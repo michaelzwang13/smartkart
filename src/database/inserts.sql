@@ -1,4 +1,6 @@
-REATE TABLE user(
+-- Basic functionality
+
+CREATE TABLE user(
     user_ID VARCHAR(50),
     email VARCHAR(50) NOT NULL,
     password VARCHAR(50) NOT NULL,
