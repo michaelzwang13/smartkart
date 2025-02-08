@@ -1,223 +1,206 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Shopping Trip</title>
-  <script>
-      document.addEventListener("DOMContentLoaded", function () {
-      document.getElementById("addItemForm").addEventListener("submit", handleFormSubmit);
-    });
+  <head>
+    <meta charset="UTF-8" />
+    <title>Shopping Trip</title>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+        document.getElementById("addItemForm").addEventListener("submit", handleFormSubmit);
+      });
 
-    function handleFormSubmit(event) {
-      event.preventDefault(); // Prevents page reload on submit
+      function handleFormSubmit(event) {
+        event.preventDefault(); // Prevents page reload on submit
 
-      // Extract form data
-      const itemName = document.getElementById("itemName").value;
-      const itemPrice = parseFloat(document.getElementById("itemPrice").value);
-      const itemQty = parseInt(document.getElementById("itemQty").value, 10);
+        // Extract form data
+        const itemName = document.getElementById("itemName").value;
+        const itemPrice = parseFloat(document.getElementById("itemPrice").value);
+        const itemQty = parseInt(document.getElementById("itemQty").value, 10);
 
-      if (!itemName || isNaN(itemPrice) || isNaN(itemQty) || itemQty <= 0) {
-        alert("Please enter valid item details.");
-        return;
+        if (!itemName || isNaN(itemPrice) || isNaN(itemQty) || itemQty <= 0) {
+          alert("Please enter valid item details.");
+          return;
+        }
+
+        // Send request to the backend
+        fetch(`/searchitem?upc=${itemName}`)
+          .then(response => response.json())
+          .then(data => {
+            console.log("Search result:", data);
+          })
+          .catch(error => {
+            console.error("Error fetching item details:", error);
+          });
+
+        // Clear the form fields after submission
+        document.getElementById("addItemForm").reset();
       }
+    </script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 1rem;
+      }
+      .section-container {
+        margin-bottom: 2rem;
+      }
+      h2 {
+        color: #007bff;
+      }
+      .form-group {
+        margin-bottom: 1rem;
+      }
+      label {
+        display: inline-block;
+        width: 100px;
+        font-weight: 600;
+      }
+      input[type="text"],
+      input[type="number"] {
+        padding: 0.4rem;
+        font-size: 1rem;
+        width: 200px;
+        margin-bottom: 0.5rem;
+      }
+      button {
+        padding: 0.5rem 1rem;
+        font-size: 1rem;
+        border: none;
+        border-radius: 4px;
+        background-color: #007bff;
+        color: #fff;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+      }
+      thead {
+        background-color: #f4f4f4;
+      }
+      th,
+      td {
+        border: 1px solid #ccc;
+        padding: 0.5rem;
+      }
+      .finish-btn {
+        margin-top: 1rem;
+        background-color: #28a745;
+      }
+      .finish-btn:hover {
+        background-color: #218838;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- If NO existing cart session -->
+    {% if not cart_session %}
+    <section class="section-container">
+      <h2>Start a New Shopping Trip</h2>
+      <form action="/start-shopping" method="POST">
+        <div class="form-group">
+          <label for="storeName">Store Name:</label>
+          <input
+            type="text"
+            id="storeName"
+            name="storeName"
+            placeholder="e.g. Walmart, Costco"
+            required
+          />
+        </div>
+        <button type="submit">Start Shopping</button>
+      </form>
+    </section>
 
-      // Send request to the backend
-      fetch(`/searchitem?upc=${itemName}`)
-        .then(response => response.json())
-        .then(data => {
-          console.log("Search result:", data);
-        })
-        .catch(error => {
-          console.error("Error fetching item details:", error);
-        });
+    {% else %}
+    <!-- If there IS an existing cart session -->
+    <section class="section-container">
+      <h2>Current Shopping Trip</h2>
+      <p><strong>Store:</strong> {{ cart_session.store_name }}</p>
+      <p><strong>Status:</strong> Active</p>
+    </section>
 
-      // Clear the form fields after submission
-      document.getElementById("addItemForm").reset();
-    }
-  </script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-    }
+    <section class="section-container">
+      <h3>Add an Item</h3>
+      <form action="/shopping-trip/add-item" method="POST">
+        <div>
+          <label for="upc">Barcode Number:</label>
+          <input type="number" id="upc" name="upc" required />
+        </div>
+        <div class="form-group">
+          <label for="itemPrice">Price:</label>
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            max="999999.99"
+            id="itemPrice"
+            name="itemPrice"
+            placeholder="0.00"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label for="itemQty">Quantity:</label>
+          <input
+            type="number"
+            id="itemQty"
+            name="itemQty"
+            min="1"
+            value="1"
+            required
+          />
+        </div>
+        <button type="submit">Add to Cart</button>
+      </form>
+    </section>
 
-    header, footer {
-      background-color: #f4f4f4;
-      padding: 1rem;
-      text-align: center;
-    }
+    <section class="section-container">
+      <h3>Current Cart Items</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Price</th>
+            <th>Qty</th>
+            <th>Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if cart_items %} {% for item in cart_items %}
+          <tr>
+            <td>{{ item.name }}</td>
+            <td>\${{ item.price }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>\${{ item.price * item.quantity }}</td>
+          </tr>
+          {% endfor %} {% else %}
+          <tr>
+            <td colspan="4" style="text-align: center">No items yet.</td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </section>
 
-    main {
-      display: flex;
-      flex-wrap: wrap;
-      padding: 1rem;
-      gap: 1rem;
-    }
+    <section class="section-container">
+      <h3>Budget Overview</h3>
+      <p><strong>Allocated Budget:</strong> \${{ allocated_budget }}</p>
+      <p><strong>Current Spend:</strong> \${{ current_spend }}</p>
+      <p>
+        <strong>Remaining:</strong> \${{ allocated_budget - current_spend }}
+      </p>
+    </section>
 
-    /* Left Column: Add Item + Cart */
-    .left-column {
-      flex: 1 1 300px;
-      border: 1px solid #ddd;
-      padding: 1rem;
-    }
-
-    /* Right Column: Budget + Shopping List */
-    .right-column {
-      flex: 1 1 300px;
-      border: 1px solid #ddd;
-      padding: 1rem;
-    }
-
-    h2, h3 {
-      margin-top: 0;
-    }
-
-    form {
-      margin-bottom: 1rem;
-    }
-
-    label {
-      display: inline-block;
-      width: 80px;
-    }
-
-    input[type="text"],
-    input[type="number"] {
-      margin-bottom: 0.5rem;
-      width: 150px;
-    }
-
-    button {
-      display: inline-block;
-      padding: 0.5rem 1rem;
-      margin-top: 0.5rem;
-      font-size: 1rem;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      background-color: #007bff;
-      color: #fff;
-    }
-
-    button:hover {
-      background-color: #0056b3;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 1rem;
-    }
-
-    table, th, td {
-      border: 1px solid #ccc;
-    }
-
-    th, td {
-      padding: 0.5rem;
-      text-align: left;
-    }
-
-    .budget-display {
-      background-color: #f9f9f9;
-      padding: 1rem;
-      margin-bottom: 1rem;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-    }
-  </style>
-</head>
-<body>
-
-  <!-- Header Section -->
-  <header>
-    <h1>Shopping Trip</h1>
-    <p>Manage your current shopping trip, budget, and planned items.</p>
-  </header>
-
-  <!-- Main Content Area -->
-  <main>
-
-    <!-- Left Column: Add Item + Cart -->
-    <div class="left-column">
-      <!-- Form to Add New Item -->
-      <section>
-        <h2>Add a New Item</h2>
-        <form id="addItemForm">
-          <div>
-            <label for="itemName">Name:</label>
-            <input type="text" id="itemName" name="itemName" required />
-          </div>
-          <div>
-            <label for="itemPrice">Price:</label>
-            <input type="number" step="0.01" id="itemPrice" name="itemPrice" required />
-          </div>
-          <div>
-            <label for="itemQty">Qty:</label>
-            <input type="number" id="itemQty" name="itemQty" min="1" value="1" required />
-          </div>
-          <button type="submit">Add to Cart</button>
-        </form>
-      </section>
-
-      <!-- Cart Display -->
-      <section>
-        <h2>Current Cart</h2>
-        <table id="cartTable">
-          <thead>
-            <tr>
-              <th>Item Name</th>
-              <th>Price</th>
-              <th>Qty</th>
-              <th>Subtotal</th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- Dynamically generated cart items would go here -->
-            <tr>
-              <td colspan="4" style="text-align:center;"><em>No items yet</em></td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
-    </div>
-
-    <!-- Right Column: Budget + Shopping List -->
-    <div class="right-column">
-      <!-- Budget Display -->
-      <section class="budget-display">
-        <h3>Budget</h3>
-        <p>Allocated Budget: <span id="allocatedBudget">$0.00</span></p>
-        <p>Current Spend: <span id="currentSpend">$0.00</span></p>
-        <p>Remaining: <span id="remainingBudget">$0.00</span></p>
-      </section>
-
-      <!-- Shopping List Section -->
-      <section>
-        <h3>Planned Shopping List</h3>
-        <ul id="shoppingList">
-          <!-- Dynamically generated shopping list items would go here -->
-          <li><em>No planned items yet</em></li>
-        </ul>
-      </section>
-    </div>
-  </main>
-
-  <!-- Footer Section -->
-  <footer>
-    <p>&copy; 2025 SmartKart. All rights reserved.</p>
-  </footer>
-
-  <!-- Optional JavaScript for dynamic functionality -->
-  <script>
-    // Placeholder for dynamic updates, e.g.:
-    // 1. Handle form submission
-    // 2. Add items to cart
-    // 3. Update budget calculations
-    // 4. Populate shopping list, etc.
-  </script>
-
-</body>
+    <section class="section-container">
+      <form action="/finish-shopping" method="POST">
+        <button type="submit" class="finish-btn">Finish Shopping</button>
+      </form>
+    </section>
+    {% endif %}
+  </body>
 </html>
