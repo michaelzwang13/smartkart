@@ -1,33 +1,89 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SmartKart</title>
+  <!-- You can include your own CSS file or inline styles here -->
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
 
+    header, footer {
+      background-color: #f4f4f4;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    nav {
+      margin: 0.5rem 0;
+    }
+
+    main {
+      padding: 2rem;
+      text-align: center;
+    }
+
+    .button {
+      display: inline-block;
+      padding: 0.75rem 1.5rem;
+      margin: 0.5rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      text-decoration: none;
+      color: #fff;
+      background-color: #007bff;
+    }
+
+    .button:hover {
+      background-color: #0056b3;
+    }
+
+    .login-btn {
+      background-color: #28a745;
+    }
+
+    .login-btn:hover {
+      background-color: #218838;
+    }
+  </style>
 </head>
-
 <body>
-{% if not message %}
-	<a href="/login">Login</a>
-	<a href="/register">Register</a>
-{% endif %}
 
-{% if message %}
-	<a href="/logout">Logout</a>
-	<a href="/remove_account">Remove Account</a>
-	<p class="message">You are logged in {{message}}. You have {{num}} follower(s)</p> </br>
-	<a href="/tweets">View your tweets</a> </br>
-	<a href="/find_people">Find people to follow</a> </br>
-	<a href="/unfollow">Unfollow someone</a> </br>
-	<a href="/view_followed">View people you have followed</a> </br>
-	</br>
+  <!-- Header Section -->
+  <header>
+    <h1>Welcome to Your Shopping Assistant</h1>
+    <nav>
+      <!-- Link to Login (could be a separate page or a modal trigger) -->
+      <a href="/login" class="button login-btn">Login</a>
+      <!-- If you have a signup page, you can also add a link here -->
+      <!-- <a href="/signup" class="button">Sign Up</a> -->
+    </nav>
+  </header>
 
-        <h4>15 most recent tweets from you and your followers </h4> </br>
+  <!-- Main Content Section -->
+  <main>
+    <p>
+      Start a new shopping trip, explore product recommendations, and earn rewards 
+      for sticking to your budget and avoiding impulse buys!
+    </p>
 
-	{% for line in tweets%}
-	        <p>{{line}}</p>
-	        <hr>
-	{% endfor %}
-	{% endif %}
+    <!-- Button to Start a New Shopping Trip (redirects to shopping cart or a new page) -->
+    <a href="/shopping_trip" class="button">Start a New Shopping Trip</a>
+
+    <!-- Button to View Achievements/Rewards -->
+    <a href="/rewards" class="button">Achievements & Rewards</a>
+  </main>
+
+  <!-- Footer Section -->
+  <footer>
+    <p>&copy; 2025 SmartKart. All rights reserved.</p>
+  </footer>
+
 </body>
-
 </html>

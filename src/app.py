@@ -83,30 +83,42 @@ def registerAuth():
 		cursor.close()
 		return render_template('index.html')
 
-@app.route('/home')
-def home():
-    
-    username = session['username']
-    cursor = conn.cursor();
-    query = 'SELECT ts, blog_post FROM blog WHERE username = %s ORDER BY ts DESC'
-    cursor.execute(query, (username))
-    data1 = cursor.fetchall() 
-    for each in data1:
-        print(each['blog_post'])
-    cursor.close()
-    return render_template('home.html', username=username, posts=data1)
 
+@app.route('/shopping_trip', methods=['GET'])
+def get_shopping_trip():
+    
+    # total_spend = sum(item['price'] * item['quantity'] for item in CART_ITEMS)
+    # remaining = BUDGET - total_spend
 		
-@app.route('/post', methods=['GET', 'POST'])
-def post():
-	username = session['username']
-	cursor = conn.cursor();
-	blog = request.form['blog']
-	query = 'INSERT INTO blog (blog_post, username) VALUES(%s, %s)'
-	cursor.execute(query, (blog, username))
-	conn.commit()
-	cursor.close()
-	return redirect(url_for('home'))
+    return render_template('shopping_trip.html')
+
+    # return render_template(
+    #     'shopping_trip.html',
+    #     cart_items=CART_ITEMS,
+    #     allocated_budget=BUDGET,
+    #     current_spend=round(total_spend, 2),
+    #     remaining_budget=round(remaining, 2)
+    # )
+
+@app.route('/shopping-trip/add-item', methods=['POST'])
+def add_item():
+    """
+    A sample endpoint that processes a form submission to add an item to the cart.
+    This is optional but shows how you'd handle incoming form data.
+    """
+    item_name = request.form.get('itemName')
+    item_price = float(request.form.get('itemPrice', 0))
+    item_qty = int(request.form.get('itemQty', 1))
+
+    # Append to our in-memory cart (in real usage, insert into your database).
+    CART_ITEMS.append({
+        'name': item_name,
+        'price': item_price,
+        'quantity': item_qty
+    })
+
+    # Redirect back to the shopping trip page.
+    return redirect(url_for('get_shopping_trip'))
 
 @app.route('/logout')
 def logout():
