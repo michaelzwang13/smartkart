@@ -3,6 +3,38 @@
   <head>
     <meta charset="UTF-8" />
     <title>Shopping Trip</title>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+        document.getElementById("addItemForm").addEventListener("submit", handleFormSubmit);
+      });
+
+      function handleFormSubmit(event) {
+        event.preventDefault(); // Prevents page reload on submit
+
+        // Extract form data
+        const itemName = document.getElementById("itemName").value;
+        const itemPrice = parseFloat(document.getElementById("itemPrice").value);
+        const itemQty = parseInt(document.getElementById("itemQty").value, 10);
+
+        if (!itemName || isNaN(itemPrice) || isNaN(itemQty) || itemQty <= 0) {
+          alert("Please enter valid item details.");
+          return;
+        }
+
+        // Send request to the backend
+        fetch(`/searchitem?upc=${itemName}`)
+          .then(response => response.json())
+          .then(data => {
+            console.log("Search result:", data);
+          })
+          .catch(error => {
+            console.error("Error fetching item details:", error);
+          });
+
+        // Clear the form fields after submission
+        document.getElementById("addItemForm").reset();
+      }
+    </script>
     <style>
       body {
         font-family: Arial, sans-serif;

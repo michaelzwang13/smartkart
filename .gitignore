@@ -1,2 +1,4 @@
 venv/
 .DS_Store
+connect_mysql.sh
+src/config.py
