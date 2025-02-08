@@ -1,10 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
-<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Shopping Assistant</title>
+  <title>Achievements - Grocery Tracker</title>
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.gstatic.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
@@ -90,30 +89,49 @@
       max-width: 600px;
       line-height: 1.5;
     }
-    .cta-buttons {
+
+    /* Achievements Section */
+    .achievements {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 1rem;
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    }
+    .achievements h2 {
+      font-size: 1.75rem;
+      color: #007bff;
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+    .achievement {
       display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-      justify-content: center;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background-color: #f9f9f9;
     }
-    .btn {
-      display: inline-block;
-      padding: 0.75rem 1.5rem;
+    .achievement.completed {
+      background-color: #e8f5e9;
+      border-color: #4CAF50;
+    }
+    .achievement img {
+      width: 60px;
+      height: 60px;
+      margin-right: 1.5rem;
+      border-radius: 50%;
+    }
+    .achievement h3 {
+      font-size: 1.25rem;
+      margin-bottom: 0.5rem;
+      color: #333;
+    }
+    .achievement p {
       font-size: 1rem;
-      text-decoration: none;
-      color: #fff;
-      background-color: #007bff;
-      border-radius: 4px;
-      transition: background-color 0.2s ease;
-    }
-    .btn:hover {
-      background-color: #0056b3;
-    }
-    .btn-secondary {
-      background-color: #6c757d;
-    }
-    .btn-secondary:hover {
-      background-color: #5a6268;
+      color: #666;
     }
 
     /* Footer Section */
@@ -137,27 +155,68 @@
   <nav class="navbar">
     <a href="#" class="brand">Shopping Assistant</a>
     <ul>
-      <!-- This can link back to the same page or a separate 'Home' route -->
       <li><a href="/">Home</a></li>
       <li><a href="/shopping-trip">New Trip</a></li>
       <li><a href="/budget">Budget</a></li>
       <li><a href="/rewards">Rewards</a></li>
-      <!-- Login link -->
-      <li><a href="/login" class="login-btn">Login</a></li>
     </ul>
   </nav>
 
-  <!-- Hero / Welcome Section -->
+  <!-- Hero Section -->
   <section class="hero">
-    <h1>Welcome to Your Shopping Assistant</h1>
+    <h1>Achievements</h1>
     <p>
-      Plan your shopping trips, stay within your budget, and earn rewards 
-      for making smarter purchases. Avoid impulse buys and save money 
-      every time you shop!
+      Celebrate your milestones! Track your progress and unlock rewards for staying under budget, planning meals, and more.
     </p>
-    <div class="cta-buttons">
-      <a href="/new-shopping-trip" class="btn">Start a New Shopping Trip</a>
-      <a href="/rewards" class="btn btn-secondary">Check Your Rewards</a>
+  </section>
+
+  <!-- Achievements Section -->
+  <section class="achievements">
+    <h2>Unlocked Achievements</h2>
+
+    <!-- Achievement 1: Staying Under Budget -->
+    <div class="achievement completed">
+      <img src="https://via.placeholder.com/60" alt="Badge">
+      <div>
+        <h3>Staying Under Budget</h3>
+        <p>Congratulations! You stayed under your grocery budget this month.</p>
+      </div>
+    </div>
+
+    <!-- Achievement 2: Meal Planner Pro -->
+    <div class="achievement">
+      <img src="https://via.placeholder.com/60" alt="Badge">
+      <div>
+        <h3>Meal Planner Pro</h3>
+        <p>Plan your meals for a week without exceeding your budget.</p>
+      </div>
+    </div>
+
+    <!-- Achievement 3: Grocery Guru -->
+    <div class="achievement">
+      <img src="https://via.placeholder.com/60" alt="Badge">
+      <div>
+        <h3>Grocery Guru</h3>
+        <p>Track your groceries for 3 consecutive months.</p>
+      </div>
+    </div>
+
+    <!-- Achievement 4: Savings Star -->
+    <div class="achievement">
+      <img src="https://via.placeholder.com/60" alt="Badge">
+      <div>
+        <h3>Savings Star</h3>
+        <p>Save more than 20% of your grocery budget for 2 months in a row.</p>
+      </div>
+    </div>
+
+    <!-- Achievement 5: Budget Boss -->
+    <div class="achievement">
+      <img src="https://via.placeholder.com/60" alt="Badge">
+      <div>
+        <h3>Budget Boss</h3>
+        <p>Successfully stay under budget for 6 consecutive months.</p>
+      </div>
     </div>
   </section>
 
