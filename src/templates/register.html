@@ -127,7 +127,6 @@
       <!-- Adjust nav items as needed -->
       <li><a href="/">Home</a></li>
       <li><a href="/new-shopping-trip">New Trip</a></li>
-      <li><a href="/recommendations">Recommendations</a></li>
       <li><a href="/rewards">Rewards</a></li>
       <li><a href="/login">Login</a></li>
     </ul>
@@ -136,22 +135,22 @@
   <!-- Register Form Section -->
   <div class="form-container">
     <h2>Create Your Account</h2>
-    <form action="/register" method="POST">
+    <form action="/registerAuth" method="POST">
       <div class="form-group">
-        <label for="email">Email</label>
+        <label for="email_address">Email</label>
         <input 
           type="email" 
-          id="email" 
-          name="email" 
+          id="email_address" 
+          name="email_address" 
           required
         />
       </div>
       <div class="form-group">
-        <label for="username">Username</label>
+        <label for="user_ID">Username</label>
         <input 
           type="text" 
-          id="username" 
-          name="username"
+          id="user_ID" 
+          name="user_ID"
           required
         />
       </div>
