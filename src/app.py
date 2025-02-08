@@ -1,27 +1,29 @@
 #Import Flask Library
-from flask import Flask, render_template, request, session, url_for, redirect
+from flask import Flask, render_template, request, session, url_for, redirect, jsonify
+import requests
 import pymysql.cursors
 import hashlib
+import config
 
 #Initialize the app from Flask
 app = Flask(__name__)
 
 #Configure MySQL
-conn = pymysql.connect(host='localhost',
-											 port= 8889,
-                       user='root',
-                       password='root',
-                       db='hacknyu25',
-                       charset='utf8mb4',
-                       cursorclass=pymysql.cursors.DictCursor)
-
 # conn = pymysql.connect(host='localhost',
-# 						port= 3306,
-#                         user='willy',
-#                         password='willy',
-#                         database='hacknyu25',
-#                         charset='utf8mb4',
-#                         cursorclass=pymysql.cursors.DictCursor)
+# 											 port= 8889,
+#                        user='root',
+#                        password='root',
+#                        db='hacknyu25',
+#                        charset='utf8mb4',
+#                        cursorclass=pymysql.cursors.DictCursor)
+
+conn = pymysql.connect(host='localhost',
+						port= 3306,
+                         user='willy',
+                         password='willy',
+                         database='hacknyu25',
+                         charset='utf8mb4',
+                         cursorclass=pymysql.cursors.DictCursor)
 
 #Define a route to hello function
 @app.route('/')
@@ -145,6 +147,24 @@ def rewards():
 @app.route('/budget')
 def budget():
     return render_template('budget.html')
+
+@app.route('/searchitem', methods=['GET'])
+def searchitem():
+    url = 'https://trackapi.nutritionix.com/v2/search/item?upc='
+    headers = {
+        'x-app-id': config.API_ID,
+        'x-app-key': config.API_KEY
+    }
+
+    upc = request.args.get('upc')
+    
+    if not upc:
+        return jsonify({'error': 'UPC parameter is required'}), 400  # Return error if no 'upc' parameter
+
+    url += upc
+    response = requests.get(url, headers=headers)
+
+    return jsonify(response.json())
 
 @app.route('/logout')
 def logout():

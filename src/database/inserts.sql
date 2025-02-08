@@ -27,11 +27,11 @@ VALUES
 -- Adjust references to the correct cart_IDs from the previous step.
 INSERT INTO item (item_ID, cart_ID, user_ID, quantity, item_name, upc, item_lifetime)
 VALUES
-(1, 1, 'john_doe', 'Bread', 12345, 7),      -- Goes in cart_ID=1
-(2, 1, 'john_doe', 'Milk', 67890, 5),
-(3, 3, 'jane_smith', 'Laptop', 11111, 365),   -- Goes in cart_ID=2
-(4, 3, 'jane_smith', 'Juice', 22222, 10),    -- Goes in cart_ID=3
-(5, 3, 'jane_smith', 'Apples', 33333, 3);
+(1, 1, 'john_doe', 1, 'Bread', 12345, 7),      -- Goes in cart_ID=1
+(2, 1, 'john_doe', 2, 'Milk', 67890, 5),
+(3, 3, 'jane_smith', 3, 'Laptop', 11111, 365),   -- Goes in cart_ID=2
+(4, 3, 'jane_smith', 4, 'Juice', 22222, 10),    -- Goes in cart_ID=3
+(5, 3, 'jane_smith', 5, 'Apples', 33333, 3);
 
 -- 4. Insert ACHIEVEMENTS
 -- achievement_ID is AUTO_INCREMENT.
