@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Budget Goals - Grocery Tracker</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.gstatic.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* Global Reset & Font */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Open Sans', Arial, sans-serif;
+      color: #333;
+      background-color: #f8f9fa;
+      line-height: 1.6;
+    }
+
+    /* Navbar Styling */
+    .navbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 2rem;
+      background-color: #ffffff;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    .navbar .brand {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #007bff;
+      text-decoration: none;
+    }
+    .navbar ul {
+      display: flex;
+      list-style: none;
+    }
+    .navbar li {
+      margin-left: 1.5rem;
+    }
+    .navbar a {
+      text-decoration: none;
+      color: #333;
+      font-weight: 500;
+      transition: color 0.2s ease;
+    }
+    .navbar a:hover {
+      color: #007bff;
+    }
+    .login-btn {
+      color: #28a745;
+      font-weight: 600;
+    }
+    .login-btn:hover {
+      color: #218838;
+    }
+
+    /* Hero Section */
+    .hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 4rem 2rem;
+      background-color: #ffffff;
+      margin: 1.5rem auto;
+      max-width: 1200px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    }
+    .hero h1 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      color: #007bff;
+    }
+    .hero p {
+      font-size: 1.1rem;
+      margin-bottom: 2rem;
+      max-width: 600px;
+      line-height: 1.5;
+    }
+
+    /* Budget Goals Section */
+    .budget-goals {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 2rem;
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    }
+    .budget-goals h2 {
+      font-size: 1.75rem;
+      color: #007bff;
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+    .budget-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .budget-form label {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #333;
+    }
+    .budget-form input {
+      padding: 0.75rem;
+      font-size: 1rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      outline: none;
+    }
+    .budget-form input:focus {
+      border-color: #007bff;
+    }
+    .budget-form button {
+      padding: 0.75rem;
+      font-size: 1rem;
+      color: #fff;
+      background-color: #007bff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+    .budget-form button:hover {
+      background-color: #0056b3;
+    }
+
+    /* Past Budget Stats Section */
+    .past-stats {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 2rem;
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    }
+    .past-stats h2 {
+      font-size: 1.75rem;
+      color: #007bff;
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+    .stats-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .stats-table th,
+    .stats-table td {
+      padding: 1rem;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    .stats-table th {
+      background-color: #f8f9fa;
+      font-weight: 600;
+    }
+    .stats-table tr:hover {
+      background-color: #f1f1f1;
+    }
+
+    /* Footer Section */
+    footer {
+      text-align: center;
+      padding: 1rem;
+      background-color: #ffffff;
+      font-size: 0.9rem;
+      color: #777;
+      position: relative;
+      bottom: 0;
+      width: 100%;
+      box-shadow: 0 -1px 4px rgba(0,0,0,0.05);
+      margin-top: 1.5rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <a href="#" class="brand">Shopping Assistant</a>
+    <ul>
+        <li><a href="/">Home</a></li>
+        <li><a href="/shopping-trip">New Trip</a></li>
+        <li><a href="/budget">Budget</a></li>
+        <li><a href="/rewards">Rewards</a></li>
+    </ul>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <h1>Budget Goals</h1>
+    <p>
+      Set your monthly grocery budget goals and track your spending over time to stay on top of your finances.
+    </p>
+  </section>
+
+  <!-- Budget Goals Section -->
+  <section class="budget-goals">
+    <h2>Set Your Budget Goal</h2>
+    <form class="budget-form">
+      <label for="monthly-budget">Monthly Budget ($)</label>
+      <input type="number" id="monthly-budget" placeholder="Enter your monthly budget" required>
+      <button type="submit">Set Budget</button>
+    </form>
+  </section>
+
+  <!-- Past Budget Stats Section -->
+  <section class="past-stats">
+    <h2>Past Budget Statistics</h2>
+    <table class="stats-table">
+      <thead>
+        <tr>
+          <th>Month</th>
+          <th>Budget</th>
+          <th>Spent</th>
+          <th>Saved</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>January 2024</td>
+          <td>$500</td>
+          <td>$450</td>
+          <td>$50</td>
+        </tr>
+        <tr>
+          <td>February 2024</td>
+          <td>$500</td>
+          <td>$480</td>
+          <td>$20</td>
+        </tr>
+        <tr>
+          <td>March 2024</td>
+          <td>$500</td>
+          <td>$510</td>
+          <td>-$10</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Footer Section -->
+  <footer>
+    &copy; 2025 Shopping Assistant. All rights reserved.
+  </footer>
+
+</body>
+</html>

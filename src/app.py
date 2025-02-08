@@ -7,13 +7,21 @@ import hashlib
 app = Flask(__name__)
 
 #Configure MySQL
+# conn = pymysql.connect(host='localhost',
+# 											 port= 8889,
+#                        user='root',
+#                        password='root',
+#                        db='hacknyu25',
+#                        charset='utf8mb4',
+#                        cursorclass=pymysql.cursors.DictCursor)
+
 conn = pymysql.connect(host='localhost',
-											 port= 8889,
-                       user='root',
-                       password='root',
-                       db='hacknyu25',
-                       charset='utf8mb4',
-                       cursorclass=pymysql.cursors.DictCursor)
+						port= 3306,
+                        user='willy',
+                        password='willy',
+                        database='hacknyu25',
+                        charset='utf8mb4',
+                        cursorclass=pymysql.cursors.DictCursor)
 
 #Define a route to hello function
 @app.route('/')
@@ -129,6 +137,14 @@ def add_item():
 
     # Redirect back to the shopping trip page.
     return redirect(url_for('get_shopping_trip'))
+
+@app.route('/rewards')
+def rewards():
+    return render_template('reward.html')
+
+@app.route('/budget')
+def budget():
+    return render_template('budget.html')
 
 @app.route('/logout')
 def logout():
