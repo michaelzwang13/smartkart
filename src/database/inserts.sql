@@ -5,8 +5,8 @@ USE hacknyu25;
 -- 1. Insert USERS (user_account)
 INSERT INTO user_account (user_ID, email, password)
 VALUES
-('john_doe', 'john@example.com', 'pass123'),
-('jane_smith', 'jane@example.com', 'pass456');
+('john_doe', 'john@example.com', '202cb962ac59075b964b07152d234b70'),
+('jane_smith', 'jane@example.com', '202cb962ac59075b964b07152d234b70');
 
 -- 2. Insert CARTS
 -- cart_ID is AUTO_INCREMENT, so we omit it in the insert.

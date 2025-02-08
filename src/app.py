@@ -7,21 +7,21 @@ import hashlib
 app = Flask(__name__)
 
 #Configure MySQL
-# conn = pymysql.connect(host='localhost',
-# 											 port= 8889,
-#                        user='root',
-#                        password='root',
-#                        db='hacknyu25',
-#                        charset='utf8mb4',
-#                        cursorclass=pymysql.cursors.DictCursor)
-
 conn = pymysql.connect(host='localhost',
-						port= 3306,
-                        user='willy',
-                        password='willy',
-                        database='hacknyu25',
-                        charset='utf8mb4',
-                        cursorclass=pymysql.cursors.DictCursor)
+											 port= 8889,
+                       user='root',
+                       password='root',
+                       db='hacknyu25',
+                       charset='utf8mb4',
+                       cursorclass=pymysql.cursors.DictCursor)
+
+# conn = pymysql.connect(host='localhost',
+# 						port= 3306,
+#                         user='willy',
+#                         password='willy',
+#                         database='hacknyu25',
+#                         charset='utf8mb4',
+#                         cursorclass=pymysql.cursors.DictCursor)
 
 #Define a route to hello function
 @app.route('/')
