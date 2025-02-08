@@ -1,19 +1,167 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <title>Login - Shopping Assistant</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <!-- Google Font -->
+  <link rel="preconnect" href="https://fonts.gstatic.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* Global Reset & Font */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Open Sans', Arial, sans-serif;
+      color: #333;
+      background-color: #f8f9fa;
+    }
+
+    /* Navbar Styling */
+    .navbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 2rem;
+      background-color: #ffffff;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    .navbar .brand {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #007bff;
+      text-decoration: none;
+    }
+    .navbar ul {
+      display: flex;
+      list-style: none;
+    }
+    .navbar li {
+      margin-left: 1.5rem;
+    }
+    .navbar a {
+      text-decoration: none;
+      color: #333;
+      font-weight: 500;
+      transition: color 0.2s ease;
+    }
+    .navbar a:hover {
+      color: #007bff;
+    }
+
+    /* Login Form Container */
+    .form-container {
+      max-width: 400px;
+      margin: 3rem auto;
+      padding: 2rem;
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    }
+    .form-container h2 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      color: #007bff;
+    }
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+    .btn-submit {
+      width: 100%;
+      padding: 0.75rem;
+      background-color: #007bff;
+      color: #ffffff;
+      border: none;
+      border-radius: 4px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+    .btn-submit:hover {
+      background-color: #0056b3;
+    }
+    .register-link {
+      display: block;
+      margin-top: 1rem;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 1rem;
+      background-color: #ffffff;
+      font-size: 0.9rem;
+      color: #777;
+      box-shadow: 0 -1px 4px rgba(0,0,0,0.05);
+      margin-top: 3rem;
+    }
+  </style>
 </head>
 <body>
-<form action="/loginAuth" method="POST">
-	<input type="text" name = "username" placeholder="username" required/> </br>
-	<input type="password" name = "password" placeholder="password" required/></br>
-	<input type="submit" value = Login />
-	{% if error %}
-		<p class="error"><strong>Error:</strong> {{error}}</p>
-	{% endif %}
-</form>
 
-<a href="/">Go back</a>
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <a href="/" class="brand">Shopping Assistant</a>
+    <ul>
+      <!-- Adjust nav items as needed -->
+      <li><a href="/">Home</a></li>
+      <li><a href="/new-shopping-trip">New Trip</a></li>
+      <li><a href="/recommendations">Recommendations</a></li>
+      <li><a href="/rewards">Rewards</a></li>
+    </ul>
+  </nav>
 
+  <!-- Login Form Section -->
+  <div class="form-container">
+    <h2>Login</h2>
+    <form action="/login" method="POST">
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input 
+          type="email" 
+          id="email" 
+          name="email" 
+          required
+        />
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input 
+          type="password" 
+          id="password" 
+          name="password" 
+          required
+        />
+      </div>
+      <button type="submit" class="btn-submit">Login</button>
+      <a href="/register" class="register-link">Don’t have an account? Register here</a>
+    </form>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    &copy; 2025 Shopping Assistant. All rights reserved.
+  </footer>
 </body>
-
-
 </html>
