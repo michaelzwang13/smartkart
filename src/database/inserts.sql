@@ -6,7 +6,6 @@ CREATE TABLE user_account (
     user_ID VARCHAR(50),
     email VARCHAR(50) NOT NULL,
     password VARCHAR(50) NOT NULL,
-    date_registered DATETIME NOT NULL,
     PRIMARY KEY (user_ID)
 );
 
