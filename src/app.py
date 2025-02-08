@@ -101,42 +101,77 @@ def registerAuth():
         session['user_ID'] = user_ID
         return render_template('index.html')
 
-
-@app.route('/shopping-trip', methods=['GET'])
-def get_shopping_trip():
+@app.route('/start-shopping', methods=['POST'])
+def start_shopping():
+    store_name = request.form.get('storeName')
+    user_ID = session['user_ID']
     
-    # total_spend = sum(item['price'] * item['quantity'] for item in CART_ITEMS)
-    # remaining = BUDGET - total_spend
-		
-    return render_template('shopping_trip.html')
+    cursor = conn.cursor()
+    
+    query = 'SELECT cart_ID FROM cart WHERE user_ID = %s AND status = %s'
+    cursor.execute(query, (user_ID, "active"))
+    cart_ID = cursor.fetchone()
+    
+    if cart_ID:
+      session['cart_ID'] = cart_ID
+    else:
+      ins = 'INSERT INTO cart VALUES(%s, %s, %s)'
+      cursor.execute(ins, (user_ID, store_name, "active"))
+      conn.commit()
+      session['cart_ID'] = cursor.fetchone()
+    
+    cursor.close()
+    
+    return redirect(url_for('shopping_trip'))
 
-    # return render_template(
-    #     'shopping_trip.html',
-    #     cart_items=CART_ITEMS,
-    #     allocated_budget=BUDGET,
-    #     current_spend=round(total_spend, 2),
-    #     remaining_budget=round(remaining, 2)
-    # )
+@app.route('/shopping-trip')
+def shopping_trip():
+    if not "cart_ID" in session:
+        # No active cart
+        return render_template('shopping_trip.html', cart_session=None)
+    else:
+        # Query DB for cart items, budget, etc.
+        cart_ID = session['cart_ID']
+        cursor = conn.cursor()
+        query = 'SELECT * FROM item WHERE cart_ID = %s'
+        cursor.execute(query, (cart_ID))
+        
+        items = cursor.fetchall()
+        
+        return render_template(
+            'shopping_trip.html', 
+            cart_items=items,
+            # cart_items=..., 
+            # allocated_budget=..., 
+            # current_spend=...
+        )
+
+@app.route('/finish-shopping', methods=['POST'])
+def finish_shopping():
+    cart_ID = session['cart_ID']
+    cursor = conn.cursor()
+    query = '''UPDATE cart SET status = %s 
+                        WHERE ID = %s'''
+    cursor.execute(query, ("purchased", cart_ID))
+    return redirect(url_for('shopping_trip'))
 
 @app.route('/shopping-trip/add-item', methods=['POST'])
 def add_item():
-    """
-    A sample endpoint that processes a form submission to add an item to the cart.
-    This is optional but shows how you'd handle incoming form data.
-    """
-    item_name = request.form.get('itemName')
-    item_price = float(request.form.get('itemPrice', 0))
-    item_qty = int(request.form.get('itemQty', 1))
+    user_ID = session['user_ID']
+    cart_ID = session['cart_ID']
+    upc = request.form['upc']
+    price = request.form['itemPrice']
+    quantity = request.form['itemQty']
 
-    # Append to our in-memory cart (in real usage, insert into your database).
-    CART_ITEMS.append({
-        'name': item_name,
-        'price': item_price,
-        'quantity': item_qty
-    })
+    cursor = conn.cursor()
+    ins = 'INSERT INTO item VALUES(%s, %s, %s, %s, %s, %s, %s)'
+    cursor.execute(ins, (cart_ID, user_ID, quantity, price, "BREAD", upc, 7))
+    
+    conn.commit()
+    cursor.close()
 
     # Redirect back to the shopping trip page.
-    return redirect(url_for('get_shopping_trip'))
+    return render_template('shopping_trip.html')
 
 @app.route('/rewards')
 def rewards():

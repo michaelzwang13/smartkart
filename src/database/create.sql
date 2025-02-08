@@ -26,6 +26,7 @@ CREATE TABLE item (
     user_ID VARCHAR(50), 
     quantity INT NOT NULL,
     item_name VARCHAR(50) NOT NULL,
+    price DECIMAL(10,2),
     upc INT, 
     item_lifetime INT, -- # of DAYS
     PRIMARY KEY (item_ID),
