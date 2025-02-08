@@ -52,7 +52,7 @@ def loginAuth():
         #creates a session for the the user
         #session is a built in
             session['user_ID'] = user_ID
-            return redirect(url_for('user_home'))
+            return render_template('user_home.html')
         else:
             error = 'Invalid username or password'
             return render_template('login.html', error=error)
@@ -94,7 +94,7 @@ def registerAuth():
         return render_template('index.html')
 
 
-@app.route('/shopping_trip', methods=['GET'])
+@app.route('/shopping-trip', methods=['GET'])
 def get_shopping_trip():
     
     # total_spend = sum(item['price'] * item['quantity'] for item in CART_ITEMS)

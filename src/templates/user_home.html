@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Customer Home - Shopping Assistant</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <!-- Google Font -->
+  <link rel="preconnect" href="https://fonts.gstatic.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* Global Reset & Font */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Open Sans', Arial, sans-serif;
+      color: #333;
+      background-color: #f8f9fa;
+    }
+
+    /* Navbar Styling */
+    .navbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 2rem;
+      background-color: #ffffff;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    .navbar .brand {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #007bff;
+      text-decoration: none;
+    }
+    .navbar ul {
+      display: flex;
+      list-style: none;
+      gap: 1.5rem;
+    }
+    .navbar a {
+      text-decoration: none;
+      color: #333;
+      font-weight: 500;
+      transition: color 0.2s ease;
+    }
+    .navbar a:hover {
+      color: #007bff;
+    }
+
+    /* Main Container */
+    .main-container {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+
+    .welcome {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .welcome h2 {
+      font-size: 1.8rem;
+      color: #007bff;
+      margin-bottom: 0.5rem;
+    }
+    .welcome p {
+      font-size: 1rem;
+      color: #555;
+    }
+
+    /* History Sections */
+    .history-section {
+      margin-bottom: 2rem;
+    }
+    .history-section h3 {
+      font-size: 1.3rem;
+      color: #007bff;
+      margin-bottom: 1rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #fff;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    thead {
+      background-color: #f1f1f1;
+    }
+    th, td {
+      padding: 0.75rem 1rem;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+    th {
+      font-weight: 600;
+    }
+    td {
+      font-size: 0.95rem;
+    }
+    .no-data {
+      text-align: center;
+      padding: 1rem;
+      font-style: italic;
+      color: #999;
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 1rem;
+      background-color: #ffffff;
+      font-size: 0.9rem;
+      color: #777;
+      box-shadow: 0 -1px 4px rgba(0,0,0,0.05);
+      margin-top: 2rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <a href="/" class="brand">Shopping Assistant</a>
+    <ul>
+      <!-- Example additional links -->
+      <li><a href="/shopping-trip">New Trip</a></li>
+      <li><a href="/rewards">Rewards</a></li>
+      <li><a href="/logout">Logout</a></li>
+    </ul>
+  </nav>
+
+  <!-- Main Content Area -->
+  <div class="main-container">
+    <section class="welcome">
+      <!-- Insert the actual user's name or user_id dynamically -->
+      <h2>Welcome Back, {{ user_ID }}!</h2>
+      <p>Here’s an overview of your recent shopping activity and spending history.</p>
+    </section>
+
+    <!-- Shopping Cart History -->
+    <section class="history-section">
+      <h3>Your Shopping Cart History</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Cart ID</th>
+            <th>Date</th>
+            <th>Number of Items</th>
+            <th>Total Spent</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Loop over the user's cart history dynamically -->
+          <!-- Example row placeholders: -->
+          <!-- If no data, show a "no-data" row -->
+          <!-- 
+          {% if cart_history %}
+            {% for cart in cart_history %}
+              <tr>
+                <td>{{ cart.cart_id }}</td>
+                <td>{{ cart.date_brought }}</td>
+                <td>{{ cart.total_items }}</td>
+                <td>${{ cart.total_spent }}</td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="4" class="no-data">No past carts found.</td>
+            </tr>
+          {% endif %}
+          -->
+          <tr>
+            <td colspan="4" class="no-data">No past carts found.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Spending History -->
+    <section class="history-section">
+      <h3>Your Spending History</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Month</th>
+            <th>Total Spent</th>
+            <th>Impulse Items</th>
+            <th>Budget Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Loop over the user's spending data dynamically -->
+          <!-- Example row placeholders: -->
+          <!-- 
+          {% if spending_history %}
+            {% for month_data in spending_history %}
+              <tr>
+                <td>{{ month_data.month_label }}</td>
+                <td>${{ month_data.total_spent }}</td>
+                <td>{{ month_data.impulse_count }}</td>
+                <td>{{ month_data.budget_status }}</td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="4" class="no-data">No spending data available.</td>
+            </tr>
+          {% endif %}
+          -->
+          <tr>
+            <td colspan="4" class="no-data">No spending data available.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    &copy; 2025 Shopping Assistant. All rights reserved.
+  </footer>
+</body>
+</html>
