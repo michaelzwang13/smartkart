@@ -1,7 +1,7 @@
 #Import Flask Library
 from flask import Flask, render_template, request, session, url_for, redirect, jsonify, flash
 import requests
-# import pyodbc
+import pyodbc
 import pymysql.cursors
 import hashlib
 import config
@@ -11,13 +11,13 @@ import helper
 app = Flask(__name__)
 
 #Configure MySQL
-conn = pymysql.connect(host='localhost',
-											 port= 8889,
-                       user='root',
-                       password='root',
-                       db='hacknyu25',
-                       charset='utf8mb4',
-                       cursorclass=pymysql.cursors.DictCursor)
+# conn = pymysql.connect(host='localhost',
+# 											 port= 8889,
+#                        user='root',
+#                        password='root',
+#                        db='hacknyu25',
+#                        charset='utf8mb4',
+#                        cursorclass=pymysql.cursors.DictCursor)
 
 # conn = pymysql.connect(host='localhost',
 # 						port= 3306,
@@ -33,7 +33,7 @@ username = config.AZURE_UID
 password = config.AZURE_PWD
 driver = '{ODBC DRIVER 18 for SQL Server}'
 
-# conn = pyodbc.connect(f'DRIVER={driver};SERVER={server};DATABASE={database};UID={username};PWD={password}')
+conn = pyodbc.connect(f'DRIVER={driver};SERVER={server};DATABASE={database};UID={username};PWD={password}')
 
 #Define a route to hello function
 @app.route('/')
