@@ -64,8 +64,8 @@ def loginAuth():
     #cursor used to send queries
     cursor = conn.cursor()
     #executes query
-    query = 'SELECT * FROM user_account WHERE user_ID = %s'
-    cursor.execute(query, (user_ID))
+    query = 'SELECT * FROM user_account WHERE user_ID = ?'
+    cursor.execute(query, (user_ID,))
     #stores the results in a variable
     data = cursor.fetchone()
     #use fetchall() if you are expecting more than 1 data row
@@ -73,7 +73,7 @@ def loginAuth():
     error = None
     if(data):
         #if bcrypt.checkpw(password.encode('utf-8'), data['password'].encode('utf-8')):
-        if hash_password_md5(password)==data['password']:
+        if hash_password_md5(password)==data[2]:
         #creates a session for the the user
         #session is a built in
             session['user_ID'] = user_ID
@@ -101,7 +101,7 @@ def registerAuth():
     #cursor used to send queries
     cursor = conn.cursor()
     #executes query
-    query = 'SELECT * FROM user_account WHERE user_ID = %s'
+    query = 'SELECT * FROM user_account WHERE user_ID = ?'
     cursor.execute(query, (user_ID))
     #stores the results in a variable
     data = cursor.fetchone()
@@ -112,7 +112,7 @@ def registerAuth():
         error = "This username already exists"
         return render_template('register.html', error = error)
     else:
-        ins = 'INSERT INTO user_account VALUES(%s, %s, %s)'
+        ins = 'INSERT INTO user_account VALUES(?, ?, ?)'
         cursor.execute(ins, (user_ID, email_address, hashed_password))
         
         conn.commit()
@@ -127,7 +127,7 @@ def start_shopping():
     
     cursor = conn.cursor()
     
-    query = 'SELECT * FROM cart WHERE user_ID = %s AND status = %s'
+    query = 'SELECT * FROM cart WHERE user_ID = ? AND status = ?'
     cursor.execute(query, (user_ID, "active"))
     cart_ID = cursor.fetchone()
     
@@ -138,14 +138,14 @@ def start_shopping():
       items, total_items, total_spent = retrieve_totals(cart_ID['cart_ID'])
     else:
       print("ALPEREN SENGUN")
-      ins = 'INSERT INTO cart (user_ID, store_name, status) VALUES(%s, %s, %s)'
+      ins = 'INSERT INTO cart (user_ID, store_name, status) VALUES(?, ?, ?)'
       cursor.execute(ins, (user_ID, store_name, "active"))
       conn.commit()
 
-      query = 'SELECT * FROM cart WHERE user_ID = %s AND status = %s'
+      query = 'SELECT * FROM cart WHERE user_ID = ? AND status = ?'
       cursor.execute(query, (user_ID, "active"))
       cart_ID = cursor.fetchone()
-      session['cart_ID'] = cart_ID['cart_ID']
+      session['cart_ID'] = cart_ID[0]
       
     cursor.close()
     
@@ -165,7 +165,7 @@ def shopping_trip():
         print("KYLE KUZMA")
         
         cursor = conn.cursor()
-        query = 'SELECT * FROM cart WHERE user_ID = %s AND status = %s'
+        query = 'SELECT * FROM cart WHERE user_ID = ? AND status = ?'
         cursor.execute(query, (session['user_ID'], "active"))
         cart_ID = cursor.fetchone()
         
@@ -175,7 +175,7 @@ def shopping_trip():
         if cart_ID:
           print("KLAY THOMPSON")
           cart_session = cart_ID
-          session['cart_ID'] = cart_ID['cart_ID']
+          session['cart_ID'] = cart_ID[0]
           
         return render_template(
             'shopping_trip.html',
@@ -186,12 +186,10 @@ def shopping_trip():
         cart_ID = session['cart_ID']
         
         cursor = conn.cursor()
-        query = 'SELECT * FROM cart WHERE cart_ID = %s'
+        query = 'SELECT * FROM cart WHERE cart_ID = ?'
         cursor.execute(query, (cart_ID))
         cart = cursor.fetchone()
         
-        print(cart_ID)
-        print("LEBRON JAMES")
         
         items, total_items, total_spent = retrieve_totals(cart_ID)
         
@@ -210,8 +208,8 @@ def finish_shopping():
     user_ID = session['user_ID']
     cart_ID = session['cart_ID']
     cursor = conn.cursor()
-    query = '''UPDATE cart SET status = %s 
-                        WHERE cart_ID = %s'''
+    query = '''UPDATE cart SET status = ? 
+                        WHERE cart_ID = ?'''
     cursor.execute(query, ("purchased", cart_ID))
     conn.commit()
     cursor.close()
@@ -247,17 +245,20 @@ def add_item():
         return jsonify({"error": "Missing fields (upc, price, quantity, item)"}), 400
 
     cursor = conn.cursor()
-    ins = 'INSERT INTO item (cart_ID, user_ID, quantity, item_name, price, upc, item_lifetime, image_url) VALUES(%s, %s, %s, %s, %s, %s, %s, %s)'
+    ins = 'INSERT INTO item (cart_ID, user_ID, quantity, item_name, price, upc, item_lifetime, image_url) VALUES(?, ?, ?, ?, ?, ?, ?, ?)'
     cursor.execute(ins, (cart_ID, user_ID, quantity, item_name, price, upc, 7, image_url))
     
     conn.commit()
     
     cursor = conn.cursor()
-    query = 'SELECT * FROM item WHERE cart_ID = %s'
+    query = 'SELECT * FROM item WHERE cart_ID = ?'
     cursor.execute(query, (cart_ID))
     
-    items = cursor.fetchall()
-    
+    rows = cursor.fetchall()
+
+    columns = [column[0] for column in cursor.description]
+    items = [dict(zip(columns, row)) for row in rows]
+
     cursor.close()
 
     # Redirect back to the shopping trip page.
@@ -274,9 +275,14 @@ def get_cart_items():
     
     cart_ID = session['cart_ID']
     cursor = conn.cursor()
-    query = 'SELECT item_name, price, quantity, image_url FROM item WHERE cart_ID = %s'
+    query = 'SELECT item_name, price, quantity, image_url FROM item WHERE cart_ID = ?'
     cursor.execute(query, (cart_ID,))
-    items = cursor.fetchall()
+
+    rows = cursor.fetchall()
+
+    columns = [column[0] for column in cursor.description]
+    items = [dict(zip(columns, row)) for row in rows]
+
     cursor.close()
     
     return jsonify({"items": items})
@@ -390,20 +396,26 @@ def logout():
 
 def retrieve_totals(cart_ID):
     cursor = conn.cursor()
-    query = 'SELECT * FROM item WHERE cart_ID = %s'
+    query = 'SELECT * FROM item WHERE cart_ID = ?'
     cursor.execute(query, (cart_ID))
     
     items = cursor.fetchall()
     
-    query = 'SELECT COUNT(*) as num_items FROM item WHERE cart_ID = %s'
+    query = 'SELECT COUNT(*) as num_items FROM item WHERE cart_ID = ?'
     cursor.execute(query, (cart_ID))
     
-    total_items = cursor.fetchone()['num_items']
+    row = cursor.fetchone()
+
+    if row:
+        total_items = row[0]
     
-    query = 'SELECT SUM(price * quantity) AS total_spent FROM item WHERE cart_ID = %s'
+    query = 'SELECT SUM(price * quantity) AS total_spent FROM item WHERE cart_ID = ?'
     cursor.execute(query, (cart_ID))
     
-    total_spent = cursor.fetchone()['total_spent']
+    row = cursor.fetchone()
+
+    if row:
+        total_spent = row[0]
     
     if not total_items:
       total_items = 0
