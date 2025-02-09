@@ -4,26 +4,27 @@ import requests
 import pymysql.cursors
 import hashlib
 import config
+import helper
 
 #Initialize the app from Flask
 app = Flask(__name__)
 
 #Configure MySQL
-conn = pymysql.connect(host='localhost',
-											 port= 8889,
-                       user='root',
-                       password='root',
-                       db='hacknyu25',
-                       charset='utf8mb4',
-                       cursorclass=pymysql.cursors.DictCursor)
-
 # conn = pymysql.connect(host='localhost',
-# 						port= 3306,
-#                          user='willy',
-#                          password='willy',
-#                          database='hacknyu25',
-#                          charset='utf8mb4',
-#                          cursorclass=pymysql.cursors.DictCursor)
+# 											 port= 8889,
+#                        user='root',
+#                        password='root',
+#                        db='hacknyu25',
+#                        charset='utf8mb4',
+#                        cursorclass=pymysql.cursors.DictCursor)
+
+conn = pymysql.connect(host='localhost',
+						port= 3306,
+                         user='willy',
+                         password='willy',
+                         database='hacknyu25',
+                         charset='utf8mb4',
+                         cursorclass=pymysql.cursors.DictCursor)
 
 #Define a route to hello function
 @app.route('/')
@@ -246,6 +247,24 @@ def searchitem():
     response = requests.get(url, headers=headers)
 
     return jsonify(response.json())
+
+@app.route('/predict')
+def predict():
+    carbs = request.args.get('carbs')
+    sugar = request.args.get('sugar')
+    sodium = request.args.get('sodium')
+    fat = request.args.get('fat')
+
+    if helper.model == None:
+        return jsonify({'error': 'Model didnt load properly'}), 500
+    
+    prediction = helper.predict_impulsive_purchase(carbs, sugar, sodium, fat).item()
+
+    response = {
+        'prediction': int(prediction)
+    }
+
+    return jsonify(response)
 
 @app.route('/logout')
 def logout():
