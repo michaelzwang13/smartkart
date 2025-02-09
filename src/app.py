@@ -52,7 +52,31 @@ def register():
 @app.route('/home')
 def home():
   user_ID = session['user_ID']
-  return render_template('home.html', user_ID=user_ID)
+  
+  cursor = conn.cursor()
+  query = """
+    SELECT cart_ID, store_name 
+    FROM cart 
+    WHERE user_ID = %s 
+      AND EXISTS (
+        SELECT 1 
+        FROM item 
+        WHERE item.cart_ID = cart.cart_ID
+      )
+    """
+  cursor.execute(query, (user_ID,))
+  cart_history = cursor.fetchall()
+  
+  count_query = 'SELECT COUNT(*) as num_items FROM item WHERE cart_ID = %s'
+  total_query = 'SELECT SUM(price * quantity) AS total_spent FROM item WHERE cart_ID = %s'
+  for cart in cart_history:
+    cursor.execute(count_query, (cart['cart_ID'],))
+    cart['total_items'] = cursor.fetchone()['num_items']
+    
+    cursor.execute(total_query, (cart['cart_ID'],))
+    cart['total_spent'] = cursor.fetchone()['total_spent']
+  
+  return render_template('home.html', user_ID=user_ID, cart_history=cart_history)
 
 #Authenticates the login
 @app.route('/loginAuth', methods=['GET', 'POST'])
@@ -78,8 +102,8 @@ def loginAuth():
         #session is a built in
             session['user_ID'] = user_ID
             session['cart_ID'] = None
-            # return redirect(url_for('home'))
-            return render_template('home.html', user_ID=user_ID)
+            return redirect(url_for('home'))
+            # return render_template('home.html', user_ID=user_ID)
         else:
             error = 'Invalid username or password'
             return render_template('login.html', error=error)
@@ -118,7 +142,8 @@ def registerAuth():
         conn.commit()
         cursor.close()
         session['user_ID'] = user_ID
-        return render_template('home.html', user_ID=user_ID)
+        # return render_template('home.html', user_ID=user_ID)
+        return redirect(url_for('home'))
 
 @app.route('/start-shopping', methods=['POST'])
 def start_shopping():
@@ -158,6 +183,7 @@ def start_shopping():
             total_items=total_items, 
             total_spent=total_spent
         )
+    
 @app.route('/shopping-trip')
 def shopping_trip():
     if not "cart_ID" in session or not session['cart_ID']:
@@ -179,7 +205,8 @@ def shopping_trip():
           
         return render_template(
             'shopping_trip.html',
-            cart_session=cart_session
+            cart_session=cart_session,
+            cart_items=None
         )
     else:
         # Query DB for cart items, budget, etc.
@@ -218,10 +245,11 @@ def finish_shopping():
     
     del session['cart_ID']
     
-    return render_template(
-            'home.html',
-            user_ID=user_ID
-        )
+    # return render_template(
+    #         'home.html',
+    #         user_ID=user_ID
+    #     )
+    return redirect(url_for('home'))
 
 @app.route('/shopping-trip/add-item', methods=['POST'])
 def add_item():
@@ -288,17 +316,39 @@ def edit_list():
 @app.route('/list/items', methods=['GET'])
 def list_get_items():
     """Return the current shopping list as JSON."""
+    # Get the local shopping list from the session, or initialize an empty list.
     items = session.get('shopping_list', [])
-    user_ID = session['user_ID']
     
-    cursor = conn.cursor()
-    query = "SELECT item_name as name, quantity FROM shopping_list WHERE user_ID = %s AND status = %s"
-    db_items = cursor.fetchall(query, (user_ID, "pending",))
+    flag = session.get('db_items_loaded', False)
     
-    print(db_items)
+    print("JAMES HARDEN")
     
-    for item in db_items:
-      items.append(item)
+    # Only load from the database if we haven't done it already.
+    if not flag:
+        user_ID = session['user_ID']
+        
+        cursor = conn.cursor()
+        query = """
+            SELECT list_ID, item_name AS name, quantity 
+            FROM shopping_list 
+            WHERE user_ID = %s AND status = %s
+        """
+        cursor.execute(query, (user_ID, "pending",))
+        db_items = cursor.fetchall()
+        
+        print("ANTHONY DAVIS")
+        print(db_items)
+        
+        print("Loaded items from DB:", db_items)
+        
+        # Append the db items to the local list
+        items.extend(db_items)
+        session['shopping_list'] = items
+        
+        # Mark that we have loaded the db items once
+        session['db_items_loaded'] = True
+        session['to_be_deleted'] = []
+
     return jsonify({'items': items})
 
 @app.route('/list/add_item', methods=['POST'])
@@ -310,12 +360,11 @@ def list_add_item():
         return jsonify({'error': 'No item provided'}), 400
 
     # Create an object for the item
-    new_item = {"name": item_name, "quantity": quantity}
+    new_item = {"list_ID": -1, "name": item_name, "quantity": quantity}
     shopping_list = session.get('shopping_list', [])
     shopping_list.append(new_item)
     session['shopping_list'] = shopping_list
     return jsonify({'items': shopping_list})
-
 
 @app.route('/list/remove_item', methods=['POST'])
 def list_remove_item():
@@ -324,10 +373,13 @@ def list_remove_item():
     shopping_list = session.get('shopping_list', [])
     to_be_deleted = session.get('to_be_deleted', [])
     
+    print(to_be_deleted)
+    
     for product in shopping_list:
         if product.get('name') == item_name:
-            if product.get('cart_ID') != -1:
-              to_be_deleted.append(product.get('cart_ID'))
+            if product.get('list_ID') != -1:
+              to_be_deleted.append(product.get('list_ID'))
+              session['to_be_deleted'] = to_be_deleted
             shopping_list.remove(product)
             session['shopping_list'] = shopping_list
             return jsonify({'items': shopping_list})
@@ -340,7 +392,7 @@ def list_save():
     
     cursor = conn.cursor()
     ins = 'INSERT INTO shopping_list (user_ID, item_name, quantity, status) VALUES(%s, %s, %s, %s)'
-    delete = 'DELETE FROM shopping_list WHERE cart_ID = %s'
+    delete = 'DELETE FROM shopping_list WHERE list_ID = %s'
     
     shopping_list = session.get('shopping_list', [])
     to_be_deleted = session.get('to_be_deleted', [])
@@ -352,14 +404,16 @@ def list_save():
         cursor.execute(ins, (user_ID, product.get("name"), product.get("quantity"), "pending"))
         conn.commit()
         
-    for product in to_be_deleted:
-      cursor.execute(delete, (product['cart_ID']))
+    print(to_be_deleted)
+    for list_ID in to_be_deleted:
+      cursor.execute(delete, (list_ID,))
       conn.commit()
       
     cursor.close()
     
     session['shopping_list'] = []
     session['to_be_deleted'] = []
+    session['db_items_loaded'] = False
       
     return jsonify({'items': shopping_list})
 
@@ -429,6 +483,10 @@ def logout():
     session.pop('cart_ID')
   if 'shopping_list' in session:
     session.pop('shopping_list')
+  if 'to_be_deleted' in session:
+    session.pop('to_be_deleted')
+  if 'db_items_loaded' in session:
+    session.pop('db_items_loaded')
   return redirect('/')
 
 def retrieve_totals(cart_ID):

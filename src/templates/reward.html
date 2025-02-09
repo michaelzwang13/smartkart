@@ -157,8 +157,8 @@
     <ul>
       <li><a href="/">Home</a></li>
       <li><a href="/shopping-trip">New Trip</a></li>
+      <li><a href="/edit-list">Edit List</a></li>
       <li><a href="/budget">Budget</a></li>
-      <li><a href="/rewards">Rewards</a></li>
       <li><a href="/logout">Logout</a></li>
     </ul>
   </nav>
@@ -177,7 +177,7 @@
 
     <!-- Achievement 1: Staying Under Budget -->
     <div class="achievement completed">
-      <img src="https://via.placeholder.com/60" alt="Badge">
+      <img src="{{ url_for('static', filename='images/milestone.png') }}" alt="Badge">
       <div>
         <h3>Staying Under Budget</h3>
         <p>Congratulations! You stayed under your grocery budget this month.</p>
@@ -186,7 +186,7 @@
 
     <!-- Achievement 2: Meal Planner Pro -->
     <div class="achievement">
-      <img src="https://via.placeholder.com/60" alt="Badge">
+      <img src="{{ url_for('static', filename='images/milestone.png') }}" alt="Badge">
       <div>
         <h3>Meal Planner Pro</h3>
         <p>Plan your meals for a week without exceeding your budget.</p>
@@ -195,7 +195,7 @@
 
     <!-- Achievement 3: Grocery Guru -->
     <div class="achievement">
-      <img src="https://via.placeholder.com/60" alt="Badge">
+      <img src="{{ url_for('static', filename='images/milestone.png') }}" alt="Badge">
       <div>
         <h3>Grocery Guru</h3>
         <p>Track your groceries for 3 consecutive months.</p>
@@ -204,7 +204,7 @@
 
     <!-- Achievement 4: Savings Star -->
     <div class="achievement">
-      <img src="https://via.placeholder.com/60" alt="Badge">
+      <img src="{{ url_for('static', filename='images/milestone.png') }}" alt="Badge">
       <div>
         <h3>Savings Star</h3>
         <p>Save more than 20% of your grocery budget for 2 months in a row.</p>
@@ -213,7 +213,7 @@
 
     <!-- Achievement 5: Budget Boss -->
     <div class="achievement">
-      <img src="https://via.placeholder.com/60" alt="Badge">
+      <img src="{{ url_for('static', filename='images/milestone.png') }}" alt="Badge">
       <div>
         <h3>Budget Boss</h3>
         <p>Successfully stay under budget for 6 consecutive months.</p>

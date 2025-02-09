@@ -3,11 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <title>Shopping Trip</title>
-
+    <!-- Load the Roboto font from Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
+      /* Use Roboto as the primary font */
       body {
-        font-family: Arial, sans-serif;
+        font-family: 'Roboto', sans-serif;
         margin: 1rem;
+        background-color: #f9f9f9;
+        color: #333;
       }
       .section-container {
         margin-bottom: 2rem;
@@ -15,6 +21,7 @@
       }
       h2 {
         color: #007bff;
+        font-weight: 500;
       }
       .form-group {
         margin-bottom: 1rem;
@@ -22,7 +29,7 @@
       label {
         display: inline-block;
         width: 100px;
-        font-weight: 600;
+        font-weight: 500;
         text-align: left; /* Keep labels aligned left if preferred */
       }
       input[type="text"],
@@ -31,6 +38,8 @@
         font-size: 1rem;
         width: 200px;
         margin-bottom: 0.5rem;
+        border: 1px solid #ccc;
+        border-radius: 4px;
       }
       button {
         padding: 0.5rem 1rem;
@@ -51,22 +60,18 @@
         justify-content: space-between;
         margin-bottom: 2rem;
       }
-
       .left {
         flex: 0 0 auto; /* Do not grow; width defined by content */
       }
-
       .center {
         margin-top: 2rem;
         flex: 1;
         text-align: center;
       }
-
       .right {
         flex: 0 0 auto;
         width: 50px;  /* Reserve some space on the right to balance the layout */
       }
-
       /* Styling for the Back button */
       .back-btn {
         background-color: #6c757d;
@@ -77,18 +82,15 @@
         cursor: pointer;
         transition: background-color 0.2s ease;
       }
-
       .back-btn:hover {
         background-color: #5a6268;
       }
-
       /* Optionally, adjust the heading if needed */
       .center h2 {
         font-size: 1.8rem;
         color: #007bff;
         margin: 0;
       }
-
       table {
         margin: 2rem auto; /* Center table horizontally */
         border-collapse: collapse;
@@ -110,7 +112,6 @@
       .finish-btn:hover {
         background-color: #218838;
       }
-
       /* Optional larger image styling */
       .item-image {
         width: 150px;

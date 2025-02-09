@@ -167,10 +167,10 @@
           {% if cart_history %}
             {% for cart in cart_history %}
               <tr>
-                <td>{{ cart['cart_id'] }}</td>
+                <td>{{ cart['cart_ID'] }}</td>
                 <td>{{ cart['store_name'] }}</td>
-                <td>{{ total_items }}</td>
-                <td>${{ total_spent }}</td>
+                <td>{{ cart['total_items'] }}</td>
+                <td>${{ cart['total_spent'] }}</td>
               </tr>
             {% endfor %}
           {% else %}
@@ -178,48 +178,6 @@
               <td colspan="4" class="no-data">No past carts found.</td>
             </tr>
           {% endif %}
-         
-          <tr>
-            <td colspan="4" class="no-data">No past carts found.</td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
-
-    <!-- Spending History -->
-    <section class="history-section">
-      <h3>Your Spending History</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>Month</th>
-            <th>Total Spent</th>
-            <th>Impulse Items</th>
-            <th>Budget Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <!-- Loop over the user's spending data dynamically -->
-          <!-- Example row placeholders: -->
-          <!-- 
-          {% if spending_history %}
-            {% for month_data in spending_history %}
-              <tr>
-                <td>{{ month_data.month_label }}</td>
-                <td>${{ month_data.total_spent }}</td>
-                <td>{{ month_data.impulse_count }}</td>
-                <td>{{ month_data.budget_status }}</td>
-              </tr>
-            {% endfor %}
-          {% else %}
-            <tr>
-              <td colspan="4" class="no-data">No spending data available.</td>
-            </tr>
-          {% endif %}
-          -->
-          <tr>
-            <td colspan="4" class="no-data">No spending data available.</td>
-          </tr>
         </tbody>
       </table>
     </section>
