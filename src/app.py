@@ -4,8 +4,8 @@ import requests
 import pyodbc
 import pymysql.cursors
 import hashlib
-import config
 import helper
+import os
 
 #Initialize the app from Flask
 app = Flask(__name__)
@@ -29,8 +29,8 @@ app = Flask(__name__)
 
 server = 'smart-kart-server.database.windows.net'
 database = 'smart-kart-db'
-username = config.AZURE_UID
-password = config.AZURE_PWD
+username = os.environ['AZURE_UID']
+password = os.environ['AZURE_PWD']
 driver = '{ODBC DRIVER 18 for SQL Server}'
 
 conn = pyodbc.connect(f'DRIVER={driver};SERVER={server};DATABASE={database};UID={username};PWD={password}')
@@ -57,7 +57,7 @@ def home():
   query = """
     SELECT cart_ID, store_name 
     FROM cart 
-    WHERE user_ID = %s 
+    WHERE user_ID = ? 
       AND EXISTS (
         SELECT 1 
         FROM item 
@@ -66,15 +66,16 @@ def home():
     """
   cursor.execute(query, (user_ID,))
   cart_history = cursor.fetchall()
-  
-  count_query = 'SELECT COUNT(*) as num_items FROM item WHERE cart_ID = %s'
-  total_query = 'SELECT SUM(price * quantity) AS total_spent FROM item WHERE cart_ID = %s'
+  cart_history = [{'cart_ID': row[0], 'store_name': row[1]} for row in cart_history]
+
+  count_query = 'SELECT COUNT(*) as num_items FROM item WHERE cart_ID = ?'
+  total_query = 'SELECT SUM(price * quantity) AS total_spent FROM item WHERE cart_ID = ?'
   for cart in cart_history:
     cursor.execute(count_query, (cart['cart_ID'],))
-    cart['total_items'] = cursor.fetchone()['num_items']
+    cart['total_items'] = cursor.fetchone()[0]
     
     cursor.execute(total_query, (cart['cart_ID'],))
-    cart['total_spent'] = cursor.fetchone()['total_spent']
+    cart['total_spent'] = cursor.fetchone()[0]
   
   return render_template('home.html', user_ID=user_ID, cart_history=cart_history)
 
@@ -340,7 +341,7 @@ def list_get_items():
         query = """
             SELECT list_ID, item_name AS name, quantity 
             FROM shopping_list 
-            WHERE user_ID = %s AND status = %s
+            WHERE user_ID = ? AND status = ?
         """
         cursor.execute(query, (user_ID, "pending",))
         db_items = cursor.fetchall()
@@ -393,8 +394,8 @@ def list_save():
     user_ID = session['user_ID']
     
     cursor = conn.cursor()
-    ins = 'INSERT INTO shopping_list (user_ID, item_name, quantity, status) VALUES(%s, %s, %s, %s)'
-    delete = 'DELETE FROM shopping_list WHERE list_ID = %s'
+    ins = 'INSERT INTO shopping_list (user_ID, item_name, quantity, status) VALUES(?, ?, ?, ?)'
+    delete = 'DELETE FROM shopping_list WHERE list_ID = ?'
     
     shopping_list = session.get('shopping_list', [])
     to_be_deleted = session.get('to_be_deleted', [])
@@ -428,8 +429,8 @@ def budget():
 def searchitem():
     url = 'https://trackapi.nutritionix.com/v2/search/item?upc='
     headers = {
-        'x-app-id': config.API_ID,
-        'x-app-key': config.API_KEY
+        'x-app-id': os.environ['API_ID'],
+        'x-app-key': os.environ['API_KEY']
     }
 
     upc = request.args.get('upc')
