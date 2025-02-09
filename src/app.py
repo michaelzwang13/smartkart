@@ -1,6 +1,7 @@
 #Import Flask Library
 from flask import Flask, render_template, request, session, url_for, redirect, jsonify
 import requests
+import pyodbc
 import pymysql.cursors
 import hashlib
 import config
@@ -18,13 +19,21 @@ app = Flask(__name__)
 #                        charset='utf8mb4',
 #                        cursorclass=pymysql.cursors.DictCursor)
 
-conn = pymysql.connect(host='localhost',
-						port= 3306,
-                         user='willy',
-                         password='willy',
-                         database='hacknyu25',
-                         charset='utf8mb4',
-                         cursorclass=pymysql.cursors.DictCursor)
+# conn = pymysql.connect(host='localhost',
+# 						port= 3306,
+#                          user='willy',
+#                          password='willy',
+#                          database='hacknyu25',
+#                          charset='utf8mb4',
+#                          cursorclass=pymysql.cursors.DictCursor)
+
+server = 'smart-kart-server.database.windows.net'
+database = 'smart-kart-db'
+username = 'skadmins'
+password = '&?@wE9}K#Cf*K^u'
+driver = '{ODBC DRIVER 18 for SQL Server}'
+
+conn = pyodbc.connect(f'DRIVER={driver};SERVER={server};DATABASE={database};UID={username};PWD={password}')
 
 #Define a route to hello function
 @app.route('/')
@@ -142,8 +151,8 @@ def start_shopping():
     return render_template(
             'shopping_trip.html',
             cart_session=cart_ID, 
-            allocated_budget=1000,
-            remaining=1000-total_spent,
+            # allocated_budget=1000,
+            # remaining=1000-total_spent,
             cart_items=items,
             total_items=total_items, 
             total_spent=total_spent
@@ -183,8 +192,8 @@ def shopping_trip():
         return render_template(
             'shopping_trip.html',
             cart_session=cart_ID, 
-            allocated_budget=1000,
-            remaining=1000-total_spent,
+            # allocated_budget=1000,
+            # remaining=1000-total_spent,
             cart_items=items,
             total_items=total_items, 
             total_spent=total_spent
@@ -316,12 +325,12 @@ def learn():
     sugar = request.args.get('sugar')
     sodium = request.args.get('sodium')
     fat = request.args.get('fat')
-    label = request.args.get('label')
 
     if helper.model == None:
         return jsonify({'error': 'Model didnt load properly'}), 500
     
-    helper.model_learn(carbs, sugar, sodium, fat, label)
+    helper.model_learn(carbs, sugar, sodium, fat)
+    print('model learned its mistake, model promises it may or may not make the same mistake again')
 
     return jsonify({'status': 'learned'}), 200
 
