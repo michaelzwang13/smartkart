@@ -152,8 +152,8 @@ def start_shopping():
     return render_template(
             'shopping_trip.html',
             cart_session=cart_ID, 
-            # allocated_budget=1000,
-            # remaining=1000-total_spent,
+            allocated_budget=1000,
+            remaining=1000-total_spent,
             cart_items=items,
             total_items=total_items, 
             total_spent=total_spent
