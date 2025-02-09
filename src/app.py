@@ -29,8 +29,8 @@ app = Flask(__name__)
 
 server = 'smart-kart-server.database.windows.net'
 database = 'smart-kart-db'
-username = 'skadmins'
-password = '&?@wE9}K#Cf*K^u'
+username = config.AZURE_UID
+password = config.AZURE_PWD
 driver = '{ODBC DRIVER 18 for SQL Server}'
 
 conn = pyodbc.connect(f'DRIVER={driver};SERVER={server};DATABASE={database};UID={username};PWD={password}')
