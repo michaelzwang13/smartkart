@@ -153,7 +153,7 @@
         <thead>
           <tr>
             <th>Cart ID</th>
-            <th>Date</th>
+            <th>Store</th>
             <th>Number of Items</th>
             <th>Total Spent</th>
           </tr>
@@ -162,14 +162,14 @@
           <!-- Loop over the user's cart history dynamically -->
           <!-- Example row placeholders: -->
           <!-- If no data, show a "no-data" row -->
-          <!-- 
+          
           {% if cart_history %}
             {% for cart in cart_history %}
               <tr>
-                <td>{{ cart.cart_id }}</td>
-                <td>{{ cart.date_brought }}</td>
-                <td>{{ cart.total_items }}</td>
-                <td>${{ cart.total_spent }}</td>
+                <td>{{ cart['cart_id'] }}</td>
+                <td>{{ cart['store_name'] }}</td>
+                <td>{{ total_items }}</td>
+                <td>${{ total_spent }}</td>
               </tr>
             {% endfor %}
           {% else %}
@@ -177,7 +177,7 @@
               <td colspan="4" class="no-data">No past carts found.</td>
             </tr>
           {% endif %}
-          -->
+         
           <tr>
             <td colspan="4" class="no-data">No past carts found.</td>
           </tr>

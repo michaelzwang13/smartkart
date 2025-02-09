@@ -45,6 +45,49 @@
       button:hover {
         background-color: #0056b3;
       }
+      .header-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 2rem;
+      }
+
+      .left {
+        flex: 0 0 auto; /* Do not grow; width defined by content */
+      }
+
+      .center {
+        flex: 1;
+        text-align: center;
+      }
+
+      .right {
+        flex: 0 0 auto;
+        width: 50px;  /* Reserve some space on the right to balance the layout */
+      }
+
+      /* Styling for the Back button */
+      .back-btn {
+        background-color: #6c757d;
+        color: #fff;
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+      }
+
+      .back-btn:hover {
+        background-color: #5a6268;
+      }
+
+      /* Optionally, adjust the heading if needed */
+      .center h2 {
+        font-size: 1.8rem;
+        color: #007bff;
+        margin: 0;
+      }
+
       table {
         margin: 2rem auto; /* Center table horizontally */
         border-collapse: collapse;
@@ -73,17 +116,83 @@
         height: auto;
       }
     </style>
-
     <script>
       // When the DOM is ready...
       document.addEventListener("DOMContentLoaded", function () {
-        // Grab the form by ID
+        // Load existing cart items immediately
+        loadCartItems();
+
+        // Grab the form by ID and attach the submit handler
         const form = document.getElementById("addItemForm");
         if (form) {
-          // Attach our custom submit handler
           form.addEventListener("submit", handleFormSubmit);
         }
       });
+
+      // Function to fetch current cart items from a dedicated endpoint
+      async function loadCartItems() {
+        try {
+          const response = await fetch("/shopping-trip/items", {
+            method: "GET",
+            headers: { "Content-Type": "application/json" }
+          });
+          const data = await response.json();
+          console.log("Loaded cart items:", data.items);
+          if (data.items) {
+            updateCartDOM(data.items);
+          }
+          if (data.total_items !== undefined) {
+            updateBudgetOverview(
+              data.allocated_budget,
+              data.total_spent,
+              data.total_items,
+              data.remaining
+            );
+          }
+        } catch (err) {
+          console.error("Error loading cart items:", err);
+        }
+      }
+
+      // Reusable function to update the DOM with the cart items
+      function updateCartDOM(items) {
+        const tableBody = document.getElementById("cart-items-body");
+        if (tableBody) {
+          tableBody.innerHTML = ""; // Clear existing rows
+
+          items.forEach((item) => {
+            const row = document.createElement("tr");
+            const subtotal = (item.price * item.quantity).toFixed(2);
+
+            // Create the HTML for the image if available
+            const imgHtml = item.image_url
+              ? `<img src="${item.image_url}" alt="${item.item_name}" class="item-image">`
+              : "";
+
+            row.innerHTML = `
+              <td>${imgHtml}</td>
+              <td>${item.item_name}</td>
+              <td>$${item.price}</td>
+              <td>${item.quantity}</td>
+              <td>$${subtotal}</td>
+            `;
+            tableBody.appendChild(row);
+          });
+        }
+      }
+
+      function updateBudgetOverview(allocated, spent, totalItems, remaining) {
+        // Assumes you have an element with id "budget-overview" where you display these values.
+        const budgetEl = document.getElementById("budget-overview");
+        if (budgetEl) {
+          budgetEl.innerHTML = `
+            <p><strong>Allocated Budget:</strong> $${allocated}</p>
+            <p><strong>Total Spent:</strong> $${spent}</p>
+            <p><strong>Total Items:</strong> ${totalItems}</p>
+            <p><strong>Remaining:</strong> $${remaining}</p>
+          `;
+        }
+      }
 
       async function handleFormSubmit(event) {
         event.preventDefault();
@@ -106,7 +215,7 @@
           // 2) Extract brand_name, food_name, and image
           let brandName = "Unknown Brand";
           let foodName = "Unknown Item";
-          let imageUrl = "";
+          let imageUrl = "https://t4.ftcdn.net/jpg/02/51/95/53/360_F_251955356_FAQH0U1y1TZw3ZcdPGybwUkH90a3VAhb.jpg";
 
           if (searchData.foods && searchData.foods.length > 0) {
             const firstItem = searchData.foods[0];
@@ -139,39 +248,16 @@
           const resultData = await addItemResponse.json();
           console.log("Result from /shopping-trip/add-item:", resultData);
 
-          // 4) Update the DOM (or redirect to /shopping-trip)
+          // 4) Update the DOM with the updated cart items
           if (resultData.items) {
-            const tableBody = document.getElementById("cart-items-body");
-            if (tableBody) {
-              tableBody.innerHTML = ""; // Clear old rows
-
-              resultData.items.forEach((item) => {
-                const row = document.createElement("tr");
-                const subtotal = (item.price * item.quantity).toFixed(2);
-
-                // If there's an image, display it.
-                const imgHtml = item.image_url
-                  ? `<img src="${item.image_url}" alt="${item.item_name}" class="item-image">`
-                  : "";
-
-                // Center everything in one row (since td {text-align:center; vertical-align:middle;}).
-                row.innerHTML = `
-                  <td>${imgHtml}</td>
-                  <td>${item.item_name}</td>
-                  <td>$${item.price}</td>
-                  <td>${item.quantity}</td>
-                  <td>$${subtotal}</td>
-                `;
-                tableBody.appendChild(row);
-              });
-            }
+            updateCartDOM(resultData.items);
           }
         } catch (err) {
           console.error("Error adding item:", err);
           alert("An error occurred while adding the item.");
         }
 
-        // Clear the form
+        // Clear the form fields after submission
         document.getElementById("addItemForm").reset();
       }
     </script>
@@ -198,10 +284,17 @@
 
     {% else %}
     <!-- If there IS an existing cart session -->
-    <section class="section-container">
-      <h2>Current Shopping Trip</h2>
-      <p><strong>Store:</strong> {{ cart_session['store_name'] }}</p>
-    </section>
+    <section class="section-container header-container">
+      <div class="left">
+        <button type="button" onclick="window.history.back()" class="back-btn">Back</button>
+      </div>
+      <div class="center">
+        <h2>Current Shopping Trip</h2>
+      </div>
+      <div class="right">
+        <!-- Optional: Empty div to balance the layout -->
+      </div>
+    </section>    
 
     <section class="section-container">
       <h3>Add an Item</h3>
@@ -275,11 +368,12 @@
       </table>
     </section>
 
-    <section class="section-container">
-      <h3>Budget Overview</h3>
-      <p><strong>Allocated Budget: 1</strong></p>
-      <p><strong>Current Spend: 1</strong></p>
-      <p><strong>Remaining: 10</strong></p>
+    <section class="section-container" id="budget-overview">
+      <!-- This will be updated by JavaScript if using AJAX -->
+      <p><strong>Allocated Budget:</strong> ${{ allocated_budget }}</p>
+      <p><strong>Total Spent:</strong> ${{ total_spent }}</p>
+      <p><strong>Total Items:</strong> {{ total_items }}</p>
+      <p><strong>Remaining:</strong> ${{ remaining }}</p>
     </section>
 
     <section class="section-container">

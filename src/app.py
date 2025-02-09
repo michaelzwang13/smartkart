@@ -121,9 +121,13 @@ def start_shopping():
     cursor.execute(query, (user_ID, "active"))
     cart_ID = cursor.fetchone()
     
+    items, total_items, total_spent = None, None, None
     if cart_ID:
+      print("BRONNY")
       session['cart_ID'] = cart_ID['cart_ID']
+      items, total_items, total_spent = retrieve_totals(cart_ID)
     else:
+      print("ALPEREN SENGUN")
       ins = 'INSERT INTO cart (user_ID, store_name, status) VALUES(%s, %s, %s)'
       cursor.execute(ins, (user_ID, store_name, "active"))
       conn.commit()
@@ -131,24 +135,41 @@ def start_shopping():
       query = 'SELECT * FROM cart WHERE user_ID = %s AND status = %s'
       cursor.execute(query, (user_ID, "active"))
       cart_ID = cursor.fetchone()
-    
+      session['cart_ID'] = cart_ID['cart_ID']
+      
     cursor.close()
     
     return render_template(
             'shopping_trip.html',
             cart_session=cart_ID, 
-            # allocated_budget=..., 
-            # current_spend=...
+            allocated_budget=1000,
+            remaining=1000-total_spent,
+            cart_items=items,
+            total_items=total_items, 
+            total_spent=total_spent
         )
 @app.route('/shopping-trip')
 def shopping_trip():
     if not "cart_ID" in session or not session['cart_ID']:
         # No active cart
         print("KYLE KUZMA")
-        # return start_shopping()
+        
+        cursor = conn.cursor()
+        query = 'SELECT * FROM cart WHERE user_ID = %s AND status = %s'
+        cursor.execute(query, (session['user_ID'], "active"))
+        cart_ID = cursor.fetchone()
+        
+        cursor.close()
+        
+        cart_session = None
+        if cart_ID:
+          print("KLAY THOMPSON")
+          cart_session = cart_ID
+          session['cart_ID'] = cart_ID['cart_ID']
+          
         return render_template(
             'shopping_trip.html',
-            cart_session=None
+            cart_session=cart_session
         )
     else:
         # Query DB for cart items, budget, etc.
@@ -156,22 +177,22 @@ def shopping_trip():
         print(type(cart_ID))
         print(cart_ID)
         print("LEBRON JAMES")
-        cursor = conn.cursor()
-        query = 'SELECT * FROM item WHERE cart_ID = %s'
-        cursor.execute(query, (cart_ID))
         
-        items = cursor.fetchall()
+        items, total_items, total_spent = retrieve_totals(cart_ID)
         
         return render_template(
             'shopping_trip.html',
             cart_session=cart_ID, 
+            allocated_budget=1000,
+            remaining=1000-total_spent,
             cart_items=items,
-            # allocated_budget=..., 
-            # current_spend=...
+            total_items=total_items, 
+            total_spent=total_spent
         )
 
 @app.route('/finish-shopping', methods=['POST'])
 def finish_shopping():
+    user_ID = session['user_ID']
     cart_ID = session['cart_ID']
     cursor = conn.cursor()
     query = '''UPDATE cart SET status = %s 
@@ -180,7 +201,12 @@ def finish_shopping():
     conn.commit()
     cursor.close()
     
-    return redirect(url_for('home'))
+    del session['cart_ID']
+    
+    return render_template(
+            'shopping_trip.html',
+            user_ID=user_ID
+        )
 
 @app.route('/shopping-trip/add-item', methods=['POST'])
 def add_item():
@@ -221,6 +247,24 @@ def add_item():
 
     # Redirect back to the shopping trip page.
     return jsonify({"status": "success", "items": items}), 200
+  
+@app.route('/shopping-trip/items', methods=['GET'])
+def get_cart_items():
+    if "cart_ID" not in session or not session['cart_ID']:
+        return jsonify({"items": [], 
+              "allocated_budget": 0,
+              "total_spent": 0,
+              "total_items": 0,
+              "remaining": 0})
+    
+    cart_ID = session['cart_ID']
+    cursor = conn.cursor()
+    query = 'SELECT item_name, price, quantity, image_url FROM item WHERE cart_ID = %s'
+    cursor.execute(query, (cart_ID,))
+    items = cursor.fetchall()
+    cursor.close()
+    
+    return jsonify({"items": items})
 
 @app.route('/rewards')
 def rewards():
@@ -287,6 +331,25 @@ def logout():
   if 'cart_ID' in session:
     session.pop('cart_ID')
   return redirect('/')
+
+def retrieve_totals(cart_ID):
+    cursor = conn.cursor()
+    query = 'SELECT * FROM item WHERE cart_ID = %s'
+    cursor.execute(query, (cart_ID))
+    
+    items = cursor.fetchall()
+    
+    query = 'SELECT COUNT(*) FROM item WHERE cart_ID = %s'
+    cursor.execute(query, (cart_ID))
+    
+    total_items = cursor.fetchall()['COUNT(*)']
+    
+    query = 'SELECT SUM(price * quantity) AS total_spent FROM item WHERE cart_ID = %s'
+    cursor.execute(query, (cart_ID))
+    
+    total_spent = cursor.fetchall()['total_spent']
+    
+    return items, total_items, total_spent
 
 def hash_password_md5(password):
     # Create an MD5 hash object
