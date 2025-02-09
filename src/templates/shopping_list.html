@@ -183,9 +183,10 @@
   <body>
     <!-- Navigation Bar -->
     <nav class="navbar">
-      <a href="/" class="brand">SmartKart</a>
+      <a href="/home" class="brand">SmartKart</a>
       <ul>
         <!-- Example additional links -->
+        <li><a href="/home">Home</a></li>
         <li><a href="/shopping-trip">New Trip</a></li>
         <li><a href="/rewards">Rewards</a></li>
         <li><a href="/logout">Logout</a></li>
@@ -260,7 +261,7 @@
           const response = await fetch("/list/add_item", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ item: foodName, quantity: quantity })
+            body: JSON.stringify({ list_ID: -1, item: foodName, quantity: quantity })
           });
           const data = await response.json();
           updateListDOM(data.items);
@@ -295,6 +296,7 @@
           const data = await response.json();
           console.log("List saved:", data);
           alert("Shopping list saved!");
+          window.location.href = "/home";
         } catch (err) {
           console.error("Error saving list:", err);
           alert("Error saving list.");

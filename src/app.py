@@ -1,7 +1,7 @@
 #Import Flask Library
 from flask import Flask, render_template, request, session, url_for, redirect, jsonify, flash
 import requests
-import pyodbc
+# import pyodbc
 import pymysql.cursors
 import hashlib
 import config
@@ -11,13 +11,13 @@ import helper
 app = Flask(__name__)
 
 #Configure MySQL
-# conn = pymysql.connect(host='localhost',
-# 											 port= 8889,
-#                        user='root',
-#                        password='root',
-#                        db='hacknyu25',
-#                        charset='utf8mb4',
-#                        cursorclass=pymysql.cursors.DictCursor)
+conn = pymysql.connect(host='localhost',
+											 port= 8889,
+                       user='root',
+                       password='root',
+                       db='hacknyu25',
+                       charset='utf8mb4',
+                       cursorclass=pymysql.cursors.DictCursor)
 
 # conn = pymysql.connect(host='localhost',
 # 						port= 3306,
@@ -27,13 +27,13 @@ app = Flask(__name__)
 #                          charset='utf8mb4',
 #                          cursorclass=pymysql.cursors.DictCursor)
 
-server = 'smart-kart-server.database.windows.net'
-database = 'smart-kart-db'
-username = 'skadmins'
-password = '&?@wE9}K#Cf*K^u'
-driver = '{ODBC DRIVER 18 for SQL Server}'
+# server = 'smart-kart-server.database.windows.net'
+# database = 'smart-kart-db'
+# username = 'skadmins'
+# password = '&?@wE9}K#Cf*K^u'
+# driver = '{ODBC DRIVER 18 for SQL Server}'
 
-conn = pyodbc.connect(f'DRIVER={driver};SERVER={server};DATABASE={database};UID={username};PWD={password}')
+# conn = pyodbc.connect(f'DRIVER={driver};SERVER={server};DATABASE={database};UID={username};PWD={password}')
 
 #Define a route to hello function
 @app.route('/')
@@ -289,6 +289,16 @@ def edit_list():
 def list_get_items():
     """Return the current shopping list as JSON."""
     items = session.get('shopping_list', [])
+    user_ID = session['user_ID']
+    
+    cursor = conn.cursor()
+    query = "SELECT item_name as name, quantity FROM shopping_list WHERE user_ID = %s AND status = %s"
+    db_items = cursor.fetchall(query, (user_ID, "pending",))
+    
+    print(db_items)
+    
+    for item in db_items:
+      items.append(item)
     return jsonify({'items': items})
 
 @app.route('/list/add_item', methods=['POST'])
@@ -309,18 +319,49 @@ def list_add_item():
 
 @app.route('/list/remove_item', methods=['POST'])
 def list_remove_item():
-    """
-    Remove an item from the shopping list.
-    Expects a JSON payload with an "item" field.
-    """
     data = request.get_json()
-    item = data.get('item')
+    item_name = data.get('item')
     shopping_list = session.get('shopping_list', [])
-    if item in shopping_list:
-        shopping_list.remove(item)
-        session['shopping_list'] = shopping_list
-        return jsonify({'items': shopping_list})
+    to_be_deleted = session.get('to_be_deleted', [])
+    
+    for product in shopping_list:
+        if product.get('name') == item_name:
+            if product.get('cart_ID') != -1:
+              to_be_deleted.append(product.get('cart_ID'))
+            shopping_list.remove(product)
+            session['shopping_list'] = shopping_list
+            return jsonify({'items': shopping_list})
     return jsonify({'error': 'Item not found'}), 404
+  
+@app.route('/list/save', methods=['POST'])
+def list_save():
+    """Return the current shopping list as JSON."""
+    user_ID = session['user_ID']
+    
+    cursor = conn.cursor()
+    ins = 'INSERT INTO shopping_list (user_ID, item_name, quantity, status) VALUES(%s, %s, %s, %s)'
+    delete = 'DELETE FROM shopping_list WHERE cart_ID = %s'
+    
+    shopping_list = session.get('shopping_list', [])
+    to_be_deleted = session.get('to_be_deleted', [])
+    
+    print(shopping_list)
+    print("LEBRONNNN")
+    for product in shopping_list:
+      if product['list_ID'] == -1:
+        cursor.execute(ins, (user_ID, product.get("name"), product.get("quantity"), "pending"))
+        conn.commit()
+        
+    for product in to_be_deleted:
+      cursor.execute(delete, (product['cart_ID']))
+      conn.commit()
+      
+    cursor.close()
+    
+    session['shopping_list'] = []
+    session['to_be_deleted'] = []
+      
+    return jsonify({'items': shopping_list})
 
 @app.route('/rewards')
 def rewards():
@@ -386,6 +427,8 @@ def logout():
   session.pop('user_ID')
   if 'cart_ID' in session:
     session.pop('cart_ID')
+  if 'shopping_list' in session:
+    session.pop('shopping_list')
   return redirect('/')
 
 def retrieve_totals(cart_ID):
