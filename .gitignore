@@ -1,5 +1,6 @@
 venv/
 .DS_Store
 connect_mysql.sh
+update_mysql.sh
 src/config.py
 __pycache__/

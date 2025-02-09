@@ -1,5 +1,5 @@
 #Import Flask Library
-from flask import Flask, render_template, request, session, url_for, redirect, jsonify
+from flask import Flask, render_template, request, session, url_for, redirect, jsonify, flash
 import requests
 import pyodbc
 import pymysql.cursors
@@ -11,6 +11,7 @@ import helper
 app = Flask(__name__)
 
 #Configure MySQL
+<<<<<<< HEAD
 # conn = pymysql.connect(host='localhost',
 # 											 port= 8889,
 #                        user='root',
@@ -18,6 +19,15 @@ app = Flask(__name__)
 #                        db='hacknyu25',
 #                        charset='utf8mb4',
 #                        cursorclass=pymysql.cursors.DictCursor)
+=======
+conn = pymysql.connect(host='localhost',
+											 port= 8889,
+                       user='root',
+                       password='root',
+                       db='hacknyu25',
+                       charset='utf8mb4',
+                       cursorclass=pymysql.cursors.DictCursor)
+>>>>>>> main
 
 # conn = pymysql.connect(host='localhost',
 # 						port= 3306,
@@ -26,6 +36,7 @@ app = Flask(__name__)
 #                          database='hacknyu25',
 #                          charset='utf8mb4',
 #                          cursorclass=pymysql.cursors.DictCursor)
+<<<<<<< HEAD
 
 server = 'smart-kart-server.database.windows.net'
 database = 'smart-kart-db'
@@ -34,6 +45,8 @@ password = '&?@wE9}K#Cf*K^u'
 driver = '{ODBC DRIVER 18 for SQL Server}'
 
 conn = pyodbc.connect(f'DRIVER={driver};SERVER={server};DATABASE={database};UID={username};PWD={password}')
+=======
+>>>>>>> main
 
 #Define a route to hello function
 @app.route('/')
@@ -51,7 +64,8 @@ def register():
 
 @app.route('/home')
 def home():
-	return render_template('home.html')
+  user_ID = session['user_ID']
+  return render_template('home.html', user_ID=user_ID)
 
 #Authenticates the login
 @app.route('/loginAuth', methods=['GET', 'POST'])
@@ -130,11 +144,11 @@ def start_shopping():
     cursor.execute(query, (user_ID, "active"))
     cart_ID = cursor.fetchone()
     
-    items, total_items, total_spent = None, None, None
+    items, total_items, total_spent = None, 0, 0
     if cart_ID:
       print("BRONNY")
       session['cart_ID'] = cart_ID['cart_ID']
-      items, total_items, total_spent = retrieve_totals(cart_ID)
+      items, total_items, total_spent = retrieve_totals(cart_ID['cart_ID'])
     else:
       print("ALPEREN SENGUN")
       ins = 'INSERT INTO cart (user_ID, store_name, status) VALUES(%s, %s, %s)'
@@ -183,7 +197,12 @@ def shopping_trip():
     else:
         # Query DB for cart items, budget, etc.
         cart_ID = session['cart_ID']
-        print(type(cart_ID))
+        
+        cursor = conn.cursor()
+        query = 'SELECT * FROM cart WHERE cart_ID = %s'
+        cursor.execute(query, (cart_ID))
+        cart = cursor.fetchone()
+        
         print(cart_ID)
         print("LEBRON JAMES")
         
@@ -191,9 +210,15 @@ def shopping_trip():
         
         return render_template(
             'shopping_trip.html',
+<<<<<<< HEAD
             cart_session=cart_ID, 
             # allocated_budget=1000,
             # remaining=1000-total_spent,
+=======
+            cart_session=cart, 
+            allocated_budget=1000,
+            remaining=1000-total_spent,
+>>>>>>> main
             cart_items=items,
             total_items=total_items, 
             total_spent=total_spent
@@ -213,7 +238,7 @@ def finish_shopping():
     del session['cart_ID']
     
     return render_template(
-            'shopping_trip.html',
+            'home.html',
             user_ID=user_ID
         )
 
@@ -274,6 +299,47 @@ def get_cart_items():
     cursor.close()
     
     return jsonify({"items": items})
+  
+@app.route('/edit-list')
+def edit_list():
+	return render_template('shopping_list.html')
+
+@app.route('/list/items', methods=['GET'])
+def list_get_items():
+    """Return the current shopping list as JSON."""
+    items = session.get('shopping_list', [])
+    return jsonify({'items': items})
+
+@app.route('/list/add_item', methods=['POST'])
+def list_add_item():
+    data = request.get_json()
+    item_name = data.get('item')
+    quantity = data.get('quantity', 1)
+    if not item_name:
+        return jsonify({'error': 'No item provided'}), 400
+
+    # Create an object for the item
+    new_item = {"name": item_name, "quantity": quantity}
+    shopping_list = session.get('shopping_list', [])
+    shopping_list.append(new_item)
+    session['shopping_list'] = shopping_list
+    return jsonify({'items': shopping_list})
+
+
+@app.route('/list/remove_item', methods=['POST'])
+def list_remove_item():
+    """
+    Remove an item from the shopping list.
+    Expects a JSON payload with an "item" field.
+    """
+    data = request.get_json()
+    item = data.get('item')
+    shopping_list = session.get('shopping_list', [])
+    if item in shopping_list:
+        shopping_list.remove(item)
+        session['shopping_list'] = shopping_list
+        return jsonify({'items': shopping_list})
+    return jsonify({'error': 'Item not found'}), 404
 
 @app.route('/rewards')
 def rewards():
@@ -348,15 +414,21 @@ def retrieve_totals(cart_ID):
     
     items = cursor.fetchall()
     
-    query = 'SELECT COUNT(*) FROM item WHERE cart_ID = %s'
+    query = 'SELECT COUNT(*) as num_items FROM item WHERE cart_ID = %s'
     cursor.execute(query, (cart_ID))
     
-    total_items = cursor.fetchall()['COUNT(*)']
+    total_items = cursor.fetchone()['num_items']
     
     query = 'SELECT SUM(price * quantity) AS total_spent FROM item WHERE cart_ID = %s'
     cursor.execute(query, (cart_ID))
     
-    total_spent = cursor.fetchall()['total_spent']
+    total_spent = cursor.fetchone()['total_spent']
+    
+    if not total_items:
+      total_items = 0
+      
+    if not total_spent:
+      total_spent = 0
     
     return items, total_items, total_spent
 
