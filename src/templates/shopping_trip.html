@@ -3,38 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <title>Shopping Trip</title>
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-        document.getElementById("addItemForm").addEventListener("submit", handleFormSubmit);
-      });
 
-      function handleFormSubmit(event) {
-        event.preventDefault(); // Prevents page reload on submit
-
-        // Extract form data
-        const itemName = document.getElementById("itemName").value;
-        const itemPrice = parseFloat(document.getElementById("itemPrice").value);
-        const itemQty = parseInt(document.getElementById("itemQty").value, 10);
-
-        if (!itemName || isNaN(itemPrice) || isNaN(itemQty) || itemQty <= 0) {
-          alert("Please enter valid item details.");
-          return;
-        }
-
-        // Send request to the backend
-        fetch(`/searchitem?upc=${itemName}`)
-          .then(response => response.json())
-          .then(data => {
-            console.log("Search result:", data);
-          })
-          .catch(error => {
-            console.error("Error fetching item details:", error);
-          });
-
-        // Clear the form fields after submission
-        document.getElementById("addItemForm").reset();
-      }
-    </script>
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -42,6 +11,7 @@
       }
       .section-container {
         margin-bottom: 2rem;
+        text-align: center; /* Center headings and forms */
       }
       h2 {
         color: #007bff;
@@ -53,6 +23,7 @@
         display: inline-block;
         width: 100px;
         font-weight: 600;
+        text-align: left; /* Keep labels aligned left if preferred */
       }
       input[type="text"],
       input[type="number"] {
@@ -75,17 +46,18 @@
         background-color: #0056b3;
       }
       table {
-        width: 100%;
+        margin: 2rem auto; /* Center table horizontally */
         border-collapse: collapse;
-        margin-top: 1rem;
+        width: 80%; /* Adjust width as desired */
       }
       thead {
         background-color: #f4f4f4;
       }
-      th,
-      td {
+      th, td {
         border: 1px solid #ccc;
         padding: 0.5rem;
+        text-align: center;        /* Horizontal center */
+        vertical-align: middle;    /* Vertical center */
       }
       .finish-btn {
         margin-top: 1rem;
@@ -94,7 +66,115 @@
       .finish-btn:hover {
         background-color: #218838;
       }
+
+      /* Optional larger image styling */
+      .item-image {
+        width: 150px;
+        height: auto;
+      }
     </style>
+
+    <script>
+      // When the DOM is ready...
+      document.addEventListener("DOMContentLoaded", function () {
+        // Grab the form by ID
+        const form = document.getElementById("addItemForm");
+        if (form) {
+          // Attach our custom submit handler
+          form.addEventListener("submit", handleFormSubmit);
+        }
+      });
+
+      async function handleFormSubmit(event) {
+        event.preventDefault();
+
+        const itemName = document.getElementById("itemName").value;
+        const itemPrice = parseFloat(document.getElementById("itemPrice").value);
+        const itemQty = parseInt(document.getElementById("itemQty").value, 10);
+
+        if (!itemName || isNaN(itemPrice) || isNaN(itemQty) || itemQty <= 0) {
+          alert("Please enter valid item details.");
+          return;
+        }
+
+        try {
+          // 1) Fetch from /searchitem by UPC
+          const searchResponse = await fetch(`/searchitem?upc=${itemName}`);
+          const searchData = await searchResponse.json();
+          console.log("Search result from /searchitem:", searchData);
+
+          // 2) Extract brand_name, food_name, and image
+          let brandName = "Unknown Brand";
+          let foodName = "Unknown Item";
+          let imageUrl = "";
+
+          if (searchData.foods && searchData.foods.length > 0) {
+            const firstItem = searchData.foods[0];
+            if (firstItem.brand_name) {
+              brandName = firstItem.brand_name;
+            }
+            if (firstItem.food_name) {
+              foodName = firstItem.food_name;
+            }
+            if (firstItem.photo && firstItem.photo.thumb) {
+              imageUrl = firstItem.photo.thumb;
+            }
+          }
+
+          const combinedName = `${brandName} - ${foodName}`;
+
+          // 3) POST to /shopping-trip/add-item with JSON
+          const addItemResponse = await fetch("/shopping-trip/add-item", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              upc: itemName,
+              price: itemPrice,
+              quantity: itemQty,
+              itemName: combinedName,
+              imageUrl: imageUrl
+            })
+          });
+
+          const resultData = await addItemResponse.json();
+          console.log("Result from /shopping-trip/add-item:", resultData);
+
+          // 4) Update the DOM (or redirect to /shopping-trip)
+          if (resultData.items) {
+            const tableBody = document.getElementById("cart-items-body");
+            if (tableBody) {
+              tableBody.innerHTML = ""; // Clear old rows
+
+              resultData.items.forEach((item) => {
+                const row = document.createElement("tr");
+                const subtotal = (item.price * item.quantity).toFixed(2);
+
+                // If there's an image, display it.
+                const imgHtml = item.image_url
+                  ? `<img src="${item.image_url}" alt="${item.item_name}" class="item-image">`
+                  : "";
+
+                // Center everything in one row (since td {text-align:center; vertical-align:middle;}).
+                row.innerHTML = `
+                  <td>${imgHtml}</td>
+                  <td>${item.item_name}</td>
+                  <td>$${item.price}</td>
+                  <td>${item.quantity}</td>
+                  <td>$${subtotal}</td>
+                `;
+                tableBody.appendChild(row);
+              });
+            }
+          }
+        } catch (err) {
+          console.error("Error adding item:", err);
+          alert("An error occurred while adding the item.");
+        }
+
+        // Clear the form
+        document.getElementById("addItemForm").reset();
+      }
+    </script>
   </head>
   <body>
     <!-- If NO existing cart session -->
@@ -120,16 +200,15 @@
     <!-- If there IS an existing cart session -->
     <section class="section-container">
       <h2>Current Shopping Trip</h2>
-      <p><strong>Store:</strong> {{ cart_session.store_name }}</p>
-      <p><strong>Status:</strong> Active</p>
+      <p><strong>Store:</strong> {{ cart_session['store_name'] }}</p>
     </section>
 
     <section class="section-container">
       <h3>Add an Item</h3>
-      <form action="/shopping-trip/add-item" method="POST">
+      <form action="/shopping-trip/add-item" method="POST" id="addItemForm">
         <div>
-          <label for="upc">Barcode Number:</label>
-          <input type="number" id="upc" name="upc" required />
+          <label for="itemName">Barcode #:</label>
+          <input type="number" id="itemName" name="itemName" required />
         </div>
         <div class="form-group">
           <label for="itemPrice">Price:</label>
@@ -164,23 +243,32 @@
       <table>
         <thead>
           <tr>
+            <th>Image</th>
             <th>Item</th>
             <th>Price</th>
             <th>Qty</th>
             <th>Subtotal</th>
           </tr>
         </thead>
-        <tbody>
-          {% if cart_items %} {% for item in cart_items %}
+        <tbody id="cart-items-body">
+          {% if cart_items %}
+            {% for item in cart_items %}
+            <tr>
+              <!-- If your DB has image_url, you can display it here. Otherwise, skip. -->
+              <td>
+                {% if item.image_url %}
+                <img src="{{ item.image_url }}" alt="{{ item.name }}" class="item-image" style="width:150px; height:auto;">
+                {% endif %}
+              </td>
+              <td>{{ item.name }}</td>
+              <td>${{ item.price }}</td>
+              <td>{{ item.quantity }}</td>
+              <td>${{ item.price * item.quantity }}</td>
+            </tr>
+            {% endfor %}
+          {% else %}
           <tr>
-            <td>{{ item.name }}</td>
-            <td>\${{ item.price }}</td>
-            <td>{{ item.quantity }}</td>
-            <td>\${{ item.price * item.quantity }}</td>
-          </tr>
-          {% endfor %} {% else %}
-          <tr>
-            <td colspan="4" style="text-align: center">No items yet.</td>
+            <td colspan="5" style="text-align: center">No items yet.</td>
           </tr>
           {% endif %}
         </tbody>
@@ -189,11 +277,9 @@
 
     <section class="section-container">
       <h3>Budget Overview</h3>
-      <p><strong>Allocated Budget:</strong> \${{ allocated_budget }}</p>
-      <p><strong>Current Spend:</strong> \${{ current_spend }}</p>
-      <p>
-        <strong>Remaining:</strong> \${{ allocated_budget - current_spend }}
-      </p>
+      <p><strong>Allocated Budget: 1</strong></p>
+      <p><strong>Current Spend: 1</strong></p>
+      <p><strong>Remaining: 10</strong></p>
     </section>
 
     <section class="section-container">

@@ -25,13 +25,13 @@ VALUES
 -- 3. Insert ITEMS
 -- item_ID is AUTO_INCREMENT. We only specify cart_ID and other fields.
 -- Adjust references to the correct cart_IDs from the previous step.
-INSERT INTO item (item_ID, cart_ID, user_ID, quantity, price, item_name, upc, item_lifetime)
+INSERT INTO item (item_ID, cart_ID, user_ID, quantity, item_name, price, upc, item_lifetime, image_url)
 VALUES
-(1, 1, 'john_doe', 1, 3.99, 'Bread', 12345, 7),      -- Goes in cart_ID=1
-(2, 1, 'john_doe', 2, 5.99, 'Milk', 67890, 5),
-(3, 3, 'jane_smith', 20, 250.00, 'Laptop', 11111, 365),   -- Goes in cart_ID=2
-(4, 3, 'jane_smith', 3, 4.99, 'Juice', 22222, 10),    -- Goes in cart_ID=3
-(5, 3, 'jane_smith', 3, 1.99, 'Apples', 33333, 3);
+(1, 1, 'john_doe', 1, 'Bread', 3.99, 12345, 7),      -- Goes in cart_ID=1
+(2, 1, 'john_doe', 2, 'Milk', 67890, 5),
+(3, 3, 'jane_smith', 20, 'Laptop', 250.00, 11111, 365),   -- Goes in cart_ID=2
+(4, 3, 'jane_smith', 3, 'Juice', 4.99, 22222, 10),    -- Goes in cart_ID=3
+(5, 3, 'jane_smith', 3, 'Apples', 1.99, 33333, 3);
 
 -- 4. Insert ACHIEVEMENTS
 -- achievement_ID is AUTO_INCREMENT.
