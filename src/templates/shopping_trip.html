@@ -57,6 +57,7 @@
       }
 
       .center {
+        margin-top: 2rem;
         flex: 1;
         text-align: center;
       }
@@ -269,7 +270,7 @@
       <h2>Start a New Shopping Trip</h2>
       <form action="/start-shopping" method="POST">
         <div class="form-group">
-          <label for="storeName">Store Name:</label>
+          <label for="storeName">Store Name: </label>
           <input
             type="text"
             id="storeName"
@@ -286,10 +287,11 @@
     <!-- If there IS an existing cart session -->
     <section class="section-container header-container">
       <div class="left">
-        <button type="button" onclick="window.history.back()" class="back-btn">Back</button>
+        <button type="button" onclick=home() class="back-btn">Back</button>
       </div>
       <div class="center">
         <h2>Current Shopping Trip</h2>
+        <p><strong>Store:</strong> {{ cart_session['store_name'] }}</p>
       </div>
       <div class="right">
         <!-- Optional: Empty div to balance the layout -->
@@ -382,5 +384,10 @@
       </form>
     </section>
     {% endif %}
+    <script>
+      function home() {
+        window.location.href = '/home';
+      }
+    </script>
   </body>
 </html>

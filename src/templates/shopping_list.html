@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Shopping List</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.gstatic.com" />
+    <!-- Primary Body Font -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Dynamic Heading Font -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* Global Styles & Variables */
+      :root {
+        --primary-color: #007bff;
+        --accent-color: #28a745;
+        --light-bg: #f8f9fa;
+        --dark-text: #333;
+        --font-family: 'Open Sans', sans-serif;
+        --heading-font: 'Montserrat', sans-serif;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: var(--font-family);
+        /* Gradient background for a modern look */
+        background: linear-gradient(135deg, #f0f4ff, #e2e8f0, #d3e0ea);
+        padding: 0 2rem;
+        color: var(--dark-text);
+        text-align: center;
+      }
+
+      h1 {
+        font-family: var(--heading-font);
+        font-size: 2.5rem;
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+      }
+
+      .container {
+        max-width: 600px;
+        margin: 2rem auto;
+        background: #ffffff;
+        border-radius: 20px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem;
+      }
+
+      form {
+        margin-bottom: 1rem;
+      }
+
+      input[type="text"],
+      input[type="number"] {
+        padding: 0.5rem;
+        font-size: 1rem;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        margin-right: 0.5rem;
+      }
+
+      input[type="text"] {
+        width: 50%;
+      }
+
+      input[type="number"] {
+        width: 20%;
+      }
+
+      button {
+        padding: 0.5rem 1rem;
+        font-size: 1rem;
+        border: none;
+        border-radius: 4px;
+        background-color: var(--primary-color);
+        color: #fff;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+      }
+
+      button:hover {
+        background-color: #0056b3;
+      }
+
+      ul {
+        list-style: none;
+        padding: 0;
+      }
+
+      li {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.5rem;
+        border-bottom: 1px solid #eee;
+      }
+
+      li:last-child {
+        border-bottom: none;
+      }
+
+      .food-text {
+        flex-grow: 1;
+        margin-left: 0.5rem;
+        text-align: left;
+      }
+
+      .food-text.strikethrough {
+        text-decoration: line-through;
+        color: #888;
+      }
+
+      .remove-btn {
+        background-color: #dc3545;
+        color: #fff;
+        border: none;
+        padding: 0.3rem 0.6rem;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        margin-left: 1rem;
+      }
+
+      .remove-btn:hover {
+        background-color: #c82333;
+      }
+
+      /* Save Button Styling */
+      .save-btn {
+        margin-top: 1rem;
+        background-color: var(--accent-color);
+      }
+
+      .save-btn:hover {
+        background-color: #218838;
+      }
+
+      /* Navbar Styling */
+      .navbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem 2rem;
+        background-color: #ffffff;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+      }
+      .navbar .brand {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #007bff;
+        text-decoration: none;
+      }
+      .navbar ul {
+        display: flex;
+        list-style: none;
+        gap: 1.5rem;
+      }
+      .navbar a {
+        text-decoration: none;
+        color: #333;
+        font-weight: 500;
+        transition: color 0.2s ease;
+      }
+      .navbar a:hover {
+        color: #007bff;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+      <a href="/" class="brand">SmartKart</a>
+      <ul>
+        <!-- Example additional links -->
+        <li><a href="/shopping-trip">New Trip</a></li>
+        <li><a href="/rewards">Rewards</a></li>
+        <li><a href="/logout">Logout</a></li>
+      </ul>
+    </nav>
+    
+    <div class="container">
+      <h1>Shopping List</h1>
+      <!-- The form now includes a quantity input -->
+      <form id="itemForm">
+        <input
+          type="text"
+          id="foodInput"
+          placeholder="Enter item"
+          required
+        />
+        <input
+          type="number"
+          id="foodQty"
+          placeholder="Qty"
+          min="1"
+          value="1"
+          required
+        />
+        <button type="submit">Add</button>
+      </form>
+      <ul id="foodList">
+        <!-- Food items will be appended here -->
+      </ul>
+      <!-- Save List button -->
+      <button id="saveBtn" class="save-btn">Save List</button>
+    </div>
+
+    <script>
+      // Global variable to hold the current list items
+      let currentItems = [];
+
+      // Load the shopping list from the backend when the page loads
+      document.addEventListener("DOMContentLoaded", loadItems);
+
+      // Listen for form submission to add a new food item
+      document.getElementById("itemForm").addEventListener("submit", function (event) {
+        event.preventDefault();
+        const nameInput = document.getElementById("foodInput");
+        const qtyInput = document.getElementById("foodQty");
+        const foodName = nameInput.value.trim();
+        const foodQty = parseInt(qtyInput.value, 10);
+        if (foodName !== "" && !isNaN(foodQty) && foodQty > 0) {
+          addFoodItem(foodName, foodQty);
+          nameInput.value = "";
+          qtyInput.value = "1";
+        }
+      });
+
+      // Event listener for the Save List button
+      document.getElementById("saveBtn").addEventListener("click", saveList);
+
+      // Fetch current items from the backend and update the DOM
+      async function loadItems() {
+        try {
+          const response = await fetch("/list/items");
+          const data = await response.json();
+          updateListDOM(data.items);
+        } catch (err) {
+          console.error("Error loading items:", err);
+        }
+      }
+
+      // Send a POST request to add a new food item
+      async function addFoodItem(foodName, quantity) {
+        try {
+          const response = await fetch("/list/add_item", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ item: foodName, quantity: quantity })
+          });
+          const data = await response.json();
+          updateListDOM(data.items);
+        } catch (err) {
+          console.error("Error adding item:", err);
+        }
+      }
+
+      // Send a POST request to remove a food item
+      async function removeFoodItem(foodName) {
+        try {
+          const response = await fetch("/list/remove_item", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ item: foodName })
+          });
+          const data = await response.json();
+          updateListDOM(data.items);
+        } catch (err) {
+          console.error("Error removing item:", err);
+        }
+      }
+
+      // Send a POST request to save the current list
+      async function saveList() {
+        try {
+          const response = await fetch("/list/save", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ items: currentItems })
+          });
+          const data = await response.json();
+          console.log("List saved:", data);
+          alert("Shopping list saved!");
+        } catch (err) {
+          console.error("Error saving list:", err);
+          alert("Error saving list.");
+        }
+      }
+
+      // Update the entire list in the DOM and update global variable
+      function updateListDOM(items) {
+        currentItems = items; // Update the global variable
+        const ul = document.getElementById("foodList");
+        ul.innerHTML = "";
+        items.forEach((item) => {
+          addFoodItemToDOM(item);
+        });
+      }
+
+      // Create and append a list item to the DOM
+      // Expects each item to be an object: { name: "Item name", quantity: Number }
+      function addFoodItemToDOM(item) {
+        const ul = document.getElementById("foodList");
+        const li = document.createElement("li");
+
+        // Create span for the food text with quantity displayed
+        const foodText = document.createElement("span");
+        foodText.textContent = `${item.name} (Qty: ${item.quantity})`;
+        foodText.className = "food-text";
+
+        // Create remove button
+        const removeBtn = document.createElement("button");
+        removeBtn.textContent = "Remove";
+        removeBtn.className = "remove-btn";
+        removeBtn.addEventListener("click", function () {
+          removeFoodItem(item.name);
+        });
+
+        li.appendChild(foodText);
+        li.appendChild(removeBtn);
+
+        ul.appendChild(li);
+      }
+    </script>
+  </body>
+</html>
