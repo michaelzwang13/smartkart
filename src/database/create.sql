@@ -27,8 +27,9 @@ CREATE TABLE item (
     quantity INT NOT NULL,
     item_name VARCHAR(50) NOT NULL,
     price DECIMAL(10,2),
-    upc INT, 
+    upc BIGINT, 
     item_lifetime INT, -- # of DAYS
+    image_url VARCHAR(500),
     PRIMARY KEY (item_ID),
     FOREIGN KEY (cart_ID) REFERENCES cart(cart_ID),
     FOREIGN KEY (user_ID) REFERENCES user_account(user_ID)

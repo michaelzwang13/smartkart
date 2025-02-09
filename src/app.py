@@ -9,21 +9,21 @@ import config
 app = Flask(__name__)
 
 #Configure MySQL
-# conn = pymysql.connect(host='localhost',
-# 											 port= 8889,
-#                        user='root',
-#                        password='root',
-#                        db='hacknyu25',
-#                        charset='utf8mb4',
-#                        cursorclass=pymysql.cursors.DictCursor)
-
 conn = pymysql.connect(host='localhost',
-						port= 3306,
-                         user='willy',
-                         password='willy',
-                         database='hacknyu25',
-                         charset='utf8mb4',
-                         cursorclass=pymysql.cursors.DictCursor)
+											 port= 8889,
+                       user='root',
+                       password='root',
+                       db='hacknyu25',
+                       charset='utf8mb4',
+                       cursorclass=pymysql.cursors.DictCursor)
+
+# conn = pymysql.connect(host='localhost',
+# 						port= 3306,
+#                          user='willy',
+#                          password='willy',
+#                          database='hacknyu25',
+#                          charset='utf8mb4',
+#                          cursorclass=pymysql.cursors.DictCursor)
 
 #Define a route to hello function
 @app.route('/')
@@ -38,6 +38,10 @@ def login():
 @app.route('/register')
 def register():
 	return render_template('register.html')
+
+@app.route('/home')
+def home():
+	return render_template('home.html')
 
 #Authenticates the login
 @app.route('/loginAuth', methods=['GET', 'POST'])
@@ -62,7 +66,9 @@ def loginAuth():
         #creates a session for the the user
         #session is a built in
             session['user_ID'] = user_ID
-            return render_template('user_home.html')
+            session['cart_ID'] = None
+            # return redirect(url_for('home'))
+            return render_template('home.html', user_ID=user_ID)
         else:
             error = 'Invalid username or password'
             return render_template('login.html', error=error)
@@ -101,7 +107,7 @@ def registerAuth():
         conn.commit()
         cursor.close()
         session['user_ID'] = user_ID
-        return render_template('index.html')
+        return render_template('home.html', user_ID=user_ID)
 
 @app.route('/start-shopping', methods=['POST'])
 def start_shopping():
@@ -110,30 +116,45 @@ def start_shopping():
     
     cursor = conn.cursor()
     
-    query = 'SELECT cart_ID FROM cart WHERE user_ID = %s AND status = %s'
+    query = 'SELECT * FROM cart WHERE user_ID = %s AND status = %s'
     cursor.execute(query, (user_ID, "active"))
     cart_ID = cursor.fetchone()
     
     if cart_ID:
-      session['cart_ID'] = cart_ID
+      session['cart_ID'] = cart_ID['cart_ID']
     else:
-      ins = 'INSERT INTO cart VALUES(%s, %s, %s)'
+      ins = 'INSERT INTO cart (user_ID, store_name, status) VALUES(%s, %s, %s)'
       cursor.execute(ins, (user_ID, store_name, "active"))
       conn.commit()
-      session['cart_ID'] = cursor.fetchone()
+
+      query = 'SELECT * FROM cart WHERE user_ID = %s AND status = %s'
+      cursor.execute(query, (user_ID, "active"))
+      cart_ID = cursor.fetchone()
     
     cursor.close()
     
-    return redirect(url_for('shopping_trip'))
-
+    return render_template(
+            'shopping_trip.html',
+            cart_session=cart_ID, 
+            # allocated_budget=..., 
+            # current_spend=...
+        )
 @app.route('/shopping-trip')
 def shopping_trip():
-    if not "cart_ID" in session:
+    if not "cart_ID" in session or not session['cart_ID']:
         # No active cart
-        return render_template('shopping_trip.html', cart_session=None)
+        print("KYLE KUZMA")
+        # return start_shopping()
+        return render_template(
+            'shopping_trip.html',
+            cart_session=None
+        )
     else:
         # Query DB for cart items, budget, etc.
         cart_ID = session['cart_ID']
+        print(type(cart_ID))
+        print(cart_ID)
+        print("LEBRON JAMES")
         cursor = conn.cursor()
         query = 'SELECT * FROM item WHERE cart_ID = %s'
         cursor.execute(query, (cart_ID))
@@ -141,9 +162,9 @@ def shopping_trip():
         items = cursor.fetchall()
         
         return render_template(
-            'shopping_trip.html', 
+            'shopping_trip.html',
+            cart_session=cart_ID, 
             cart_items=items,
-            # cart_items=..., 
             # allocated_budget=..., 
             # current_spend=...
         )
@@ -153,27 +174,52 @@ def finish_shopping():
     cart_ID = session['cart_ID']
     cursor = conn.cursor()
     query = '''UPDATE cart SET status = %s 
-                        WHERE ID = %s'''
+                        WHERE cart_ID = %s'''
     cursor.execute(query, ("purchased", cart_ID))
-    return redirect(url_for('shopping_trip'))
+    conn.commit()
+    cursor.close()
+    
+    return redirect(url_for('home'))
 
 @app.route('/shopping-trip/add-item', methods=['POST'])
 def add_item():
     user_ID = session['user_ID']
     cart_ID = session['cart_ID']
-    upc = request.form['upc']
-    price = request.form['itemPrice']
-    quantity = request.form['itemQty']
+    
+    if not user_ID or not cart_ID:
+        return jsonify({"error": "No active cart or user session"}), 400
+
+    # 2) Parse JSON from the request
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Invalid JSON body"}), 400
+
+    upc = data.get('upc')
+    price = data.get('price')
+    quantity = data.get('quantity')
+    item_name = data.get('itemName')
+    image_url = data.get('imageUrl')
+
+    # Basic validation
+    if not upc or price is None or quantity is None or item_name is None or image_url is None:
+        return jsonify({"error": "Missing fields (upc, price, quantity, item)"}), 400
 
     cursor = conn.cursor()
-    ins = 'INSERT INTO item VALUES(%s, %s, %s, %s, %s, %s, %s)'
-    cursor.execute(ins, (cart_ID, user_ID, quantity, price, "BREAD", upc, 7))
+    ins = 'INSERT INTO item (cart_ID, user_ID, quantity, item_name, price, upc, item_lifetime, image_url) VALUES(%s, %s, %s, %s, %s, %s, %s, %s)'
+    cursor.execute(ins, (cart_ID, user_ID, quantity, item_name, price, upc, 7, image_url))
     
     conn.commit()
+    
+    cursor = conn.cursor()
+    query = 'SELECT * FROM item WHERE cart_ID = %s'
+    cursor.execute(query, (cart_ID))
+    
+    items = cursor.fetchall()
+    
     cursor.close()
 
     # Redirect back to the shopping trip page.
-    return render_template('shopping_trip.html')
+    return jsonify({"status": "success", "items": items}), 200
 
 @app.route('/rewards')
 def rewards():
@@ -203,8 +249,10 @@ def searchitem():
 
 @app.route('/logout')
 def logout():
-	session.pop('user_id')
-	return redirect('/')
+  session.pop('user_ID')
+  if 'cart_ID' in session:
+    session.pop('cart_ID')
+  return redirect('/')
 
 def hash_password_md5(password):
     # Create an MD5 hash object
