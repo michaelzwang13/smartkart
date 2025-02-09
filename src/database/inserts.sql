@@ -27,19 +27,11 @@ VALUES
 -- Adjust references to the correct cart_IDs from the previous step.
 INSERT INTO item (item_ID, cart_ID, user_ID, quantity, item_name, price, upc, item_lifetime, image_url)
 VALUES
-<<<<<<< HEAD
-(1, 1, 'john_doe', 1, 'Bread', 3.99, 12345, 7, 'https://t4.ftcdn.net/jpg/02/51/95/53/360_F_251955356_FAQH0U1y1TZw3ZcdPGybwUkH90a3VAhb.jpg'),      -- Goes in cart_ID=1
-(2, 1, 'john_doe', 2, 'Milk', 1.99, 67890, 5, 'https://t4.ftcdn.net/jpg/02/51/95/53/360_F_251955356_FAQH0U1y1TZw3ZcdPGybwUkH90a3VAhb.jpg'),
-(3, 3, 'jane_smith', 20, 'Laptop', 250.00, 11111, 365, 'https://t4.ftcdn.net/jpg/02/51/95/53/360_F_251955356_FAQH0U1y1TZw3ZcdPGybwUkH90a3VAhb.jpg'),   -- Goes in cart_ID=2
-(4, 3, 'jane_smith', 3, 'Juice', 4.99, 22222, 10, 'https://t4.ftcdn.net/jpg/02/51/95/53/360_F_251955356_FAQH0U1y1TZw3ZcdPGybwUkH90a3VAhb.jpg'),    -- Goes in cart_ID=3
-(5, 3, 'jane_smith', 3, 'Apples', 1.99, 33333, 3, 'https://t4.ftcdn.net/jpg/02/51/95/53/360_F_251955356_FAQH0U1y1TZw3ZcdPGybwUkH90a3VAhb.jpg');
-=======
 (1, 1, 'john_doe', 1, 'Bread', 3.99, 12345, 7, "https://t4.ftcdn.net/jpg/02/51/95/53/360_F_251955356_FAQH0U1y1TZw3ZcdPGybwUkH90a3VAhb.jpg"),      -- Goes in cart_ID=1
 (2, 1, 'john_doe', 2, 'Milk', 1.99, 67890, 5, "https://t4.ftcdn.net/jpg/02/51/95/53/360_F_251955356_FAQH0U1y1TZw3ZcdPGybwUkH90a3VAhb.jpg"),
 (3, 3, 'jane_smith', 20, 'Laptop', 250.00, 11111, 365, "https://t4.ftcdn.net/jpg/02/51/95/53/360_F_251955356_FAQH0U1y1TZw3ZcdPGybwUkH90a3VAhb.jpg"),   -- Goes in cart_ID=2
 (4, 3, 'jane_smith', 3, 'Juice', 4.99, 22222, 10, "https://t4.ftcdn.net/jpg/02/51/95/53/360_F_251955356_FAQH0U1y1TZw3ZcdPGybwUkH90a3VAhb.jpg"),    -- Goes in cart_ID=3
 (5, 3, 'jane_smith', 3, 'Apples', 1.99, 33333, 3, "https://t4.ftcdn.net/jpg/02/51/95/53/360_F_251955356_FAQH0U1y1TZw3ZcdPGybwUkH90a3VAhb.jpg");
->>>>>>> main
 
 -- 4. Insert ACHIEVEMENTS
 -- achievement_ID is AUTO_INCREMENT.

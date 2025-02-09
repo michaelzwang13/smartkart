@@ -11,7 +11,6 @@ import helper
 app = Flask(__name__)
 
 #Configure MySQL
-<<<<<<< HEAD
 # conn = pymysql.connect(host='localhost',
 # 											 port= 8889,
 #                        user='root',
@@ -19,15 +18,6 @@ app = Flask(__name__)
 #                        db='hacknyu25',
 #                        charset='utf8mb4',
 #                        cursorclass=pymysql.cursors.DictCursor)
-=======
-conn = pymysql.connect(host='localhost',
-											 port= 8889,
-                       user='root',
-                       password='root',
-                       db='hacknyu25',
-                       charset='utf8mb4',
-                       cursorclass=pymysql.cursors.DictCursor)
->>>>>>> main
 
 # conn = pymysql.connect(host='localhost',
 # 						port= 3306,
@@ -36,7 +26,6 @@ conn = pymysql.connect(host='localhost',
 #                          database='hacknyu25',
 #                          charset='utf8mb4',
 #                          cursorclass=pymysql.cursors.DictCursor)
-<<<<<<< HEAD
 
 server = 'smart-kart-server.database.windows.net'
 database = 'smart-kart-db'
@@ -45,8 +34,6 @@ password = '&?@wE9}K#Cf*K^u'
 driver = '{ODBC DRIVER 18 for SQL Server}'
 
 conn = pyodbc.connect(f'DRIVER={driver};SERVER={server};DATABASE={database};UID={username};PWD={password}')
-=======
->>>>>>> main
 
 #Define a route to hello function
 @app.route('/')
@@ -210,15 +197,9 @@ def shopping_trip():
         
         return render_template(
             'shopping_trip.html',
-<<<<<<< HEAD
-            cart_session=cart_ID, 
-            # allocated_budget=1000,
-            # remaining=1000-total_spent,
-=======
             cart_session=cart, 
             allocated_budget=1000,
             remaining=1000-total_spent,
->>>>>>> main
             cart_items=items,
             total_items=total_items, 
             total_spent=total_spent
