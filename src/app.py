@@ -266,6 +266,21 @@ def predict():
 
     return jsonify(response)
 
+@app.route('/learn')
+def learn():
+    carbs = request.args.get('carbs')
+    sugar = request.args.get('sugar')
+    sodium = request.args.get('sodium')
+    fat = request.args.get('fat')
+    label = request.args.get('label')
+
+    if helper.model == None:
+        return jsonify({'error': 'Model didnt load properly'}), 500
+    
+    helper.model_learn(carbs, sugar, sodium, fat, label)
+
+    return jsonify({'status': 'learned'}), 200
+
 @app.route('/logout')
 def logout():
   session.pop('user_ID')

@@ -20,9 +20,17 @@ def predict_impulsive_purchase(carbs, sugar, sodium, fat):
     return model.predict(sample_df)
 
 def model_learn(carbs, sugar, sodium, fat, label):
-    x = np.array([carbs, sugar, sodium, fat])
-    y = np.array([label])
+    sample = {}
+    sample['Data.Carbohydrate'] = carbs
+    sample['Data.Sugar Total'] = sugar
+    sample['Data.Major Minerals.Sodium'] = sodium
+    sample['Data.Fat.Saturated Fat'] = fat
+    sample['Label'] = label
+    sample_df = pd.DataFrame([sample])
 
-    model.partial_fix(x, y)
+    x = sample_df[['Data.Carbohydrate', 'Data.Sugar Total', 'Data.Major Minerals.Sodium', 'Data.Fat.Saturated Fat']]
+    y = sample_df['Label']
+
+    model.partial_fit(x, y)
 
     return model
