@@ -158,11 +158,9 @@ def start_shopping():
     
     items, total_items, total_spent = None, 0, 0
     if cart_ID:
-      print("BRONNY")
       session['cart_ID'] = cart_ID['cart_ID']
       items, total_items, total_spent = retrieve_totals(cart_ID['cart_ID'])
     else:
-      print("ALPEREN SENGUN")
       ins = 'INSERT INTO cart (user_ID, store_name, status) VALUES(?, ?, ?)'
       cursor.execute(ins, (user_ID, store_name, "active"))
       conn.commit()
@@ -188,7 +186,6 @@ def start_shopping():
 def shopping_trip():
     if not "cart_ID" in session or not session['cart_ID']:
         # No active cart
-        print("KYLE KUZMA")
         
         cursor = conn.cursor()
         query = 'SELECT * FROM cart WHERE user_ID = ? AND status = ?'
@@ -199,7 +196,7 @@ def shopping_trip():
         
         cart_session = None
         if cart_ID:
-          print("KLAY THOMPSON")
+
           cart_session = cart_ID
           session['cart_ID'] = cart_ID[0]
           
@@ -315,6 +312,14 @@ def get_cart_items():
     
     return jsonify({"items": items})
   
+@app.route('/cancel-shopping', methods=['POST'])
+def cancel_shopping():
+    session['cart_ID'] = []
+    session.pop('cart_ID', None)
+    session.modified = True
+    flash("Your shopping trip has been canceled.", "info")
+    return redirect('/home')
+  
 @app.route('/edit-list')
 def edit_list():
 	return render_template('shopping_list.html')
@@ -326,8 +331,6 @@ def list_get_items():
     items = session.get('shopping_list', [])
     
     flag = session.get('db_items_loaded', False)
-    
-    print("JAMES HARDEN")
     
     # Only load from the database if we haven't done it already.
     if not flag:
@@ -341,11 +344,6 @@ def list_get_items():
         """
         cursor.execute(query, (user_ID, "pending",))
         db_items = cursor.fetchall()
-        
-        print("ANTHONY DAVIS")
-        print(db_items)
-        
-        print("Loaded items from DB:", db_items)
         
         # Append the db items to the local list
         items.extend(db_items)
@@ -379,8 +377,6 @@ def list_remove_item():
     shopping_list = session.get('shopping_list', [])
     to_be_deleted = session.get('to_be_deleted', [])
     
-    print(to_be_deleted)
-    
     for product in shopping_list:
         if product.get('name') == item_name:
             if product.get('list_ID') != -1:
@@ -402,15 +398,12 @@ def list_save():
     
     shopping_list = session.get('shopping_list', [])
     to_be_deleted = session.get('to_be_deleted', [])
-    
-    print(shopping_list)
-    print("LEBRONNNN")
+
     for product in shopping_list:
       if product['list_ID'] == -1:
         cursor.execute(ins, (user_ID, product.get("name"), product.get("quantity"), "pending"))
         conn.commit()
         
-    print(to_be_deleted)
     for list_ID in to_be_deleted:
       cursor.execute(delete, (list_ID,))
       conn.commit()
@@ -486,13 +479,15 @@ def learn():
 def logout():
   session.pop('user_ID')
   if 'cart_ID' in session:
-    session.pop('cart_ID')
+    session.pop('cart_ID', None)
   if 'shopping_list' in session:
-    session.pop('shopping_list')
+    session.pop('shopping_list', None)
   if 'to_be_deleted' in session:
-    session.pop('to_be_deleted')
+    session.pop('to_be_deleted', None)
   if 'db_items_loaded' in session:
-    session.pop('db_items_loaded')
+    session.pop('db_items_loaded', None)
+    
+  session.clear()
   return redirect('/')
 
 def retrieve_totals(cart_ID):
