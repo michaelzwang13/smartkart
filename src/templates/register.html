@@ -133,6 +133,9 @@
   <!-- Register Form Section -->
   <div class="form-container">
     <h2>Create Your Account</h2>
+    {% if error %}
+      <p class="error" style="color: red; text-align: center; margin-bottom: 1rem;">{{ error }}</p>
+    {% endif %}
     <form action="/registerAuth" method="POST">
       <div class="form-group">
         <label for="email_address">Email</label>
