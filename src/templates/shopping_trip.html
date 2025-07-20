@@ -52,19 +52,7 @@
         transition: background-color 0.2s ease;
       }
       button:hover {
-        opacity: 0.9;
-      }
-      .finish-btn {
-        background-color: #28a745;
-      }
-      .finish-btn:hover {
-        background-color: #218838;
-      }
-      .delete-btn {
-        background-color: #dc3545;
-      }
-      .delete-btn:hover {
-        background-color: #c82333;
+        background-color: #0056b3;
       }
       .header-container {
         display: flex;
@@ -87,7 +75,12 @@
       /* Styling for the Back button */
       .back-btn {
         background-color: #6c757d;
+        color: #fff;
         padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
       }
       .back-btn:hover {
         background-color: #5a6268;
@@ -112,6 +105,14 @@
         text-align: center;        /* Horizontal center */
         vertical-align: middle;    /* Vertical center */
       }
+      .finish-btn {
+        margin-top: 1rem;
+        background-color: #28a745;
+      }
+      .finish-btn:hover {
+        background-color: #218838;
+      }
+      /* Optional larger image styling */
       .item-image {
         width: 150px;
         height: auto;
@@ -218,10 +219,10 @@
           let foodName = "Unknown Item";
           let imageUrl = "https://t4.ftcdn.net/jpg/02/51/95/53/360_F_251955356_FAQH0U1y1TZw3ZcdPGybwUkH90a3VAhb.jpg";
 
-          let carbs = 0;
-          let sugar = 0;
-          let sodium = 0;
-          let fat = 0;
+          let carbs = 0
+          let sugar = 0
+          let sodium = 0
+          let fat = 0
 
           if (searchData.foods && searchData.foods.length > 0) {
             const firstItem = searchData.foods[0];
@@ -235,16 +236,16 @@
               imageUrl = firstItem.photo.thumb;
             }
             if (firstItem.nf_total_carbohydrate) {
-              carbs = firstItem.nf_total_carbohydrate;
+              carbs = firstItem.nf_total_carbohydrate
             }
             if (firstItem.nf_sugars) {
-              sugar = firstItem.nf_sugars;
+              sugar = firstItem.nf_sugars
             }
             if (firstItem.nf_sodium) {
-              sodium = firstItem.nf_sodium;
+              sodium = firstItem.nf_sodium
             }
             if (firstItem.nf_saturated_fat) {
-              fat = firstItem.nf_saturated_fat;
+              fat = firstItem.nf_saturated_fat
             }
           }
 
@@ -313,13 +314,12 @@
 
             // Add an event listener to the button to remove the popup when clicked
             button.addEventListener('click', () => {
-              document.body.removeChild(popup);
-              // Remove the outside click listener when the popup is closed
-              document.removeEventListener('click', handleOutsideClick);
+                document.body.removeChild(popup);
+                // Remove the outside click listener when the popup is closed
+                document.removeEventListener('click', handleOutsideClick);
 
-              // Update ML
-              fetch(`/learn?carbs=${carbs}&sugar=${sugar}&sodium=${sodium}&fat=${fat}&label=0`)
-                .catch(error => console.error("Request failed:", error));
+                // Update ML
+                fetch(`/learn?carbs=${carbs}&sugar=${sugar}&sodium=${sodium}&fat=${fat}&label=0`).catch(error => console.error("Request failed:", error))
             });
 
             popup.appendChild(button);
@@ -329,22 +329,22 @@
 
             // Function to handle clicks outside the popup
             function handleOutsideClick(event) {
-              if (!popup.contains(event.target)) {
-                document.body.removeChild(popup);
-                // Remove the outside click listener when the popup is closed
-                document.removeEventListener('click', handleOutsideClick);
-              }
+                if (!popup.contains(event.target)) {
+                    document.body.removeChild(popup);
+                    // Remove the outside click listener when the popup is closed
+                    document.removeEventListener('click', handleOutsideClick);
+                }
             }
 
             // Add a slight delay before adding the outside click listener
             // to avoid immediately closing the popup when it's created
             setTimeout(() => {
-              document.addEventListener('click', handleOutsideClick);
+                document.addEventListener('click', handleOutsideClick);
             }, 0);
           }
 
           if (predictData.prediction == 1) {
-            createPopup();
+            createPopup()
           }
         } catch (err) {
           console.error("Error adding item:", err);
@@ -375,11 +375,12 @@
         <button type="submit">Start Shopping</button>
       </form>
     </section>
+
     {% else %}
     <!-- If there IS an existing cart session -->
     <section class="section-container header-container">
       <div class="left">
-        <button type="button" onclick="home()" class="back-btn">Back</button>
+        <button type="button" onclick=home() class="back-btn">Back</button>
       </div>
       <div class="center">
         <h2>Current Shopping Trip</h2>
@@ -470,16 +471,10 @@
       <p><strong>Remaining:</strong> ${{ remaining }}</p>
     </section>
 
-    <!-- New button container for finishing or canceling the shopping trip -->
     <section class="section-container">
-      <div style="display: flex; justify-content: center; gap: 1rem;">
-        <form action="/finish-shopping" method="POST">
-          <button type="submit" class="finish-btn">Finish Shopping</button>
-        </form>
-        <form action="/cancel-shopping" method="POST">
-          <button type="submit" class="delete-btn">Cancel Trip</button>
-        </form>
-      </div>
+      <form action="/finish-shopping" method="POST">
+        <button type="submit" class="finish-btn">Finish Shopping</button>
+      </form>
     </section>
     {% endif %}
     <script>
