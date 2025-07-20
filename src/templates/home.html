@@ -132,10 +132,10 @@
     <a href="/" class="brand">SmartKart</a>
     <ul>
       <!-- Example additional links -->
-      <li><a href="/shopping-trip">New Trip</a></li>
-      <li><a href="/edit-list">Edit List</a></li>
-      <li><a href="/rewards">Rewards</a></li>
-      <li><a href="/logout">Logout</a></li>
+      <li><a href="{{ url_for('shopping.shopping_trip') }}">New Trip</a></li>
+      <li><a href="{{ url_for('shopping.edit_list') }}">Edit List</a></li>
+      <li><a href="{{ url_for('shopping.rewards') }}">Rewards</a></li>
+      <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
     </ul>
   </nav>
 

@@ -134,7 +134,7 @@
       // Function to fetch current cart items from a dedicated endpoint
       async function loadCartItems() {
         try {
-          const response = await fetch("/shopping-trip/items", {
+          const response = await fetch("{{ url_for('api.get_cart_items') }}", {
             method: "GET",
             headers: { "Content-Type": "application/json" }
           });
@@ -210,7 +210,7 @@
 
         try {
           // 1) Fetch from /searchitem by UPC
-          const searchResponse = await fetch(`/searchitem?upc=${itemName}`);
+          const searchResponse = await fetch(`{{ url_for('api.searchitem') }}?upc=${itemName}`);
           const searchData = await searchResponse.json();
           console.log("Search result from /searchitem:", searchData);
 
@@ -252,7 +252,7 @@
           const combinedName = `${brandName} - ${foodName}`;
 
           // 3) POST to /shopping-trip/add-item with JSON
-          const addItemResponse = await fetch("/shopping-trip/add-item", {
+          const addItemResponse = await fetch("{{ url_for('api.add_item') }}", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -273,7 +273,7 @@
           }
 
           // 5) ML)
-          const predictResponse = await fetch(`/predict?carbs=${carbs}&sugar=${sugar}&sodium=${sodium}&fat=${fat}`);
+          const predictResponse = await fetch(`{{ url_for('api.predict') }}?carbs=${carbs}&sugar=${sugar}&sodium=${sodium}&fat=${fat}`);
           const predictData = await predictResponse.json();
 
           function createPopup() {
@@ -319,7 +319,7 @@
                 document.removeEventListener('click', handleOutsideClick);
 
                 // Update ML
-                fetch(`/learn?carbs=${carbs}&sugar=${sugar}&sodium=${sodium}&fat=${fat}&label=0`).catch(error => console.error("Request failed:", error))
+                fetch(`{{ url_for('api.learn') }}?carbs=${carbs}&sugar=${sugar}&sodium=${sodium}&fat=${fat}&label=0`).catch(error => console.error("Request failed:", error))
             });
 
             popup.appendChild(button);
@@ -361,7 +361,7 @@
     {% if not cart_session %}
     <section class="section-container">
       <h2>Start a New Shopping Trip</h2>
-      <form action="/start-shopping" method="POST">
+      <form action="{{ url_for('shopping.start_shopping') }}" method="POST">
         <div class="form-group">
           <label for="storeName">Store Name: </label>
           <input
@@ -472,14 +472,14 @@
     </section>
 
     <section class="section-container">
-      <form action="/finish-shopping" method="POST">
+      <form action="{{ url_for('shopping.finish_shopping') }}" method="POST">
         <button type="submit" class="finish-btn">Finish Shopping</button>
       </form>
     </section>
     {% endif %}
     <script>
       function home() {
-        window.location.href = '/home';
+        window.location.href = "{{ url_for('shopping.home') }}";
       }
     </script>
   </body>

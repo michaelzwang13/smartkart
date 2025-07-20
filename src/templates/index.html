@@ -307,8 +307,8 @@
   <nav class="navbar">
     <a href="#" class="brand">SmartKart</a>
     <ul>
-      <li><a href="/">Home</a></li>
-      <li><a href="/login" class="login-btn">Login</a></li>
+      <li><a href="{{ url_for('shopping.index') }}">Home</a></li>
+      <li><a href="{{ url_for('auth.login') }}" class="login-btn">Login</a></li>
     </ul>
   </nav>
 
