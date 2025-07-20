@@ -4,7 +4,7 @@ import pandas as pd
 
 # load model
 try:
-    model = joblib.load('resources/nyuhack25_600.pkl')
+    model = joblib.load('src/resources/nyuhack25_600.pkl')
 except Exception as e:
     print('Error loading model: ', e)
     model = None
