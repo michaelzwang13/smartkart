@@ -186,10 +186,10 @@
       <a href="/home" class="brand">SmartKart</a>
       <ul>
         <!-- Example additional links -->
-        <li><a href="/home">Home</a></li>
-        <li><a href="/shopping-trip">New Trip</a></li>
-        <li><a href="/rewards">Rewards</a></li>
-        <li><a href="/logout">Logout</a></li>
+        <li><a href="{{ url_for('shopping.home') }}">Home</a></li>
+        <li><a href="{{ url_for('shopping.shopping_trip') }}">New Trip</a></li>
+        <li><a href="{{ url_for('shopping.rewards') }}">Rewards</a></li>
+        <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
       </ul>
     </nav>
     
@@ -247,7 +247,7 @@
       // Fetch current items from the backend and update the DOM
       async function loadItems() {
         try {
-          const response = await fetch("/list/items");
+          const response = await fetch("{{ url_for('shopping.list_get_items') }}");
           const data = await response.json();
           updateListDOM(data.items);
         } catch (err) {
@@ -258,7 +258,7 @@
       // Send a POST request to add a new food item
       async function addFoodItem(foodName, quantity) {
         try {
-          const response = await fetch("/list/add_item", {
+          const response = await fetch("{{ url_for('shopping.list_add_item') }}", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ item: foodName, quantity: quantity })
@@ -273,7 +273,7 @@
       // Send a POST request to remove a food item
       async function removeFoodItem(foodName) {
         try {
-          const response = await fetch("/list/remove_item", {
+          const response = await fetch("{{ url_for('shopping.list_remove_item') }}", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ item: foodName })
@@ -288,7 +288,7 @@
       // Send a POST request to save the current list
       async function saveList() {
         try {
-          const response = await fetch("/list/save", {
+          const response = await fetch("{{ url_for('shopping.list_save') }}", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ items: currentItems })
@@ -296,7 +296,7 @@
           const data = await response.json();
           console.log("List saved:", data);
           alert("Shopping list saved!");
-          window.location.href = "/home";
+          window.location.href = "{{ url_for('shopping.home') }}";
         } catch (err) {
           console.error("Error saving list:", err);
           alert("Error saving list.");
