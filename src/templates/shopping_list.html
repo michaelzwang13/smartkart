@@ -1,342 +1,1096 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Shopping List</title>
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.gstatic.com" />
-    <!-- Primary Body Font -->
-    <link
-      href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap"
-      rel="stylesheet"
-    />
-    <!-- Dynamic Heading Font -->
-    <link
-      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap"
-      rel="stylesheet"
-    />
-    <style>
-      /* Global Styles & Variables */
-      :root {
-        --primary-color: #007bff;
-        --accent-color: #28a745;
-        --light-bg: #f8f9fa;
-        --dark-text: #333;
-        --font-family: 'Open Sans', sans-serif;
-        --heading-font: 'Montserrat', sans-serif;
-      }
-
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-
-      body {
-        font-family: var(--font-family);
-        /* Gradient background for a modern look */
-        background: linear-gradient(135deg, #f0f4ff, #e2e8f0, #d3e0ea);
-        padding: 0 2rem;
-        color: var(--dark-text);
-        text-align: center;
-      }
-
-      h1 {
-        font-family: var(--heading-font);
-        font-size: 2.5rem;
-        color: var(--primary-color);
-        margin-bottom: 1rem;
-      }
-
-      .container {
-        max-width: 600px;
-        margin: 2rem auto;
-        background: #ffffff;
-        border-radius: 20px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        padding: 1.5rem;
-      }
-
-      form {
-        margin-bottom: 1rem;
-      }
-
-      input[type="text"],
-      input[type="number"] {
-        padding: 0.5rem;
-        font-size: 1rem;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        margin-right: 0.5rem;
-      }
-
-      input[type="text"] {
-        width: 50%;
-      }
-
-      input[type="number"] {
-        width: 20%;
-      }
-
-      button {
-        padding: 0.5rem 1rem;
-        font-size: 1rem;
-        border: none;
-        border-radius: 4px;
-        background-color: var(--primary-color);
-        color: #fff;
-        cursor: pointer;
-        transition: background-color 0.2s ease;
-      }
-
-      button:hover {
-        background-color: #0056b3;
-      }
-
-      ul {
-        list-style: none;
-        padding: 0;
-      }
-
-      li {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0.5rem;
-        border-bottom: 1px solid #eee;
-      }
-
-      li:last-child {
-        border-bottom: none;
-      }
-
-      .food-text {
-        flex-grow: 1;
-        margin-left: 0.5rem;
-        text-align: left;
-      }
-
-      .food-text.strikethrough {
-        text-decoration: line-through;
-        color: #888;
-      }
-
-      .remove-btn {
-        background-color: #dc3545;
-        color: #fff;
-        border: none;
-        padding: 0.3rem 0.6rem;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: background-color 0.2s ease;
-        margin-left: 1rem;
-      }
-
-      .remove-btn:hover {
-        background-color: #c82333;
-      }
-
-      /* Save Button Styling */
-      .save-btn {
-        margin-top: 1rem;
-        background-color: var(--accent-color);
-      }
-
-      .save-btn:hover {
-        background-color: #218838;
-      }
-
-      /* Navbar Styling */
-      .navbar {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 1rem 2rem;
-        background-color: #ffffff;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        position: sticky;
-        top: 0;
-        z-index: 1000;
-      }
-      .navbar .brand {
-        font-size: 1.5rem;
-        font-weight: 600;
-        color: #007bff;
-        text-decoration: none;
-      }
-      .navbar ul {
-        display: flex;
-        list-style: none;
-        gap: 1.5rem;
-      }
-      .navbar a {
-        text-decoration: none;
-        color: #333;
-        font-weight: 500;
-        transition: color 0.2s ease;
-      }
-      .navbar a:hover {
-        color: #007bff;
-      }
-    </style>
-  </head>
-  <body>
-    <!-- Navigation Bar -->
-    <nav class="navbar">
-      <a href="/home" class="brand">SmartKart</a>
-      <ul>
-        <!-- Example additional links -->
-        <li><a href="{{ url_for('shopping.home') }}">Home</a></li>
-        <li><a href="{{ url_for('shopping.shopping_trip') }}">New Trip</a></li>
-        <li><a href="{{ url_for('shopping.rewards') }}">Rewards</a></li>
-        <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
-      </ul>
-    </nav>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shopping Lists - SmartKart</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    /* CSS Variables matching theme */
+    :root {
+      --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      --warning-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      
+      --primary-color: #667eea;
+      --secondary-color: #764ba2;
+      --accent-color: #4facfe;
+      --success-color: #10b981;
+      --warning-color: #f59e0b;
+      --error-color: #ef4444;
+      
+      --text-primary: #1f2937;
+      --text-secondary: #6b7280;
+      --text-muted: #9ca3af;
+      --text-white: #ffffff;
+      
+      --bg-primary: #ffffff;
+      --bg-secondary: #f9fafb;
+      --bg-tertiary: #f3f4f6;
+      
+      --border-light: #e5e7eb;
+      --border-medium: #d1d5db;
+      
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      
+      --radius-sm: 0.375rem;
+      --radius-md: 0.5rem;
+      --radius-lg: 0.75rem;
+      --radius-xl: 1rem;
+      
+      --spacing-xs: 0.5rem;
+      --spacing-sm: 0.75rem;
+      --spacing-md: 1rem;
+      --spacing-lg: 1.5rem;
+      --spacing-xl: 2rem;
+      --spacing-2xl: 3rem;
+      
+      --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
     
-    <div class="container">
-      <h1>Shopping List</h1>
-      <!-- The form now includes a quantity input -->
-      <form id="itemForm">
-        <input
-          type="text"
-          id="foodInput"
-          placeholder="Enter item"
-          required
-        />
-        <input
-          type="number"
-          id="foodQty"
-          placeholder="Qty"
-          min="1"
-          value="1"
-          required
-        />
-        <button type="submit">Add</button>
-      </form>
-      <ul id="foodList">
-        <!-- Food items will be appended here -->
-      </ul>
-      <!-- Save List button -->
-      <button id="saveBtn" class="save-btn">Save List</button>
+    /* Reset and base styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    html {
+      scroll-behavior: smooth;
+    }
+    
+    body {
+      font-family: var(--font-family);
+      color: var(--text-primary);
+      line-height: 1.6;
+      background: var(--bg-secondary);
+      overflow-x: hidden;
+    }
+    
+    /* Header and Navigation */
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border-light);
+      transition: all 0.3s ease;
+    }
+    
+    .nav-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 var(--spacing-lg);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 80px;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary-color);
+      text-decoration: none;
+      transition: transform 0.3s ease;
+    }
+    
+    .logo:hover {
+      transform: scale(1.05);
+    }
+    
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: var(--primary-gradient);
+      border-radius: var(--radius-lg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.2rem;
+    }
+    
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-lg);
+      list-style: none;
+    }
+    
+    .nav-link {
+      color: var(--text-primary);
+      text-decoration: none;
+      font-weight: 500;
+      position: relative;
+      transition: color 0.3s ease;
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-radius: var(--radius-md);
+    }
+    
+    .nav-link:hover {
+      color: var(--primary-color);
+      background: rgba(102, 126, 234, 0.1);
+    }
+    
+    .nav-link.logout {
+      background: var(--error-color);
+      color: var(--text-white);
+    }
+    
+    .nav-link.logout:hover {
+      background: #dc2626;
+      color: var(--text-white);
+    }
+    
+    /* Main Content */
+    .main-content {
+      min-height: 100vh;
+      padding: 100px var(--spacing-lg) var(--spacing-xl);
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    /* Page Header */
+    .page-header {
+      text-align: center;
+      margin-bottom: var(--spacing-2xl);
+      animation: fadeInUp 0.8s ease;
+    }
+    
+    .page-title {
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 700;
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: var(--spacing-sm);
+    }
+    
+    .page-subtitle {
+      font-size: 1.125rem;
+      color: var(--text-secondary);
+      margin-bottom: var(--spacing-lg);
+    }
+    
+    /* Create List Section */
+    .create-list-section {
+      background: var(--bg-primary);
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-xl);
+      margin-bottom: var(--spacing-xl);
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--border-light);
+      animation: fadeInUp 0.8s ease 0.2s both;
+    }
+    
+    .create-list-header {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-lg);
+    }
+    
+    .create-list-icon {
+      width: 50px;
+      height: 50px;
+      background: var(--primary-gradient);
+      border-radius: var(--radius-lg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-white);
+      font-size: 1.25rem;
+    }
+    
+    .create-list-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    .create-list-form {
+      display: grid;
+      grid-template-columns: 1fr 200px auto;
+      gap: var(--spacing-md);
+      align-items: end;
+    }
+    
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-xs);
+    }
+    
+    .form-label {
+      font-weight: 600;
+      color: var(--text-primary);
+      font-size: 0.875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .form-input {
+      padding: var(--spacing-md);
+      border: 2px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      font-size: 1rem;
+      font-family: var(--font-family);
+      transition: all 0.3s ease;
+      background: var(--bg-primary);
+    }
+    
+    .form-input:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .btn-primary {
+      background: var(--primary-gradient);
+      color: var(--text-white);
+      border: none;
+      padding: var(--spacing-md) var(--spacing-lg);
+      border-radius: var(--radius-lg);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: var(--shadow-md);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+    
+    /* Lists Grid */
+    .lists-section {
+      animation: fadeInUp 0.8s ease 0.4s both;
+    }
+    
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--spacing-xl);
+    }
+    
+    .section-title {
+      font-size: 1.75rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+    }
+    
+    .section-icon {
+      width: 40px;
+      height: 40px;
+      background: var(--primary-gradient);
+      border-radius: var(--radius-lg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-white);
+    }
+    
+    .lists-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: var(--spacing-xl);
+    }
+    
+    .list-card {
+      background: var(--bg-primary);
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--border-light);
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+    
+    .list-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--primary-gradient);
+      transform: scaleX(0);
+      transition: transform 0.3s ease;
+    }
+    
+    .list-card:hover::before {
+      transform: scaleX(1);
+    }
+    
+    .list-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-xl);
+    }
+    
+    .list-header {
+      padding: var(--spacing-lg);
+      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      border-bottom: 1px solid var(--border-light);
+    }
+    
+    .list-header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--spacing-sm);
+    }
+    
+    .list-name {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    .list-actions {
+      display: flex;
+      gap: var(--spacing-xs);
+    }
+    
+    .btn-icon {
+      width: 32px;
+      height: 32px;
+      border: none;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 0.875rem;
+    }
+    
+    .btn-edit {
+      background: var(--accent-color);
+      color: var(--text-white);
+    }
+    
+    .btn-edit:hover {
+      background: #3b82f6;
+    }
+    
+    .btn-delete {
+      background: var(--error-color);
+      color: var(--text-white);
+    }
+    
+    .btn-delete:hover {
+      background: #dc2626;
+    }
+    
+    .list-meta {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+    
+    .list-stats {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+    }
+    
+    .list-body {
+      padding: var(--spacing-lg);
+    }
+    
+    .list-items {
+      list-style: none;
+      margin-bottom: var(--spacing-lg);
+    }
+    
+    .list-item {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      padding: var(--spacing-sm) 0;
+      border-bottom: 1px solid var(--border-light);
+    }
+    
+    .list-item:last-child {
+      border-bottom: none;
+    }
+    
+    .item-checkbox {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border-medium);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+    
+    .item-checkbox.completed {
+      background: var(--success-color);
+      border-color: var(--success-color);
+    }
+    
+    .item-checkbox.completed::after {
+      content: '✓';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: var(--text-white);
+      font-size: 0.75rem;
+      font-weight: bold;
+    }
+    
+    .item-text {
+      flex: 1;
+      color: var(--text-primary);
+      transition: all 0.3s ease;
+    }
+    
+    .item-text.completed {
+      text-decoration: line-through;
+      color: var(--text-muted);
+    }
+    
+    .item-quantity {
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      padding: var(--spacing-xs) var(--spacing-sm);
+      border-radius: var(--radius-md);
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    
+    .add-item-form {
+      display: flex;
+      gap: var(--spacing-sm);
+    }
+    
+    .add-item-input {
+      flex: 1;
+      padding: var(--spacing-sm) var(--spacing-md);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+    }
+    
+    .add-item-qty {
+      width: 60px;
+      padding: var(--spacing-sm);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      text-align: center;
+    }
+    
+    .btn-add-item {
+      background: var(--success-color);
+      color: var(--text-white);
+      border: none;
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 0.875rem;
+    }
+    
+    .btn-add-item:hover {
+      background: #059669;
+    }
+    
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: var(--spacing-2xl);
+      color: var(--text-muted);
+    }
+    
+    .empty-icon {
+      font-size: 4rem;
+      color: var(--text-muted);
+      margin-bottom: var(--spacing-lg);
+    }
+    
+    .empty-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--spacing-md);
+    }
+    
+    .empty-description {
+      font-size: 1rem;
+      color: var(--text-secondary);
+    }
+    
+    /* Footer */
+    .footer {
+      background: var(--text-primary);
+      color: var(--text-white);
+      padding: var(--spacing-xl) var(--spacing-lg);
+      text-align: center;
+      margin-top: var(--spacing-2xl);
+    }
+    
+    .footer p {
+      color: rgba(255, 255, 255, 0.7);
+      margin: 0;
+      font-size: 0.875rem;
+    }
+    
+    /* Mobile Menu */
+    .mobile-menu-btn {
+      display: none;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+    
+    /* Animations */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .nav-links {
+        display: none;
+      }
+      
+      .mobile-menu-btn {
+        display: block;
+      }
+      
+      .main-content {
+        padding: 100px var(--spacing-md) var(--spacing-lg);
+      }
+      
+      .create-list-form {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-md);
+      }
+      
+      .lists-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-lg);
+      }
+      
+      .page-title {
+        font-size: 2rem;
+      }
+    }
+    
+    /* Accessibility */
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+    
+    /* Focus styles for accessibility */
+    .btn-primary:focus,
+    .btn-icon:focus,
+    .nav-link:focus,
+    .form-input:focus {
+      outline: 2px solid var(--primary-color);
+      outline-offset: 2px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="nav-container">
+      <a href="{{ url_for('shopping.index') }}" class="logo">
+        <div class="logo-icon">
+          <i class="fas fa-shopping-cart" aria-hidden="true"></i>
+        </div>
+        SmartKart
+      </a>
+      
+      <nav>
+        <ul class="nav-links">
+          <li><a href="{{ url_for('shopping.home') }}" class="nav-link">
+            <i class="fas fa-home" style="margin-right: 8px;"></i>Home
+          </a></li>
+          <li><a href="{{ url_for('shopping.shopping_trip') }}" class="nav-link">
+            <i class="fas fa-cart-plus" style="margin-right: 8px;"></i>New Trip
+          </a></li>
+          <li><a href="{{ url_for('shopping.rewards') }}" class="nav-link">
+            <i class="fas fa-trophy" style="margin-right: 8px;"></i>Rewards
+          </a></li>
+          <li><a href="{{ url_for('auth.logout') }}" class="nav-link logout">
+            <i class="fas fa-sign-out-alt" style="margin-right: 8px;"></i>Logout
+          </a></li>
+        </ul>
+        
+        <button class="mobile-menu-btn" aria-label="Toggle mobile menu">
+          <i class="fas fa-bars"></i>
+        </button>
+      </nav>
     </div>
+  </header>
 
-    <script>
-      // Global variable to hold the current list items
-      let currentItems = [];
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="container">
+      <!-- Page Header -->
+      <section class="page-header">
+        <h1 class="page-title">Shopping Lists</h1>
+        <p class="page-subtitle">Organize your shopping with smart, manageable lists</p>
+      </section>
 
-      // Load the shopping list from the backend when the page loads
-      document.addEventListener("DOMContentLoaded", loadItems);
+      <!-- Create New List -->
+      <section class="create-list-section">
+        <div class="create-list-header">
+          <div class="create-list-icon">
+            <i class="fas fa-plus" aria-hidden="true"></i>
+          </div>
+          <h2 class="create-list-title">Create New List</h2>
+        </div>
+        
+        <form class="create-list-form" id="createListForm">
+          <div class="form-group">
+            <label for="listName" class="form-label">List Name</label>
+            <input 
+              type="text" 
+              id="listName" 
+              name="listName" 
+              class="form-input"
+              placeholder="e.g., Weekly Groceries, Party Supplies"
+              required
+            />
+          </div>
+          
+          <div class="form-group">
+            <label for="listDescription" class="form-label">Description (Optional)</label>
+            <input 
+              type="text" 
+              id="listDescription" 
+              name="listDescription" 
+              class="form-input"
+              placeholder="Brief description"
+            />
+          </div>
+          
+          <button type="submit" class="btn-primary">
+            <i class="fas fa-plus" aria-hidden="true"></i>
+            Create List
+          </button>
+        </form>
+      </section>
 
-      // Listen for form submission to add a new food item
-      document.getElementById("itemForm").addEventListener("submit", function (event) {
-        event.preventDefault();
-        const nameInput = document.getElementById("foodInput");
-        const qtyInput = document.getElementById("foodQty");
-        const foodName = nameInput.value.trim();
-        const foodQty = parseInt(qtyInput.value, 10);
-        if (foodName !== "" && !isNaN(foodQty) && foodQty > 0) {
-          addFoodItem(foodName, foodQty);
-          nameInput.value = "";
-          qtyInput.value = "1";
+      <!-- Shopping Lists -->
+      <section class="lists-section">
+        <div class="section-header">
+          <h2 class="section-title">
+            <div class="section-icon">
+              <i class="fas fa-list-ul" aria-hidden="true"></i>
+            </div>
+            Your Shopping Lists
+          </h2>
+        </div>
+        
+        <div class="lists-grid" id="listsGrid">
+          <!-- Lists will be populated here by JavaScript -->
+        </div>
+        
+        <!-- Empty State -->
+        <div class="empty-state" id="emptyState" style="display: none;">
+          <div class="empty-icon">
+            <i class="fas fa-clipboard-list" aria-hidden="true"></i>
+          </div>
+          <h3 class="empty-title">No shopping lists yet</h3>
+          <p class="empty-description">Create your first shopping list to get started with organized shopping!</p>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>&copy; 2025 SmartKart. All rights reserved. Shop smarter, live better.</p>
+  </footer>
+
+  <script>
+    // Global variables
+    let shoppingLists = [];
+    
+    // Initialize the page
+    document.addEventListener('DOMContentLoaded', function() {
+      loadShoppingLists();
+      initializeEventListeners();
+    });
+    
+    // Event listeners
+    function initializeEventListeners() {
+      // Create list form
+      document.getElementById('createListForm').addEventListener('submit', handleCreateList);
+    }
+    
+    // Load shopping lists from backend
+    async function loadShoppingLists() {
+      try {
+        const response = await fetch('/api/shopping-lists');
+        const data = await response.json();
+        shoppingLists = data.lists || [];
+        renderShoppingLists();
+      } catch (error) {
+        console.error('Error loading shopping lists:', error);
+        // Show mock data for demonstration
+        showMockData();
+      }
+    }
+    
+    // Handle create new list
+    async function handleCreateList(event) {
+      event.preventDefault();
+      
+      const formData = new FormData(event.target);
+      const listData = {
+        name: formData.get('listName'),
+        description: formData.get('listDescription') || ''
+      };
+      
+      try {
+        const response = await fetch('/api/shopping-lists', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(listData)
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+          // Add new list to the array
+          shoppingLists.push(result.list);
+          renderShoppingLists();
+          
+          // Reset form
+          event.target.reset();
+          
+          // Show success message
+          showNotification('List created successfully!', 'success');
+        } else {
+          showNotification(result.error || 'Failed to create list', 'error');
         }
+      } catch (error) {
+        console.error('Error creating list:', error);
+        showNotification('Failed to create list', 'error');
+      }
+    }
+    
+    // Render shopping lists
+    function renderShoppingLists() {
+      const listsGrid = document.getElementById('listsGrid');
+      const emptyState = document.getElementById('emptyState');
+      
+      if (shoppingLists.length === 0) {
+        listsGrid.style.display = 'none';
+        emptyState.style.display = 'block';
+        return;
+      }
+      
+      listsGrid.style.display = 'grid';
+      emptyState.style.display = 'none';
+      
+      listsGrid.innerHTML = shoppingLists.map(list => `
+        <div class="list-card" data-list-id="${list.id}">
+          <div class="list-header">
+            <div class="list-header-top">
+              <h3 class="list-name">${escapeHtml(list.name)}</h3>
+              <div class="list-actions">
+                <button class="btn-icon btn-edit" onclick="editList(${list.id})" title="Edit list">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn-icon btn-delete" onclick="deleteList(${list.id})" title="Delete list">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </div>
+            <div class="list-meta">
+              <div class="list-stats">
+                <i class="fas fa-shopping-basket" style="color: var(--primary-color);"></i>
+                <span>${list.items ? list.items.length : 0} items</span>
+              </div>
+              <div class="list-stats">
+                <i class="fas fa-calendar" style="color: var(--text-muted);"></i>
+                <span>${formatDate(list.created_at || new Date())}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="list-body">
+            <ul class="list-items">
+              ${(list.items || []).slice(0, 3).map(item => `
+                <li class="list-item">
+                  <div class="item-checkbox ${item.is_completed ? 'completed' : ''}" 
+                       onclick="toggleItem(${list.id}, ${item.id})"></div>
+                  <span class="item-text ${item.is_completed ? 'completed' : ''}">${escapeHtml(item.name)}</span>
+                  <span class="item-quantity">${item.quantity}</span>
+                </li>
+              `).join('')}
+              ${(list.items || []).length > 3 ? `
+                <li class="list-item">
+                  <span class="item-text" style="color: var(--text-muted); font-style: italic;">
+                    +${(list.items || []).length - 3} more items...
+                  </span>
+                </li>
+              ` : ''}
+            </ul>
+            
+            <form class="add-item-form" onsubmit="addItemToList(event, ${list.id})">
+              <input type="text" class="add-item-input" placeholder="Add item..." required>
+              <input type="number" class="add-item-qty" value="1" min="1" required>
+              <button type="submit" class="btn-add-item">
+                <i class="fas fa-plus"></i>
+              </button>
+            </form>
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    // Add item to list
+    async function addItemToList(event, listId) {
+      event.preventDefault();
+      
+      const form = event.target;
+      const itemName = form.querySelector('.add-item-input').value.trim();
+      const quantity = parseInt(form.querySelector('.add-item-qty').value);
+      
+      if (!itemName) return;
+      
+      try {
+        const response = await fetch(`/api/shopping-lists/${listId}/items`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: itemName, quantity: quantity })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+          // Update the list in our array
+          const listIndex = shoppingLists.findIndex(list => list.id === listId);
+          if (listIndex !== -1) {
+            if (!shoppingLists[listIndex].items) {
+              shoppingLists[listIndex].items = [];
+            }
+            shoppingLists[listIndex].items.push(result.item);
+            renderShoppingLists();
+          }
+          
+          // Reset form
+          form.reset();
+          form.querySelector('.add-item-qty').value = 1;
+          
+          showNotification('Item added successfully!', 'success');
+        } else {
+          showNotification(result.error || 'Failed to add item', 'error');
+        }
+      } catch (error) {
+        console.error('Error adding item:', error);
+        showNotification('Failed to add item', 'error');
+      }
+    }
+    
+    // Toggle item completion
+    async function toggleItem(listId, itemId) {
+      try {
+        const response = await fetch(`/api/shopping-lists/${listId}/items/${itemId}/toggle`, {
+          method: 'PATCH'
+        });
+        
+        if (response.ok) {
+          // Update the item in our array
+          const list = shoppingLists.find(list => list.id === listId);
+          if (list && list.items) {
+            const item = list.items.find(item => item.id === itemId);
+            if (item) {
+              item.is_completed = !item.is_completed;
+              renderShoppingLists();
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error toggling item:', error);
+      }
+    }
+    
+    // Edit list
+    function editList(listId) {
+      const list = shoppingLists.find(list => list.id === listId);
+      if (list) {
+        const newName = prompt('Enter new list name:', list.name);
+        if (newName && newName.trim() !== '') {
+          updateListName(listId, newName.trim());
+        }
+      }
+    }
+    
+    // Update list name
+    async function updateListName(listId, newName) {
+      try {
+        const response = await fetch(`/api/shopping-lists/${listId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: newName })
+        });
+        
+        if (response.ok) {
+          const listIndex = shoppingLists.findIndex(list => list.id === listId);
+          if (listIndex !== -1) {
+            shoppingLists[listIndex].name = newName;
+            renderShoppingLists();
+            showNotification('List updated successfully!', 'success');
+          }
+        } else {
+          showNotification('Failed to update list', 'error');
+        }
+      } catch (error) {
+        console.error('Error updating list:', error);
+        showNotification('Failed to update list', 'error');
+      }
+    }
+    
+    // Delete list
+    async function deleteList(listId) {
+      if (!confirm('Are you sure you want to delete this list? This action cannot be undone.')) {
+        return;
+      }
+      
+      try {
+        const response = await fetch(`/api/shopping-lists/${listId}`, {
+          method: 'DELETE'
+        });
+        
+        if (response.ok) {
+          shoppingLists = shoppingLists.filter(list => list.id !== listId);
+          renderShoppingLists();
+          showNotification('List deleted successfully!', 'success');
+        } else {
+          showNotification('Failed to delete list', 'error');
+        }
+      } catch (error) {
+        console.error('Error deleting list:', error);
+        showNotification('Failed to delete list', 'error');
+      }
+    }
+    
+    // Utility functions
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+    
+    function formatDate(date) {
+      const d = new Date(date);
+      return d.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric',
+        year: d.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
       });
-
-      // Event listener for the Save List button
-      document.getElementById("saveBtn").addEventListener("click", saveList);
-
-      // Fetch current items from the backend and update the DOM
-      async function loadItems() {
-        try {
-          const response = await fetch("{{ url_for('shopping.list_get_items') }}");
-          const data = await response.json();
-          updateListDOM(data.items);
-        } catch (err) {
-          console.error("Error loading items:", err);
+    }
+    
+    function showNotification(message, type = 'info') {
+      // Simple notification system - you can enhance this
+      const notification = document.createElement('div');
+      notification.textContent = message;
+      notification.style.cssText = `
+        position: fixed;
+        top: 100px;
+        right: 20px;
+        background: ${type === 'success' ? 'var(--success-color)' : type === 'error' ? 'var(--error-color)' : 'var(--primary-color)'};
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-lg);
+        z-index: 9999;
+        animation: fadeInUp 0.3s ease;
+      `;
+      
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        notification.remove();
+      }, 3000);
+    }
+    
+    // Mock data for demonstration (remove when backend is ready)
+    function showMockData() {
+      shoppingLists = [
+        {
+          id: 1,
+          name: 'Weekly Groceries',
+          description: 'Regular weekly shopping',
+          created_at: new Date('2025-01-15'),
+          items: [
+            { id: 1, name: 'Milk', quantity: 2, is_completed: false },
+            { id: 2, name: 'Bread', quantity: 1, is_completed: true },
+            { id: 3, name: 'Eggs', quantity: 12, is_completed: false },
+            { id: 4, name: 'Cheese', quantity: 1, is_completed: false }
+          ]
+        },
+        {
+          id: 2,
+          name: 'Party Supplies',
+          description: 'Birthday party this weekend',
+          created_at: new Date('2025-01-18'),
+          items: [
+            { id: 5, name: 'Balloons', quantity: 20, is_completed: false },
+            { id: 6, name: 'Cake Mix', quantity: 1, is_completed: true }
+          ]
         }
-      }
-
-      // Send a POST request to add a new food item
-      async function addFoodItem(foodName, quantity) {
-        try {
-          const response = await fetch("{{ url_for('shopping.list_add_item') }}", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ item: foodName, quantity: quantity })
-          });
-          const data = await response.json();
-          updateListDOM(data.items);
-        } catch (err) {
-          console.error("Error adding item:", err);
-        }
-      }
-
-      // Send a POST request to remove a food item
-      async function removeFoodItem(foodName) {
-        try {
-          const response = await fetch("{{ url_for('shopping.list_remove_item') }}", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ item: foodName })
-          });
-          const data = await response.json();
-          updateListDOM(data.items);
-        } catch (err) {
-          console.error("Error removing item:", err);
-        }
-      }
-
-      // Send a POST request to save the current list
-      async function saveList() {
-        try {
-          const response = await fetch("{{ url_for('shopping.list_save') }}", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ items: currentItems })
-          });
-          const data = await response.json();
-          console.log("List saved:", data);
-          alert("Shopping list saved!");
-          window.location.href = "{{ url_for('shopping.home') }}";
-        } catch (err) {
-          console.error("Error saving list:", err);
-          alert("Error saving list.");
-        }
-      }
-
-      // Update the entire list in the DOM and update global variable
-      function updateListDOM(items) {
-        currentItems = items; // Update the global variable
-        const ul = document.getElementById("foodList");
-        ul.innerHTML = "";
-        items.forEach((item) => {
-          addFoodItemToDOM(item);
-        });
-      }
-
-      // Create and append a list item to the DOM
-      // Expects each item to be an object: { name: "Item name", quantity: Number }
-      function addFoodItemToDOM(item) {
-        const ul = document.getElementById("foodList");
-        const li = document.createElement("li");
-
-        // Create span for the food text with quantity displayed
-        const foodText = document.createElement("span");
-        foodText.textContent = `${item.name} (Qty: ${item.quantity})`;
-        foodText.className = "food-text";
-
-        // Create remove button
-        const removeBtn = document.createElement("button");
-        removeBtn.textContent = "Remove";
-        removeBtn.className = "remove-btn";
-        removeBtn.addEventListener("click", function () {
-          removeFoodItem(item.name);
-        });
-
-        li.appendChild(foodText);
-        li.appendChild(removeBtn);
-
-        ul.appendChild(li);
-      }
-    </script>
-  </body>
+      ];
+      renderShoppingLists();
+    }
+  </script>
+</body>
 </html>

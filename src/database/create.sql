@@ -62,12 +62,29 @@ CREATE TABLE budgets (
     PRIMARY KEY (user_ID, month, year)
 );
 
-CREATE TABLE shopping_list (
+-- Create the shopping_lists table (list metadata)
+CREATE TABLE shopping_lists (
     list_id INT AUTO_INCREMENT,
     user_id VARCHAR(50) NOT NULL,
-    item_name VARCHAR(100) NOT NULL,
-    quantity INT NOT NULL DEFAULT 1,
-    status ENUM('pending', 'purchased') NOT NULL DEFAULT 'pending',
+    list_name VARCHAR(100) NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    is_active BOOLEAN DEFAULT TRUE,
     PRIMARY KEY (list_id),
     FOREIGN KEY (user_id) REFERENCES user_account(user_ID)
+);
+
+-- Create the shopping_list_items table (individual items)
+CREATE TABLE shopping_list_items (
+    item_id INT AUTO_INCREMENT,
+    list_id INT NOT NULL,
+    item_name VARCHAR(100) NOT NULL,
+    quantity INT NOT NULL DEFAULT 1,
+    notes TEXT,
+    is_completed BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (item_id),
+    FOREIGN KEY (list_id) REFERENCES shopping_lists(list_id) ON DELETE CASCADE
 );

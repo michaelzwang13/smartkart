@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, session, url_for, redirect, jsonify, flash
+from flask import Blueprint, render_template, request, session, url_for, redirect, flash
 from src.database import get_db
 
 shopping_bp = Blueprint('shopping', __name__)
@@ -122,76 +122,13 @@ def cancel_shopping():
         flash("Your shopping trip has been canceled.", "info")
     return redirect(url_for('shopping.home'))
   
-@shopping_bp.route('/edit-list')
-def edit_list():
-	return render_template('shopping_list.html')
+@shopping_bp.route('/shopping-lists')
+def shopping_lists():
+    """Show the shopping lists page"""
+    if 'user_ID' not in session:
+        return redirect(url_for('auth.login'))
+    return render_template('shopping_list.html')
 
-@shopping_bp.route('/list/items', methods=['GET'])
-def list_get_items():
-    items = session.get('shopping_list', [])
-    if not session.get('db_items_loaded', False):
-        user_ID = session['user_ID']
-        db = get_db()
-        cursor = db.cursor()
-        query = "SELECT list_ID, item_name AS name, quantity FROM shopping_list WHERE user_ID = %s AND status = 'pending'"
-        cursor.execute(query, (user_ID,))
-        db_items = cursor.fetchall()
-        items.extend(db_items)
-        session['shopping_list'] = items
-        session['db_items_loaded'] = True
-        session['to_be_deleted'] = []
-    return jsonify({'items': items})
-
-@shopping_bp.route('/list/add_item', methods=['POST'])
-def list_add_item():
-    data = request.get_json()
-    new_item = {"list_ID": -1, "name": data.get('item'), "quantity": data.get('quantity', 1)}
-    shopping_list = session.get('shopping_list', [])
-    shopping_list.append(new_item)
-    session['shopping_list'] = shopping_list
-    return jsonify({'items': shopping_list})
-
-@shopping_bp.route('/list/remove_item', methods=['POST'])
-def list_remove_item():
-    item_name = request.get_json().get('item')
-    shopping_list = session.get('shopping_list', [])
-    to_be_deleted = session.get('to_be_deleted', [])
-    
-    for product in shopping_list:
-        if product.get('name') == item_name:
-            if product.get('list_ID') != -1:
-              to_be_deleted.append(product.get('list_ID'))
-              session['to_be_deleted'] = to_be_deleted
-            shopping_list.remove(product)
-            session['shopping_list'] = shopping_list
-            return jsonify({'items': shopping_list})
-    return jsonify({'error': 'Item not found'}), 404
-  
-@shopping_bp.route('/list/save', methods=['POST'])
-def list_save():
-    user_ID = session['user_ID']
-    db = get_db()
-    cursor = db.cursor()
-    
-    shopping_list = session.get('shopping_list', [])
-    to_be_deleted = session.get('to_be_deleted', [])
-
-    for product in shopping_list:
-      if product['list_ID'] == -1:
-        cursor.execute("INSERT INTO shopping_list (user_ID, item_name, quantity, status) VALUES(%s, %s, %s, 'pending')", 
-                       (user_ID, product.get("name"), product.get("quantity")))
-        
-    for list_ID in to_be_deleted:
-      cursor.execute("DELETE FROM shopping_list WHERE list_ID = %s", (list_ID,))
-      
-    db.commit()
-    cursor.close()
-    
-    session.pop('shopping_list', None)
-    session.pop('to_be_deleted', None)
-    session.pop('db_items_loaded', None)
-      
-    return jsonify({'items': shopping_list})
 
 @shopping_bp.route('/rewards')
 def rewards():
