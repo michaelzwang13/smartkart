@@ -7,11 +7,11 @@ def retrieve_totals(cart_ID):
     db = get_db()
     cursor = db.cursor()
     
-    query_items = 'SELECT * FROM item WHERE cart_ID = %s'
+    query_items = 'SELECT * FROM cart_item WHERE cart_ID = %s'
     cursor.execute(query_items, (cart_ID,))
     items = cursor.fetchall()
     
-    query_totals = 'SELECT COUNT(*) as num_items, SUM(price * quantity) AS total_spent FROM item WHERE cart_ID = %s'
+    query_totals = 'SELECT COUNT(*) as num_items, SUM(price * quantity) AS total_spent FROM cart_item WHERE cart_ID = %s'
     cursor.execute(query_totals, (cart_ID,))
     totals = cursor.fetchone()
     
@@ -35,11 +35,11 @@ def home():
   cursor = db.cursor()
   query = """
     SELECT c.cart_ID, c.store_name, 
-           (SELECT COUNT(*) FROM item i WHERE i.cart_ID = c.cart_ID) as total_items,
-           (SELECT SUM(i.price * i.quantity) FROM item i WHERE i.cart_ID = c.cart_ID) as total_spent
-    FROM cart c
+           (SELECT COUNT(*) FROM cart_item i WHERE i.cart_ID = c.cart_ID) as total_items,
+           (SELECT SUM(i.price * i.quantity) FROM cart_item i WHERE i.cart_ID = c.cart_ID) as total_spent
+    FROM shopping_cart c
     WHERE c.user_ID = %s 
-      AND EXISTS (SELECT 1 FROM item i WHERE i.cart_ID = c.cart_ID)
+      AND EXISTS (SELECT 1 FROM cart_item i WHERE i.cart_ID = c.cart_ID)
     """
   cursor.execute(query, (user_ID,))
   cart_history = cursor.fetchall()
@@ -54,7 +54,7 @@ def start_shopping():
     db = get_db()
     cursor = db.cursor()
     
-    ins = 'INSERT INTO cart (user_ID, store_name, status) VALUES(%s, %s, %s)'
+    ins = 'INSERT INTO shopping_cart (user_ID, store_name, status) VALUES(%s, %s, %s)'
     cursor.execute(ins, (user_ID, store_name, "active"))
     db.commit()
     session['cart_ID'] = cursor.lastrowid
@@ -76,7 +76,7 @@ def shopping_trip():
         cart_ID = session['cart_ID']
         db = get_db()
         cursor = db.cursor()
-        query = 'SELECT * FROM cart WHERE cart_ID = %s'
+        query = 'SELECT * FROM shopping_cart WHERE cart_ID = %s'
         cursor.execute(query, (cart_ID,))
         cart_session = cursor.fetchone()
         
@@ -101,10 +101,23 @@ def finish_shopping():
     if cart_ID:
         db = get_db()
         cursor = db.cursor()
-        query = "UPDATE cart SET status = 'purchased' WHERE cart_ID = %s"
+        
+        # Calculate total spent for this cart
+        total_query = 'SELECT SUM(price * quantity) AS total_spent FROM cart_item WHERE cart_ID = %s'
+        cursor.execute(total_query, (cart_ID,))
+        total_result = cursor.fetchone()
+        total_spent = float(total_result['total_spent'] or 0)
+        
+        # Update cart status to purchased
+        query = "UPDATE shopping_cart SET status = 'purchased' WHERE cart_ID = %s"
         cursor.execute(query, (cart_ID,))
         db.commit()
         cursor.close()
+        
+        # Update budget with this spending
+        if 'user_ID' in session and total_spent > 0:
+            from src.views.api import update_budget_spending
+            update_budget_spending(session['user_ID'], total_spent)
     
     return redirect(url_for('shopping.home'))
 
@@ -115,8 +128,8 @@ def cancel_shopping():
         db = get_db()
         cursor = db.cursor()
         # Also delete items associated with the cart
-        cursor.execute("DELETE FROM item WHERE cart_ID = %s", (cart_ID,))
-        cursor.execute("DELETE FROM cart WHERE cart_ID = %s", (cart_ID,))
+        cursor.execute("DELETE FROM cart_item WHERE cart_ID = %s", (cart_ID,))
+        cursor.execute("DELETE FROM shopping_cart WHERE cart_ID = %s", (cart_ID,))
         db.commit()
         cursor.close()
         flash("Your shopping trip has been canceled.", "info")

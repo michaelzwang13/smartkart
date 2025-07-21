@@ -143,3 +143,6 @@ desktop.ini
 
 # VS Code
 .vscode/
+
+# Claude
+claude/

@@ -663,10 +663,10 @@
           <div class="chart-header">
             <h3 class="chart-title">Spending Trends</h3>
             <div class="chart-controls">
-              <button class="chart-btn active" data-period="week">7D</button>
-              <button class="chart-btn" data-period="month">1M</button>
-              <button class="chart-btn" data-period="quarter">3M</button>
-              <button class="chart-btn" data-period="year">1Y</button>
+              <button class="chart-btn active" data-period="7d">7D</button>
+              <button class="chart-btn" data-period="1m">1M</button>
+              <button class="chart-btn" data-period="3m">3M</button>
+              <button class="chart-btn" data-period="1y">1Y</button>
             </div>
           </div>
           <div class="chart-wrapper">
@@ -793,58 +793,24 @@
     let spendingChart;
     let categoryChart;
     
-    // Sample data - in production this would come from your API
-    const mockData = {
-      spending: {
-        week: [
-          { date: '2025-01-15', amount: 45.30 },
-          { date: '2025-01-16', amount: 32.75 },
-          { date: '2025-01-17', amount: 67.20 },
-          { date: '2025-01-18', amount: 23.45 },
-          { date: '2025-01-19', amount: 89.60 },
-          { date: '2025-01-20', amount: 41.25 },
-          { date: '2025-01-21', amount: 55.80 }
-        ],
-        month: [
-          { date: '2025-01-01', amount: 234.50 },
-          { date: '2025-01-08', amount: 198.75 },
-          { date: '2025-01-15', amount: 267.40 },
-          { date: '2025-01-22', amount: 189.30 }
-        ]
-      },
-      categories: [
-        { name: 'Fresh Produce', amount: 120, color: '#10b981' },
-        { name: 'Meat & Seafood', amount: 180, color: '#667eea' },
-        { name: 'Bakery & Dairy', amount: 85, color: '#f59e0b' },
-        { name: 'Pantry Items', amount: 95, color: '#ef4444' },
-        { name: 'Frozen Foods', amount: 65, color: '#8b5cf6' },
-        { name: 'Beverages', amount: 45, color: '#06b6d4' }
-      ]
-    };
+    // Mock data removed for debugging - using real API data only
     
     // Initialize spending chart
     function initSpendingChart() {
       const ctx = document.getElementById('spendingChart').getContext('2d');
       
       spendingChart = new Chart(ctx, {
-        type: 'line',
+        type: 'bar',
         data: {
+          labels: [],
           datasets: [{
             label: 'Daily Spending',
-            data: mockData.spending.week.map(item => ({
-              x: item.date,
-              y: item.amount
-            })),
+            data: [],
+            backgroundColor: '#667eea',
             borderColor: '#667eea',
-            backgroundColor: 'rgba(102, 126, 234, 0.1)',
-            borderWidth: 3,
-            fill: true,
-            tension: 0.4,
-            pointBackgroundColor: '#667eea',
-            pointBorderColor: '#ffffff',
-            pointBorderWidth: 2,
-            pointRadius: 6,
-            pointHoverRadius: 8
+            borderWidth: 1,
+            borderRadius: 6,
+            borderSkipped: false
           }]
         },
         options: {
@@ -857,13 +823,6 @@
           },
           scales: {
             x: {
-              type: 'time',
-              time: {
-                unit: 'day',
-                displayFormats: {
-                  day: 'MMM dd'
-                }
-              },
               grid: {
                 display: false
               },
@@ -901,10 +860,10 @@
       categoryChart = new Chart(ctx, {
         type: 'doughnut',
         data: {
-          labels: mockData.categories.map(cat => cat.name),
+          labels: [],
           datasets: [{
-            data: mockData.categories.map(cat => cat.amount),
-            backgroundColor: mockData.categories.map(cat => cat.color),
+            data: [],
+            backgroundColor: ['#10b981', '#667eea', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'],
             borderWidth: 0,
             hoverOffset: 10
           }]
@@ -938,25 +897,9 @@
       });
     }
     
-    // Update chart based on time period
+    // Update chart based on time period (legacy function - now using loadSpendingTrends directly)
     function updateChart(period) {
-      const data = mockData.spending[period] || mockData.spending.week;
-      
-      spendingChart.data.datasets[0].data = data.map(item => ({
-        x: item.date,
-        y: item.amount
-      }));
-      
-      // Update time unit based on period
-      let timeUnit = 'day';
-      if (period === 'month' || period === 'quarter') {
-        timeUnit = 'week';
-      } else if (period === 'year') {
-        timeUnit = 'month';
-      }
-      
-      spendingChart.options.scales.x.time.unit = timeUnit;
-      spendingChart.update('active');
+      loadSpendingTrends(period);
       
       // Update active button
       document.querySelectorAll('.chart-btn').forEach(btn => {
@@ -1023,29 +966,39 @@
     }
     
     // Load spending trends from API
-    async function loadSpendingTrends(period = 'week') {
+    async function loadSpendingTrends(period = '7d') {
+      console.log('DEBUG: Loading spending trends for period:', period);
       try {
         const response = await fetch(`/api/budget/spending-trends?period=${period}`);
+        console.log('DEBUG: Response status:', response.status);
         if (response.ok) {
           const data = await response.json();
+          console.log('DEBUG: Received data:', data);
           
           if (data.trends && data.trends.length > 0) {
-            spendingChart.data.datasets[0].data = data.trends.map(item => ({
-              x: item.date,
-              y: item.amount
-            }));
+            // Update labels and data for bar chart
+            const labels = data.trends.map(item => item.label || item.date);
+            const amounts = data.trends.map(item => item.amount);
             
-            // Update time unit based on period
-            let timeUnit = 'day';
-            if (period === 'month' || period === 'quarter') {
-              timeUnit = 'week';
-            } else if (period === 'year') {
-              timeUnit = 'month';
+            spendingChart.data.labels = labels;
+            spendingChart.data.datasets[0].data = amounts;
+            
+            // Update label based on period
+            let label = 'Daily Spending';
+            if (period === '1m' || period === '3m') {
+              label = 'Weekly Spending';
+            } else if (period === '1y') {
+              label = 'Monthly Spending';
             }
             
-            spendingChart.options.scales.x.time.unit = timeUnit;
+            spendingChart.data.datasets[0].label = label;
+            console.log('DEBUG: Updated chart with', amounts.length, 'data points');
             spendingChart.update('active');
+          } else {
+            console.log('DEBUG: No trends data received');
           }
+        } else {
+          console.error('DEBUG: Response not OK:', response.status);
         }
       } catch (error) {
         console.error('Error loading spending trends:', error);
@@ -1189,7 +1142,11 @@
       // Chart period controls
       document.querySelectorAll('.chart-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-          updateChart(btn.dataset.period);
+          loadSpendingTrends(btn.dataset.period);
+          
+          // Update active button
+          document.querySelectorAll('.chart-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
         });
       });
       
@@ -1198,7 +1155,7 @@
       
       // Load real data
       loadBudgetData();
-      loadSpendingTrends('week');
+      loadSpendingTrends('7d');
       loadCategoryData();
     });
   </script>

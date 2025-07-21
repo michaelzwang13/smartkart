@@ -9,18 +9,19 @@ CREATE TABLE user_account (
     PRIMARY KEY (user_ID)
 );
 
--- Create the cart table
-CREATE TABLE cart (
+-- Create the shopping_cart table
+CREATE TABLE shopping_cart (
     cart_ID INT AUTO_INCREMENT,
     user_ID VARCHAR(50),
     store_name VARCHAR(25) NOT NULL,
     status ENUM('active', 'purchased') NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (cart_ID),                         
     FOREIGN KEY (user_ID) REFERENCES user_account(user_ID)
 );
 
--- Create the item table
-CREATE TABLE item (
+-- Create the cart_item table
+CREATE TABLE cart_item (
     item_ID INT AUTO_INCREMENT,
     cart_ID INT NOT NULL,
     user_ID VARCHAR(50), 
@@ -31,7 +32,7 @@ CREATE TABLE item (
     item_lifetime INT, -- # of DAYS
     image_url VARCHAR(500),
     PRIMARY KEY (item_ID),
-    FOREIGN KEY (cart_ID) REFERENCES cart(cart_ID),
+    FOREIGN KEY (cart_ID) REFERENCES shopping_cart(cart_ID),
     FOREIGN KEY (user_ID) REFERENCES user_account(user_ID)
 );
 
@@ -54,12 +55,34 @@ CREATE TABLE user_achievements (
     FOREIGN KEY (achievement_ID) REFERENCES achievements(achievement_ID)
 );
 
-CREATE TABLE budgets (
-    user_ID VARCHAR(50),
-    month INT,
-    year INT,
-    budget DECIMAL(10,2),
-    PRIMARY KEY (user_ID, month, year)
+-- Create the budget table
+CREATE TABLE budget (
+    budget_id INT AUTO_INCREMENT,
+    user_id VARCHAR(50) NOT NULL,
+    list_id INT NULL,  -- optional link to a specific shopping list
+    allocated_amount DECIMAL(10, 2) NOT NULL DEFAULT 0.00,  -- planned budget
+    total_spent DECIMAL(10, 2) DEFAULT 0.00,               -- running total
+    remaining_amount DECIMAL(10, 2) GENERATED ALWAYS AS (allocated_amount - total_spent) STORED,
+    alert_threshold DECIMAL(5, 2) DEFAULT 0.80,             -- trigger alert when 80% of budget used
+    currency VARCHAR(10) DEFAULT 'USD',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (budget_id),
+    FOREIGN KEY (user_id) REFERENCES user_account(user_ID),
+    FOREIGN KEY (list_id) REFERENCES shopping_lists(list_id)
+);
+
+-- Create user budget settings table for preferences
+CREATE TABLE user_budget_settings (
+    user_id VARCHAR(50) PRIMARY KEY,
+    monthly_budget DECIMAL(10, 2) DEFAULT 1000.00,
+    budget_period ENUM('weekly', 'biweekly', 'monthly') DEFAULT 'monthly',
+    alert_threshold DECIMAL(5, 2) DEFAULT 80.00,
+    category_limits_enabled BOOLEAN DEFAULT TRUE,
+    currency VARCHAR(10) DEFAULT 'USD',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES user_account(user_ID)
 );
 
 -- Create the shopping_lists table (list metadata)

@@ -17,11 +17,11 @@ def add_item():
 
     db = get_db()
     cursor = db.cursor()
-    ins = 'INSERT INTO item (cart_ID, user_ID, quantity, item_name, price, upc, item_lifetime, image_url) VALUES(%s, %s, %s, %s, %s, %s, %s, %s)'
+    ins = 'INSERT INTO cart_item (cart_ID, user_ID, quantity, item_name, price, upc, item_lifetime, image_url) VALUES(%s, %s, %s, %s, %s, %s, %s, %s)'
     cursor.execute(ins, (session['cart_ID'], session['user_ID'], data['quantity'], data['itemName'], data['price'], data['upc'], 7, data['imageUrl']))
     db.commit()
     
-    query = 'SELECT * FROM item WHERE cart_ID = %s'
+    query = 'SELECT * FROM cart_item WHERE cart_ID = %s'
     cursor.execute(query, (session['cart_ID'],))
     items = cursor.fetchall()
     cursor.close()
@@ -39,18 +39,18 @@ def remove_last_item():
     
     try:
         # Get the most recently added item
-        query = 'SELECT item_ID FROM item WHERE cart_ID = %s ORDER BY item_ID DESC LIMIT 1'
+        query = 'SELECT item_ID FROM cart_item WHERE cart_ID = %s ORDER BY item_ID DESC LIMIT 1'
         cursor.execute(query, (session['cart_ID'],))
         last_item = cursor.fetchone()
         
         if last_item:
             # Delete the item
-            delete_query = 'DELETE FROM item WHERE item_ID = %s'
+            delete_query = 'DELETE FROM cart_item WHERE item_ID = %s'
             cursor.execute(delete_query, (last_item['item_ID'],))
             db.commit()
             
             # Return updated cart items
-            query = 'SELECT * FROM item WHERE cart_ID = %s'
+            query = 'SELECT * FROM cart_item WHERE cart_ID = %s'
             cursor.execute(query, (session['cart_ID'],))
             items = cursor.fetchall()
             cursor.close()
@@ -90,18 +90,18 @@ def update_item_quantity():
     
     try:
         # Verify the item belongs to the current user's cart
-        verify_query = 'SELECT item_ID FROM item WHERE item_ID = %s AND cart_ID = %s AND user_ID = %s'
+        verify_query = 'SELECT item_ID FROM cart_item WHERE item_ID = %s AND cart_ID = %s AND user_ID = %s'
         cursor.execute(verify_query, (item_id, session['cart_ID'], session['user_ID']))
         if not cursor.fetchone():
             return jsonify({"error": "Item not found"}), 404
         
         # Update the quantity
-        update_query = 'UPDATE item SET quantity = %s WHERE item_ID = %s'
+        update_query = 'UPDATE cart_item SET quantity = %s WHERE item_ID = %s'
         cursor.execute(update_query, (quantity, item_id))
         db.commit()
         
         # Return updated cart items
-        query = 'SELECT item_ID, item_name, price, quantity, image_url FROM item WHERE cart_ID = %s'
+        query = 'SELECT item_ID, item_name, price, quantity, image_url FROM cart_item WHERE cart_ID = %s'
         cursor.execute(query, (session['cart_ID'],))
         items = cursor.fetchall()
         
@@ -145,18 +145,18 @@ def delete_item():
     
     try:
         # Verify the item belongs to the current user's cart
-        verify_query = 'SELECT item_ID FROM item WHERE item_ID = %s AND cart_ID = %s AND user_ID = %s'
+        verify_query = 'SELECT item_ID FROM cart_item WHERE item_ID = %s AND cart_ID = %s AND user_ID = %s'
         cursor.execute(verify_query, (item_id, session['cart_ID'], session['user_ID']))
         if not cursor.fetchone():
             return jsonify({"error": "Item not found"}), 404
         
         # Delete the item
-        delete_query = 'DELETE FROM item WHERE item_ID = %s'
+        delete_query = 'DELETE FROM cart_item WHERE item_ID = %s'
         cursor.execute(delete_query, (item_id,))
         db.commit()
         
         # Return updated cart items
-        query = 'SELECT item_ID, item_name, price, quantity, image_url FROM item WHERE cart_ID = %s'
+        query = 'SELECT item_ID, item_name, price, quantity, image_url FROM cart_item WHERE cart_ID = %s'
         cursor.execute(query, (session['cart_ID'],))
         items = cursor.fetchall()
         
@@ -274,41 +274,74 @@ def get_budget_overview():
     
     try:
         # Get user's current budget settings (or default)
-        budget_query = """
+        settings_query = """
             SELECT monthly_budget, alert_threshold, budget_period 
             FROM user_budget_settings 
             WHERE user_id = %s
         """
-        cursor.execute(budget_query, (user_ID,))
+        cursor.execute(settings_query, (user_ID,))
         budget_settings = cursor.fetchone()
         
         if not budget_settings:
-            # Default values if no settings exist
+            # Create default settings for new user
+            insert_settings = """
+                INSERT INTO user_budget_settings (user_id, monthly_budget, alert_threshold, budget_period)
+                VALUES (%s, 1000.00, 80.00, 'monthly')
+            """
+            cursor.execute(insert_settings, (user_ID,))
+            db.commit()
+            
             monthly_budget = 1000
             alert_threshold = 80
             budget_period = 'monthly'
         else:
-            monthly_budget = budget_settings['monthly_budget']
-            alert_threshold = budget_settings['alert_threshold']
+            monthly_budget = float(budget_settings['monthly_budget'])
+            alert_threshold = float(budget_settings['alert_threshold'])
             budget_period = budget_settings['budget_period']
         
-        # Get current month's spending
-        current_month_query = """
-            SELECT SUM(i.price * i.quantity) as total_spent,
-                   COUNT(DISTINCT c.cart_ID) as total_trips
-            FROM cart c
-            JOIN item i ON c.cart_ID = i.cart_ID
+        # Get or create current month's budget entry
+        budget_query = """
+            SELECT budget_id, allocated_amount, total_spent, remaining_amount
+            FROM budget 
+            WHERE user_id = %s 
+              AND MONTH(created_at) = MONTH(CURRENT_DATE())
+              AND YEAR(created_at) = YEAR(CURRENT_DATE())
+              AND list_id IS NULL
+            ORDER BY created_at DESC
+            LIMIT 1
+        """
+        cursor.execute(budget_query, (user_ID,))
+        current_budget = cursor.fetchone()
+        
+        if not current_budget:
+            # Create new budget entry for this month
+            insert_budget = """
+                INSERT INTO budget (user_id, allocated_amount, alert_threshold)
+                VALUES (%s, %s, %s)
+            """
+            cursor.execute(insert_budget, (user_ID, monthly_budget, alert_threshold/100))
+            db.commit()
+            
+            allocated_amount = monthly_budget
+            total_spent = 0
+            remaining = monthly_budget
+        else:
+            allocated_amount = float(current_budget['allocated_amount'])
+            total_spent = float(current_budget['total_spent'] or 0)
+            remaining = float(current_budget['remaining_amount'] or 0)
+        
+        # Get total trips this month
+        trips_query = """
+            SELECT COUNT(DISTINCT c.cart_ID) as total_trips
+            FROM shopping_cart c
             WHERE c.user_ID = %s 
               AND c.status = 'purchased'
               AND MONTH(c.created_at) = MONTH(CURRENT_DATE())
               AND YEAR(c.created_at) = YEAR(CURRENT_DATE())
         """
-        cursor.execute(current_month_query, (user_ID,))
-        current_stats = cursor.fetchone()
-        
-        total_spent = float(current_stats['total_spent'] or 0)
-        total_trips = current_stats['total_trips'] or 0
-        remaining = monthly_budget - total_spent
+        cursor.execute(trips_query, (user_ID,))
+        trips_result = cursor.fetchone()
+        total_trips = trips_result['total_trips'] or 0
         
         # Calculate daily average (based on current day of month)
         from datetime import datetime
@@ -318,7 +351,7 @@ def get_budget_overview():
         cursor.close()
         
         return jsonify({
-            'monthly_budget': monthly_budget,
+            'monthly_budget': allocated_amount,
             'total_spent': total_spent,
             'remaining': remaining,
             'daily_average': daily_avg,
@@ -328,6 +361,7 @@ def get_budget_overview():
         })
         
     except Exception as e:
+        db.rollback()
         return jsonify({'error': f'Failed to get budget overview: {str(e)}'}), 500
     finally:
         cursor.close()
@@ -339,47 +373,60 @@ def get_spending_trends():
         return jsonify({'error': 'Not authenticated'}), 401
     
     user_ID = session['user_ID']
-    period = request.args.get('period', 'week')  # week, month, quarter, year
+    period = request.args.get('period', '7d')  # 7d, 1m, 3m, 1y
     
     db = get_db()
     cursor = db.cursor()
     
     try:
-        if period == 'week':
-            # Last 7 days
+        if period == '7d':
+            # Last 7 days - daily buckets
             query = """
                 SELECT DATE(c.created_at) as date, 
                        COALESCE(SUM(i.price * i.quantity), 0) as amount
-                FROM cart c
-                LEFT JOIN item i ON c.cart_ID = i.cart_ID
+                FROM shopping_cart c
+                LEFT JOIN cart_item i ON c.cart_ID = i.cart_ID
                 WHERE c.user_ID = %s 
                   AND c.status = 'purchased'
                   AND c.created_at >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
                 GROUP BY DATE(c.created_at)
                 ORDER BY date
             """
-        elif period == 'month':
-            # Last 4 weeks
+        elif period == '1m':
+            # Last 30-31 days - weekly buckets (4-5 bars)
             query = """
-                SELECT DATE(DATE_SUB(c.created_at, INTERVAL DAYOFWEEK(c.created_at)-1 DAY)) as date,
+                SELECT DATE(DATE_SUB(c.created_at, INTERVAL DAYOFWEEK(c.created_at)-2 DAY)) as date,
                        COALESCE(SUM(i.price * i.quantity), 0) as amount
-                FROM cart c
-                LEFT JOIN item i ON c.cart_ID = i.cart_ID
+                FROM shopping_cart c
+                LEFT JOIN cart_item i ON c.cart_ID = i.cart_ID
                 WHERE c.user_ID = %s 
                   AND c.status = 'purchased'
-                  AND c.created_at >= DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH)
-                GROUP BY WEEK(c.created_at)
+                  AND c.created_at >= DATE_SUB(CURRENT_DATE(), INTERVAL 31 DAY)
+                GROUP BY YEARWEEK(c.created_at, 1)
                 ORDER BY date
             """
-        else:  # quarter or year - simplified to show last 3 months
+        elif period == '3m':
+            # Last 90 days - weekly buckets (6-12 bars)
+            query = """
+                SELECT DATE(DATE_SUB(c.created_at, INTERVAL DAYOFWEEK(c.created_at)-2 DAY)) as date,
+                       COALESCE(SUM(i.price * i.quantity), 0) as amount
+                FROM shopping_cart c
+                LEFT JOIN cart_item i ON c.cart_ID = i.cart_ID
+                WHERE c.user_ID = %s 
+                  AND c.status = 'purchased'
+                  AND c.created_at >= DATE_SUB(CURRENT_DATE(), INTERVAL 90 DAY)
+                GROUP BY YEARWEEK(c.created_at, 1)
+                ORDER BY date
+            """
+        else:  # 1y - Last 12 months - monthly buckets
             query = """
                 SELECT DATE(CONCAT(YEAR(c.created_at), '-', LPAD(MONTH(c.created_at), 2, '0'), '-01')) as date,
                        COALESCE(SUM(i.price * i.quantity), 0) as amount
-                FROM cart c
-                LEFT JOIN item i ON c.cart_ID = i.cart_ID
+                FROM shopping_cart c
+                LEFT JOIN cart_item i ON c.cart_ID = i.cart_ID
                 WHERE c.user_ID = %s 
                   AND c.status = 'purchased'
-                  AND c.created_at >= DATE_SUB(CURRENT_DATE(), INTERVAL 3 MONTH)
+                  AND c.created_at >= DATE_SUB(CURRENT_DATE(), INTERVAL 12 MONTH)
                 GROUP BY YEAR(c.created_at), MONTH(c.created_at)
                 ORDER BY date
             """
@@ -387,17 +434,118 @@ def get_spending_trends():
         cursor.execute(query, (user_ID,))
         trends = cursor.fetchall()
         
-        # Convert to list of dictionaries with proper date formatting
-        formatted_trends = []
+        # Create a complete date range for the period
+        from datetime import datetime, timedelta
+        import calendar
+        
+        # Debug: print raw data
+        print(f"DEBUG: Period={period}, Raw trends count: {len(trends)}")
         for trend in trends:
-            formatted_trends.append({
-                'date': trend['date'].strftime('%Y-%m-%d'),
-                'amount': float(trend['amount'])
-            })
+            print(f"DEBUG: Raw trend: {trend}")
+        
+        # Convert existing data to dictionary for easy lookup
+        trend_data = {}
+        for trend in trends:
+            date_key = trend['date'].strftime('%Y-%m-%d')
+            trend_data[date_key] = float(trend['amount'])
+            print(f"DEBUG: Added to trend_data: {date_key} = {trend_data[date_key]}")
+        
+        # Generate complete date range and labels based on period
+        formatted_trends = []
+        if period == '7d':
+            # Last 7 days - daily buckets (7 bars)
+            for i in range(7):
+                date = (datetime.now() - timedelta(days=6-i)).date()
+                date_str = date.strftime('%Y-%m-%d')
+                label = date.strftime('%b %d')  # "Jul 14", "Jul 15"
+                formatted_trends.append({
+                    'date': date_str,
+                    'label': label,
+                    'amount': trend_data.get(date_str, 0.0)
+                })
+        elif period == '1m':
+            # Last 31 days - weekly buckets (4-5 bars)
+            # Simplify: just sum all data from trend_data and create 5 weeks
+            weeks_back = 5
+            for i in range(weeks_back):
+                # Calculate week start (Monday of each week)
+                days_back = (weeks_back - 1 - i) * 7 + datetime.now().weekday()
+                week_start = (datetime.now() - timedelta(days=days_back)).date()
+                
+                # Sum all data for this week
+                week_amount = 0.0
+                for j in range(7):  # Sum 7 days of the week
+                    day = week_start + timedelta(days=j)
+                    day_str = day.strftime('%Y-%m-%d')
+                    week_amount += trend_data.get(day_str, 0.0)
+                
+                week_start_str = week_start.strftime('%Y-%m-%d')
+                label = f"Week of {week_start.strftime('%b %d')}"
+                formatted_trends.append({
+                    'date': week_start_str,
+                    'label': label,
+                    'amount': week_amount
+                })
+        elif period == '3m':
+            # Last 90 days - weekly buckets (12 bars)
+            weeks_back = 12
+            for i in range(weeks_back):
+                # Calculate week start (Monday of each week)
+                days_back = (weeks_back - 1 - i) * 7 + datetime.now().weekday()
+                week_start = (datetime.now() - timedelta(days=days_back)).date()
+                
+                # Sum all data for this week
+                week_amount = 0.0
+                for j in range(7):  # Sum 7 days of the week
+                    day = week_start + timedelta(days=j)
+                    day_str = day.strftime('%Y-%m-%d')
+                    week_amount += trend_data.get(day_str, 0.0)
+                
+                week_start_str = week_start.strftime('%Y-%m-%d')
+                label = f"Week of {week_start.strftime('%b %d')}"
+                formatted_trends.append({
+                    'date': week_start_str,
+                    'label': label,
+                    'amount': week_amount
+                })
+        else:  # 1y - Last 12 months - monthly buckets (12 bars)
+            for i in range(12):
+                # Calculate month (11 months ago to current month)
+                current_month = datetime.now().replace(day=1)
+                months_back = 11 - i
+                
+                target_month = current_month
+                for _ in range(months_back):
+                    if target_month.month == 1:
+                        target_month = target_month.replace(year=target_month.year-1, month=12)
+                    else:
+                        target_month = target_month.replace(month=target_month.month-1)
+                
+                # Sum all data for this month
+                month_amount = 0.0
+                # Check all possible days in the month
+                days_in_month = calendar.monthrange(target_month.year, target_month.month)[1]
+                for day in range(1, days_in_month + 1):
+                    day_date = target_month.replace(day=day)
+                    day_str = day_date.strftime('%Y-%m-%d')
+                    month_amount += trend_data.get(day_str, 0.0)
+                
+                date_str = target_month.strftime('%Y-%m-%d')
+                label = target_month.strftime('%b')
+                formatted_trends.append({
+                    'date': date_str,
+                    'label': label,
+                    'amount': month_amount
+                })
         
         cursor.close()
         
-        return jsonify({'trends': formatted_trends})
+        print(f"DEBUG: Final formatted_trends: {formatted_trends}")
+        
+        return jsonify({
+            'trends': formatted_trends,
+            'period': period
+        })
         
     except Exception as e:
         return jsonify({'error': f'Failed to get spending trends: {str(e)}'}), 500
@@ -418,8 +566,8 @@ def get_category_breakdown():
         # Get current month's items
         query = """
             SELECT i.item_name, SUM(i.price * i.quantity) as amount
-            FROM cart c
-            JOIN item i ON c.cart_ID = i.cart_ID
+            FROM shopping_cart c
+            JOIN cart_item i ON c.cart_ID = i.cart_ID
             WHERE c.user_ID = %s 
               AND c.status = 'purchased'
               AND MONTH(c.created_at) = MONTH(CURRENT_DATE())
@@ -486,21 +634,112 @@ def update_budget_settings():
     if not data:
         return jsonify({'error': 'No data provided'}), 400
     
-    monthly_budget = data.get('monthly_budget', 1000)
+    monthly_budget = float(data.get('monthly_budget', 1000))
     budget_period = data.get('budget_period', 'monthly')
-    alert_threshold = data.get('alert_threshold', 80)
+    alert_threshold = float(data.get('alert_threshold', 80))
     category_limits = data.get('category_limits', 'enabled')
     
-    # For now, we'll store this in session since we don't have a user_budget_settings table
-    # In production, you'd create this table
-    session['budget_settings'] = {
-        'monthly_budget': monthly_budget,
-        'budget_period': budget_period,
-        'alert_threshold': alert_threshold,
-        'category_limits_enabled': category_limits == 'enabled'
-    }
+    db = get_db()
+    cursor = db.cursor()
     
-    return jsonify({'status': 'success', 'message': 'Budget settings updated successfully'})
+    try:
+        # Check if user already has budget settings
+        check_query = "SELECT user_id FROM user_budget_settings WHERE user_id = %s"
+        cursor.execute(check_query, (user_ID,))
+        existing = cursor.fetchone()
+        
+        if existing:
+            # Update existing settings
+            update_query = """
+                UPDATE user_budget_settings 
+                SET monthly_budget = %s, budget_period = %s, alert_threshold = %s, 
+                    category_limits_enabled = %s, updated_at = CURRENT_TIMESTAMP
+                WHERE user_id = %s
+            """
+            cursor.execute(update_query, (monthly_budget, budget_period, alert_threshold, 
+                                        category_limits == 'enabled', user_ID))
+        else:
+            # Create new settings
+            insert_query = """
+                INSERT INTO user_budget_settings 
+                (user_id, monthly_budget, budget_period, alert_threshold, category_limits_enabled)
+                VALUES (%s, %s, %s, %s, %s)
+            """
+            cursor.execute(insert_query, (user_ID, monthly_budget, budget_period, 
+                                        alert_threshold, category_limits == 'enabled'))
+        
+        # Update current month's budget allocation if it exists
+        update_budget_query = """
+            UPDATE budget 
+            SET allocated_amount = %s, alert_threshold = %s, updated_at = CURRENT_TIMESTAMP
+            WHERE user_id = %s 
+              AND MONTH(created_at) = MONTH(CURRENT_DATE())
+              AND YEAR(created_at) = YEAR(CURRENT_DATE())
+              AND list_id IS NULL
+        """
+        cursor.execute(update_budget_query, (monthly_budget, alert_threshold/100, user_ID))
+        
+        db.commit()
+        cursor.close()
+        
+        return jsonify({'status': 'success', 'message': 'Budget settings updated successfully'})
+        
+    except Exception as e:
+        db.rollback()
+        return jsonify({'error': f'Failed to update budget settings: {str(e)}'}), 500
+    finally:
+        cursor.close()
+
+def update_budget_spending(user_id, amount_spent):
+    """Helper function to update budget total_spent when a shopping trip is completed"""
+    db = get_db()
+    cursor = db.cursor()
+    
+    try:
+        # Get current month's budget entry
+        budget_query = """
+            SELECT budget_id FROM budget 
+            WHERE user_id = %s 
+              AND MONTH(created_at) = MONTH(CURRENT_DATE())
+              AND YEAR(created_at) = YEAR(CURRENT_DATE())
+              AND list_id IS NULL
+            ORDER BY created_at DESC
+            LIMIT 1
+        """
+        cursor.execute(budget_query, (user_id,))
+        budget_entry = cursor.fetchone()
+        
+        if budget_entry:
+            # Update existing budget entry
+            update_query = """
+                UPDATE budget 
+                SET total_spent = total_spent + %s, updated_at = CURRENT_TIMESTAMP
+                WHERE budget_id = %s
+            """
+            cursor.execute(update_query, (amount_spent, budget_entry['budget_id']))
+        else:
+            # Get user's budget settings to create new entry
+            settings_query = "SELECT monthly_budget, alert_threshold FROM user_budget_settings WHERE user_id = %s"
+            cursor.execute(settings_query, (user_id,))
+            settings = cursor.fetchone()
+            
+            monthly_budget = settings['monthly_budget'] if settings else 1000
+            alert_threshold = settings['alert_threshold'] if settings else 80
+            
+            # Create new budget entry
+            insert_query = """
+                INSERT INTO budget (user_id, allocated_amount, total_spent, alert_threshold)
+                VALUES (%s, %s, %s, %s)
+            """
+            cursor.execute(insert_query, (user_id, monthly_budget, amount_spent, alert_threshold/100))
+        
+        db.commit()
+        
+    except Exception as e:
+        db.rollback()
+        print(f"Error updating budget spending: {str(e)}")
+    finally:
+        cursor.close()
 
 # Shopping Lists API Routes
 
