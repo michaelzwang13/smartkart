@@ -577,6 +577,220 @@
       outline: 2px solid var(--primary-color);
       outline-offset: 2px;
     }
+
+    /* Modal Styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+
+    .modal-content {
+      background: var(--bg-primary);
+      border-radius: var(--border-radius-lg);
+      box-shadow: var(--shadow-xl);
+      max-width: 600px;
+      width: 90%;
+      max-height: 80vh;
+      overflow: hidden;
+      border: 1px solid var(--border-light);
+    }
+
+    .modal-header {
+      padding: var(--spacing-lg);
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--accent-gradient);
+      color: var(--text-white);
+    }
+
+    .modal-header h3 {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 2rem;
+      color: var(--text-white);
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+      opacity: 0.8;
+      transition: opacity 0.2s ease;
+    }
+
+    .modal-close:hover {
+      opacity: 1;
+    }
+
+    .modal-body {
+      padding: var(--spacing-lg);
+      max-height: 60vh;
+      overflow-y: auto;
+    }
+
+    .modal-summary {
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .summary-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--spacing-md);
+      text-align: center;
+    }
+
+    .modal-summary .stat-item {
+      padding: var(--spacing-md);
+      background: var(--bg-secondary);
+      border-radius: var(--border-radius);
+      border: 1px solid var(--border-light);
+    }
+
+    .modal-summary .stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary-color);
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .modal-summary .stat-label {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .trips-container {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-md);
+    }
+
+    .trip-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-light);
+      border-radius: var(--border-radius);
+      padding: var(--spacing-md);
+      transition: all 0.2s ease;
+    }
+
+    .trip-card:hover {
+      border-color: var(--primary-color);
+      box-shadow: var(--shadow-md);
+    }
+
+    .trip-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--spacing-sm);
+      padding-bottom: var(--spacing-sm);
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .trip-info h4 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .trip-meta {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-top: var(--spacing-xs);
+    }
+
+    .trip-total {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: var(--primary-color);
+    }
+
+    .trip-stats {
+      text-align: right;
+    }
+
+    .trip-items {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-top: var(--spacing-xs);
+    }
+
+    .items-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--spacing-sm);
+    }
+
+    .item-card {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-sm);
+      background: var(--bg-primary);
+      border-radius: var(--border-radius-sm);
+      border: 1px solid var(--border-light);
+    }
+
+    .item-image {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--border-radius-sm);
+      object-fit: cover;
+      background: var(--bg-tertiary);
+    }
+
+    .item-details {
+      flex: 1;
+    }
+
+    .item-name {
+      font-weight: 600;
+      color: var(--text-primary);
+      font-size: 0.875rem;
+      margin-bottom: 2px;
+    }
+
+    .item-quantity {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .item-price {
+      font-weight: 600;
+      color: var(--primary-color);
+      font-size: 0.875rem;
+    }
+
+    @media (max-width: 768px) {
+      .modal-content {
+        margin: var(--spacing-md);
+        width: calc(100% - 2rem);
+      }
+
+      .summary-stats {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-sm);
+      }
+
+      .items-list {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
@@ -786,6 +1000,38 @@
         </div>
       </section>
     </div>
+
+    <!-- Shopping Details Popup Modal -->
+    <div id="shoppingModal" class="modal-overlay" style="display: none;">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="modalTitle">Shopping Details</h3>
+          <button class="modal-close" onclick="closeShoppingModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="modal-summary">
+            <div class="summary-stats">
+              <div class="stat-item">
+                <div class="stat-value" id="modalTotalAmount">$0.00</div>
+                <div class="stat-label">Total Spent</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value" id="modalTotalTrips">0</div>
+                <div class="stat-label">Shopping Trips</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value" id="modalTotalItems">0</div>
+                <div class="stat-label">Items Purchased</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="trips-container" id="tripsContainer">
+            <!-- Shopping trips will be populated here -->
+          </div>
+        </div>
+      </div>
+    </div>
   </main>
 
   <script>
@@ -848,7 +1094,8 @@
           interaction: {
             intersect: false,
             mode: 'index'
-          }
+          },
+          onClick: handleChartClick
         }
       });
     }
@@ -976,6 +1223,9 @@
           console.log('DEBUG: Received data:', data);
           
           if (data.trends && data.trends.length > 0) {
+            // Store trends data globally for chart click handler
+            window.currentTrendsData = data.trends;
+            
             // Update labels and data for bar chart
             const labels = data.trends.map(item => item.label || item.date);
             const amounts = data.trends.map(item => item.amount);
@@ -1134,6 +1384,119 @@
       }
     }
 
+    // Shopping Details Modal Functions
+    let currentPeriod = '7d';
+    
+    function handleChartClick(event, elements) {
+      if (elements.length > 0) {
+        const element = elements[0];
+        const dataIndex = element.index;
+        
+        // We need to get the actual date, not the label
+        // The date is stored in the trends data when we load it
+        let clickedDate = null;
+        
+        // Get the date from our stored trends data
+        if (window.currentTrendsData && window.currentTrendsData[dataIndex]) {
+          clickedDate = window.currentTrendsData[dataIndex].date;
+        }
+        
+        if (clickedDate) {
+          // Show loading state
+          showShoppingModal('Loading...', 'Loading shopping details...', [], 0, 0, 0);
+          
+          // Fetch detailed spending data for this period
+          loadShoppingDetails(currentPeriod, clickedDate);
+        } else {
+          console.error('Could not determine clicked date');
+        }
+      }
+    }
+    
+    async function loadShoppingDetails(period, date) {
+      console.log('DEBUG: Loading shopping details for', period, date);
+      try {
+        const response = await fetch(`/api/budget/spending-details?period=${period}&date=${date}`);
+        console.log('DEBUG: Shopping details response status:', response.status);
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('DEBUG: Shopping details data:', data);
+          
+          showShoppingModal(
+            data.period_label,
+            `Shopping Summary for ${data.period_label}`,
+            data.trips,
+            data.total_amount,
+            data.total_trips,
+            data.total_items
+          );
+        } else {
+          console.error('DEBUG: Failed to load shopping details:', response.status);
+          showShoppingModal('Error', 'Failed to load shopping details', [], 0, 0, 0);
+        }
+      } catch (error) {
+        console.error('Error loading shopping details:', error);
+        showShoppingModal('Error', 'Failed to load shopping details', [], 0, 0, 0);
+      }
+    }
+    
+    function showShoppingModal(title, subtitle, trips, totalAmount, totalTrips, totalItems) {
+      // Update modal title and summary
+      document.getElementById('modalTitle').textContent = title;
+      document.getElementById('modalTotalAmount').textContent = '$' + totalAmount.toFixed(2);
+      document.getElementById('modalTotalTrips').textContent = totalTrips;
+      document.getElementById('modalTotalItems').textContent = totalItems;
+      
+      // Clear and populate trips container
+      const tripsContainer = document.getElementById('tripsContainer');
+      tripsContainer.innerHTML = '';
+      
+      if (trips.length === 0) {
+        tripsContainer.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 2rem;">No shopping trips found for this period.</p>';
+      } else {
+        trips.forEach(trip => {
+          const tripCard = document.createElement('div');
+          tripCard.className = 'trip-card';
+          
+          // Simplified version - just store name and item count
+          tripCard.innerHTML = `
+            <div class="trip-header">
+              <div class="trip-info">
+                <h4>${trip.store_name}</h4>
+                <div class="trip-meta">${trip.datetime}</div>
+              </div>
+              <div class="trip-stats">
+                <div class="trip-total">$${trip.trip_total.toFixed(2)}</div>
+                <div class="trip-items">${trip.items.length} items</div>
+              </div>
+            </div>
+          `;
+          
+          tripsContainer.appendChild(tripCard);
+        });
+      }
+      
+      // Show modal
+      document.getElementById('shoppingModal').style.display = 'flex';
+      
+      // Close modal when clicking overlay
+      document.getElementById('shoppingModal').onclick = function(e) {
+        if (e.target === this) {
+          closeShoppingModal();
+        }
+      };
+    }
+    
+    function closeShoppingModal() {
+      document.getElementById('shoppingModal').style.display = 'none';
+    }
+    
+    // Update current period when chart data changes
+    function updateCurrentPeriod(period) {
+      currentPeriod = period;
+    }
+
     // Initialize everything when DOM is loaded
     document.addEventListener('DOMContentLoaded', function() {
       initSpendingChart();
@@ -1142,7 +1505,9 @@
       // Chart period controls
       document.querySelectorAll('.chart-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-          loadSpendingTrends(btn.dataset.period);
+          const period = btn.dataset.period;
+          loadSpendingTrends(period);
+          updateCurrentPeriod(period);
           
           // Update active button
           document.querySelectorAll('.chart-btn').forEach(b => b.classList.remove('active'));

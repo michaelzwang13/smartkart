@@ -552,6 +552,139 @@ def get_spending_trends():
     finally:
         cursor.close()
 
+@api_bp.route('/budget/spending-details', methods=['GET'])
+def get_spending_details():
+    """Get detailed shopping items for a specific time period"""
+    if 'user_ID' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    user_ID = session['user_ID']
+    period = request.args.get('period', '7d')
+    date = request.args.get('date')  # Specific date for the bar clicked
+    
+    if not date:
+        return jsonify({'error': 'Date parameter required'}), 400
+    
+    db = get_db()
+    cursor = db.cursor()
+    
+    try:
+        from datetime import datetime, timedelta
+        
+        # Parse the date
+        try:
+            target_date = datetime.strptime(date, '%Y-%m-%d').date()
+        except ValueError:
+            return jsonify({'error': 'Invalid date format'}), 400
+        
+        # Build query based on period type to get items for the specific time range
+        if period == '7d':
+            # Single day
+            query = """
+                SELECT c.cart_ID, c.store_name, c.created_at,
+                       i.item_name, i.quantity, i.price, i.image_url,
+                       (i.quantity * i.price) as item_total
+                FROM shopping_cart c
+                JOIN cart_item i ON c.cart_ID = i.cart_ID
+                WHERE c.user_ID = %s 
+                  AND c.status = 'purchased'
+                  AND DATE(c.created_at) = %s
+                ORDER BY c.created_at DESC, i.item_name ASC
+            """
+            cursor.execute(query, (user_ID, target_date))
+        elif period == '1m' or period == '3m':
+            # Week range (Monday to Sunday)
+            week_start = target_date
+            week_end = target_date + timedelta(days=6)
+            query = """
+                SELECT c.cart_ID, c.store_name, c.created_at,
+                       i.item_name, i.quantity, i.price, i.image_url,
+                       (i.quantity * i.price) as item_total
+                FROM shopping_cart c
+                JOIN cart_item i ON c.cart_ID = i.cart_ID
+                WHERE c.user_ID = %s 
+                  AND c.status = 'purchased'
+                  AND DATE(c.created_at) BETWEEN %s AND %s
+                ORDER BY c.created_at DESC, i.item_name ASC
+            """
+            cursor.execute(query, (user_ID, week_start, week_end))
+        else:  # 1y - Monthly range
+            # Entire month
+            if target_date.month == 12:
+                month_end = target_date.replace(year=target_date.year+1, month=1, day=1) - timedelta(days=1)
+            else:
+                month_end = target_date.replace(month=target_date.month+1, day=1) - timedelta(days=1)
+            
+            query = """
+                SELECT c.cart_ID, c.store_name, c.created_at,
+                       i.item_name, i.quantity, i.price, i.image_url,
+                       (i.quantity * i.price) as item_total
+                FROM shopping_cart c
+                JOIN cart_item i ON c.cart_ID = i.cart_ID
+                WHERE c.user_ID = %s 
+                  AND c.status = 'purchased'
+                  AND DATE(c.created_at) BETWEEN %s AND %s
+                ORDER BY c.created_at DESC, i.item_name ASC
+            """
+            cursor.execute(query, (user_ID, target_date, month_end))
+        
+        items = cursor.fetchall()
+        
+        # Group items by shopping trip (cart_ID)
+        trips = {}
+        total_amount = 0
+        
+        for item in items:
+            cart_id = item['cart_ID']
+            item_total = float(item['item_total'])
+            total_amount += item_total
+            
+            if cart_id not in trips:
+                trips[cart_id] = {
+                    'cart_id': cart_id,
+                    'store_name': item['store_name'],
+                    'date': item['created_at'].strftime('%Y-%m-%d'),
+                    'datetime': item['created_at'].strftime('%b %d, %Y at %I:%M %p'),
+                    'items': [],
+                    'trip_total': 0
+                }
+            
+            trips[cart_id]['items'].append({
+                'name': item['item_name'],
+                'quantity': item['quantity'],
+                'price': float(item['price']),
+                'total': item_total,
+                'image_url': item['image_url']
+            })
+            trips[cart_id]['trip_total'] += item_total
+        
+        # Convert to list and sort by date
+        trips_list = list(trips.values())
+        trips_list.sort(key=lambda x: x['date'], reverse=True)
+        
+        cursor.close()
+        
+        # Determine period label
+        period_labels = {
+            '7d': target_date.strftime('%B %d, %Y'),
+            '1m': f"Week of {target_date.strftime('%B %d, %Y')}",
+            '3m': f"Week of {target_date.strftime('%B %d, %Y')}",
+            '1y': target_date.strftime('%B %Y')
+        }
+        
+        return jsonify({
+            'period_label': period_labels.get(period, target_date.strftime('%B %d, %Y')),
+            'total_amount': round(total_amount, 2),
+            'total_trips': len(trips_list),
+            'total_items': sum(len(trip['items']) for trip in trips_list),
+            'trips': trips_list
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'Failed to get spending details: {str(e)}'}), 500
+    finally:
+        cursor.close()
+
 @api_bp.route('/budget/categories', methods=['GET'])
 def get_category_breakdown():
     """Get spending breakdown by category"""
@@ -740,6 +873,67 @@ def update_budget_spending(user_id, amount_spent):
         print(f"Error updating budget spending: {str(e)}")
     finally:
         cursor.close()
+
+# TEMPORARILY DISABLED - Shopping trip details API
+"""
+@api_bp.route('/shopping-trip/details', methods=['GET'])
+def get_shopping_trip_details():
+    #Get detailed items for a specific shopping trip#
+    if 'user_ID' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    user_ID = session['user_ID']
+    cart_id = request.args.get('cart_id')
+    
+    if not cart_id:
+        return jsonify({'error': 'Cart ID parameter required'}), 400
+    
+    db = get_db()
+    cursor = db.cursor()
+    
+    try:
+        # Get cart info and verify ownership
+        cart_query = \"\"\"
+            SELECT cart_ID, store_name, created_at
+            FROM shopping_cart 
+            WHERE cart_ID = %s AND user_ID = %s AND status = 'purchased'
+        \"\"\"
+        cursor.execute(cart_query, (cart_id, user_ID))
+        cart = cursor.fetchone()
+        
+        if not cart:
+            return jsonify({'error': 'Shopping trip not found'}), 404
+        
+        # Get all items for this cart
+        items_query = \"\"\"
+            SELECT item_name, quantity, price, image_url
+            FROM cart_item 
+            WHERE cart_ID = %s
+            ORDER BY item_name ASC
+        \"\"\"
+        cursor.execute(items_query, (cart_id,))
+        items = cursor.fetchall()
+        
+        # Calculate totals
+        total_items = sum(item['quantity'] for item in items)
+        total_amount = sum(item['price'] * item['quantity'] for item in items)
+        
+        cursor.close()
+        
+        return jsonify({
+            'cart_id': cart['cart_ID'],
+            'store_name': cart['store_name'], 
+            'created_at': cart['created_at'].strftime('%Y-%m-%d %H:%M:%S'),
+            'items': items,
+            'total_items': total_items,
+            'total_amount': float(total_amount)
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'Failed to get shopping trip details: {str(e)}'}), 500
+    finally:
+        cursor.close()
+"""
 
 # Shopping Lists API Routes
 
