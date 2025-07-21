@@ -27,20 +27,190 @@ def add_item():
     cursor.close()
 
     return jsonify({"status": "success", "items": items}), 200
+
+@api_bp.route('/shopping-trip/remove-last-item', methods=['POST'])
+def remove_last_item():
+    """Remove the most recently added item from the cart"""
+    if 'user_ID' not in session or 'cart_ID' not in session:
+        return jsonify({"error": "User or cart not in session"}), 400
+
+    db = get_db()
+    cursor = db.cursor()
+    
+    try:
+        # Get the most recently added item
+        query = 'SELECT item_ID FROM item WHERE cart_ID = %s ORDER BY item_ID DESC LIMIT 1'
+        cursor.execute(query, (session['cart_ID'],))
+        last_item = cursor.fetchone()
+        
+        if last_item:
+            # Delete the item
+            delete_query = 'DELETE FROM item WHERE item_ID = %s'
+            cursor.execute(delete_query, (last_item['item_ID'],))
+            db.commit()
+            
+            # Return updated cart items
+            query = 'SELECT * FROM item WHERE cart_ID = %s'
+            cursor.execute(query, (session['cart_ID'],))
+            items = cursor.fetchall()
+            cursor.close()
+            
+            return jsonify({"status": "success", "items": items}), 200
+        else:
+            return jsonify({"error": "No items to remove"}), 400
+            
+    except Exception as e:
+        db.rollback()
+        return jsonify({"error": f"Failed to remove item: {str(e)}"}), 500
+    finally:
+        cursor.close()
+
+@api_bp.route('/shopping-trip/update-item', methods=['POST'])
+def update_item_quantity():
+    """Update the quantity of an item in the cart"""
+    if 'user_ID' not in session or 'cart_ID' not in session:
+        return jsonify({"error": "User or cart not in session"}), 400
+
+    data = request.get_json()
+    if not data or 'item_id' not in data or 'quantity' not in data:
+        return jsonify({"error": "Missing item_id or quantity"}), 400
+
+    item_id = data['item_id']
+    quantity = data['quantity']
+    
+    try:
+        quantity = int(quantity)
+        if quantity < 1:
+            return jsonify({"error": "Quantity must be at least 1"}), 400
+    except (ValueError, TypeError):
+        return jsonify({"error": "Invalid quantity"}), 400
+
+    db = get_db()
+    cursor = db.cursor()
+    
+    try:
+        # Verify the item belongs to the current user's cart
+        verify_query = 'SELECT item_ID FROM item WHERE item_ID = %s AND cart_ID = %s AND user_ID = %s'
+        cursor.execute(verify_query, (item_id, session['cart_ID'], session['user_ID']))
+        if not cursor.fetchone():
+            return jsonify({"error": "Item not found"}), 404
+        
+        # Update the quantity
+        update_query = 'UPDATE item SET quantity = %s WHERE item_ID = %s'
+        cursor.execute(update_query, (quantity, item_id))
+        db.commit()
+        
+        # Return updated cart items
+        query = 'SELECT item_ID, item_name, price, quantity, image_url FROM item WHERE cart_ID = %s'
+        cursor.execute(query, (session['cart_ID'],))
+        items = cursor.fetchall()
+        
+        # Calculate totals
+        total_items = sum(item['quantity'] for item in items)
+        total_spent = sum(item['price'] * item['quantity'] for item in items)
+        allocated_budget = 1000
+        remaining = allocated_budget - total_spent
+        
+        cursor.close()
+        
+        return jsonify({
+            "status": "success",
+            "items": items,
+            "total_items": total_items,
+            "total_spent": total_spent,
+            "allocated_budget": allocated_budget,
+            "remaining": remaining
+        }), 200
+        
+    except Exception as e:
+        db.rollback()
+        return jsonify({"error": f"Failed to update item: {str(e)}"}), 500
+    finally:
+        cursor.close()
+
+@api_bp.route('/shopping-trip/delete-item', methods=['POST'])
+def delete_item():
+    """Delete a specific item from the cart"""
+    if 'user_ID' not in session or 'cart_ID' not in session:
+        return jsonify({"error": "User or cart not in session"}), 400
+
+    data = request.get_json()
+    if not data or 'item_id' not in data:
+        return jsonify({"error": "Missing item_id"}), 400
+
+    item_id = data['item_id']
+
+    db = get_db()
+    cursor = db.cursor()
+    
+    try:
+        # Verify the item belongs to the current user's cart
+        verify_query = 'SELECT item_ID FROM item WHERE item_ID = %s AND cart_ID = %s AND user_ID = %s'
+        cursor.execute(verify_query, (item_id, session['cart_ID'], session['user_ID']))
+        if not cursor.fetchone():
+            return jsonify({"error": "Item not found"}), 404
+        
+        # Delete the item
+        delete_query = 'DELETE FROM item WHERE item_ID = %s'
+        cursor.execute(delete_query, (item_id,))
+        db.commit()
+        
+        # Return updated cart items
+        query = 'SELECT item_ID, item_name, price, quantity, image_url FROM item WHERE cart_ID = %s'
+        cursor.execute(query, (session['cart_ID'],))
+        items = cursor.fetchall()
+        
+        # Calculate totals
+        total_items = sum(item['quantity'] for item in items)
+        total_spent = sum(item['price'] * item['quantity'] for item in items)
+        allocated_budget = 1000
+        remaining = allocated_budget - total_spent
+        
+        cursor.close()
+        
+        return jsonify({
+            "status": "success",
+            "items": items,
+            "total_items": total_items,
+            "total_spent": total_spent,
+            "allocated_budget": allocated_budget,
+            "remaining": remaining
+        }), 200
+        
+    except Exception as e:
+        db.rollback()
+        return jsonify({"error": f"Failed to delete item: {str(e)}"}), 500
+    finally:
+        cursor.close()
   
 @api_bp.route('/shopping-trip/items', methods=['GET'])
 def get_cart_items():
     if "cart_ID" not in session or not session['cart_ID']:
-        return jsonify({"items": []})
+        return jsonify({"items": [], "total_items": 0, "total_spent": 0, "allocated_budget": 1000, "remaining": 1000})
     
     db = get_db()
     cursor = db.cursor()
-    query = 'SELECT item_name, price, quantity, image_url FROM item WHERE cart_ID = %s'
+    
+    # Get items
+    query = 'SELECT item_ID, item_name, price, quantity, image_url FROM item WHERE cart_ID = %s'
     cursor.execute(query, (session['cart_ID'],))
     items = cursor.fetchall()
+    
+    # Calculate totals
+    total_items = sum(item['quantity'] for item in items)
+    total_spent = sum(item['price'] * item['quantity'] for item in items)
+    allocated_budget = 1000  # You can make this dynamic later
+    remaining = allocated_budget - total_spent
+    
     cursor.close()
     
-    return jsonify({"items": items})
+    return jsonify({
+        "items": items,
+        "total_items": total_items,
+        "total_spent": total_spent,
+        "allocated_budget": allocated_budget,
+        "remaining": remaining
+    })
 
 @api_bp.route('/searchitem', methods=['GET'])
 def searchitem():
