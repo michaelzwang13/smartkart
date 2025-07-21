@@ -1,263 +1,1206 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Budget Goals - Grocery Tracker</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Budget & Analytics - SmartKart</title>
+  
   <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.gstatic.com"/>
-  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
-
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Chart.js for data visualization -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@2.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+  
   <style>
-    /* Global Reset & Font */
+    /* CSS Variables matching theme */
+    :root {
+      --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      --warning-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      --error-gradient: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      
+      --primary-color: #667eea;
+      --secondary-color: #764ba2;
+      --accent-color: #4facfe;
+      --success-color: #10b981;
+      --warning-color: #f59e0b;
+      --error-color: #ef4444;
+      
+      --text-primary: #1f2937;
+      --text-secondary: #6b7280;
+      --text-muted: #9ca3af;
+      --text-white: #ffffff;
+      
+      --bg-primary: #ffffff;
+      --bg-secondary: #f9fafb;
+      --bg-tertiary: #f3f4f6;
+      
+      --border-light: #e5e7eb;
+      --border-medium: #d1d5db;
+      
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      
+      --radius-sm: 0.375rem;
+      --radius-md: 0.5rem;
+      --radius-lg: 0.75rem;
+      --radius-xl: 1rem;
+      
+      --spacing-xs: 0.5rem;
+      --spacing-sm: 0.75rem;
+      --spacing-md: 1rem;
+      --spacing-lg: 1.5rem;
+      --spacing-xl: 2rem;
+      --spacing-2xl: 3rem;
+      
+      --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    
+    /* Reset and base styles */
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
-    body {
-      font-family: 'Open Sans', Arial, sans-serif;
-      color: #333;
-      background-color: #f8f9fa;
-      line-height: 1.6;
+    
+    html {
+      scroll-behavior: smooth;
     }
-
-    /* Navbar Styling */
-    .navbar {
+    
+    body {
+      font-family: var(--font-family);
+      color: var(--text-primary);
+      line-height: 1.6;
+      background: var(--bg-secondary);
+      overflow-x: hidden;
+    }
+    
+    /* Header and Navigation */
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border-light);
+      transition: all 0.3s ease;
+    }
+    
+    .nav-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 var(--spacing-lg);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 1rem 2rem;
-      background-color: #ffffff;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      position: sticky;
-      top: 0;
-      z-index: 1000;
+      height: 80px;
     }
-    .navbar .brand {
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
       font-size: 1.5rem;
-      font-weight: 600;
-      color: #007bff;
+      font-weight: 700;
+      color: var(--primary-color);
       text-decoration: none;
+      transition: transform 0.3s ease;
     }
-    .navbar ul {
+    
+    .logo:hover {
+      transform: scale(1.05);
+    }
+    
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: var(--primary-gradient);
+      border-radius: var(--radius-lg);
       display: flex;
-      list-style: none;
-    }
-    .navbar li {
-      margin-left: 1.5rem;
-    }
-    .navbar a {
-      text-decoration: none;
-      color: #333;
-      font-weight: 500;
-      transition: color 0.2s ease;
-    }
-    .navbar a:hover {
-      color: #007bff;
-    }
-    .login-btn {
-      color: #28a745;
-      font-weight: 600;
-    }
-    .login-btn:hover {
-      color: #218838;
-    }
-
-    /* Hero Section */
-    .hero {
-      display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      text-align: center;
-      padding: 4rem 2rem;
-      background-color: #ffffff;
-      margin: 1.5rem auto;
-      max-width: 1200px;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+      color: white;
+      font-size: 1.2rem;
     }
-    .hero h1 {
+    
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-lg);
+      list-style: none;
+    }
+    
+    .nav-link {
+      color: var(--text-primary);
+      text-decoration: none;
+      font-weight: 500;
+      position: relative;
+      transition: color 0.3s ease;
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-radius: var(--radius-md);
+    }
+    
+    .nav-link:hover {
+      color: var(--primary-color);
+      background: rgba(102, 126, 234, 0.1);
+    }
+    
+    .nav-link.logout {
+      background: var(--error-color);
+      color: var(--text-white);
+    }
+    
+    .nav-link.logout:hover {
+      background: #dc2626;
+      color: var(--text-white);
+    }
+    
+    /* Main Content */
+    .main-content {
+      min-height: 100vh;
+      padding: 100px var(--spacing-lg) var(--spacing-xl);
+    }
+    
+    .budget-container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    /* Page Header */
+    .page-header {
+      margin-bottom: var(--spacing-2xl);
+      text-align: center;
+      animation: fadeInUp 0.8s ease;
+    }
+    
+    .page-title {
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 700;
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: var(--spacing-sm);
+    }
+    
+    .page-subtitle {
+      font-size: 1.125rem;
+      color: var(--text-secondary);
+      margin-bottom: var(--spacing-lg);
+    }
+    
+    /* Quick Stats Cards */
+    .quick-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: var(--spacing-lg);
+      margin-bottom: var(--spacing-2xl);
+      animation: fadeInUp 0.8s ease 0.2s both;
+    }
+    
+    .stat-card {
+      background: var(--bg-primary);
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-xl);
+      text-align: center;
+      border: 1px solid var(--border-light);
+      box-shadow: var(--shadow-md);
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.3s ease;
+    }
+    
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-xl);
+    }
+    
+    .stat-card.primary {
+      background: var(--primary-gradient);
+      color: var(--text-white);
+    }
+    
+    .stat-card.success {
+      background: var(--success-gradient);
+      color: var(--text-white);
+    }
+    
+    .stat-card.warning {
+      background: var(--warning-gradient);
+      color: var(--text-white);
+    }
+    
+    .stat-card.error {
+      background: var(--error-gradient);
+      color: var(--text-white);
+    }
+    
+    .stat-icon {
       font-size: 2rem;
-      margin-bottom: 1rem;
-      color: #007bff;
+      margin-bottom: var(--spacing-md);
+      opacity: 0.9;
     }
-    .hero p {
-      font-size: 1.1rem;
-      margin-bottom: 2rem;
-      max-width: 600px;
-      line-height: 1.5;
+    
+    .stat-value {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: var(--spacing-xs);
     }
-
-    /* Budget Goals Section */
-    .budget-goals {
-      max-width: 1200px;
-      margin: 2rem auto;
-      padding: 2rem;
-      background-color: #ffffff;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    
+    .stat-label {
+      font-size: 0.875rem;
+      opacity: 0.9;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
-    .budget-goals h2 {
-      font-size: 1.75rem;
-      color: #007bff;
-      margin-bottom: 1.5rem;
-      text-align: center;
+    
+    /* Dashboard Grid */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: var(--spacing-xl);
+      margin-bottom: var(--spacing-2xl);
+      animation: fadeInUp 0.8s ease 0.4s both;
+      align-items: stretch;
     }
-    .budget-form {
+    
+    /* Chart Container */
+    .chart-container {
+      background: var(--bg-primary);
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-xl);
+      border: 1px solid var(--border-light);
+      box-shadow: var(--shadow-md);
+      position: relative;
       display: flex;
       flex-direction: column;
-      gap: 1rem;
-      margin-bottom: 2rem;
+      height: 100%;
     }
-    .budget-form label {
-      font-size: 1rem;
+    
+    .chart-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--spacing-lg);
+    }
+    
+    .chart-title {
+      font-size: 1.5rem;
       font-weight: 600;
-      color: #333;
+      color: var(--text-primary);
     }
-    .budget-form input {
-      padding: 0.75rem;
-      font-size: 1rem;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      outline: none;
+    
+    .chart-controls {
+      display: flex;
+      gap: var(--spacing-sm);
     }
-    .budget-form input:focus {
-      border-color: #007bff;
-    }
-    .budget-form button {
-      padding: 0.75rem;
-      font-size: 1rem;
-      color: #fff;
-      background-color: #007bff;
-      border: none;
-      border-radius: 4px;
+    
+    .chart-btn {
+      padding: var(--spacing-xs) var(--spacing-md);
+      border: 1px solid var(--border-light);
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      border-radius: var(--radius-md);
       cursor: pointer;
-      transition: background-color 0.2s ease;
+      transition: all 0.2s ease;
+      font-size: 0.875rem;
     }
-    .budget-form button:hover {
-      background-color: #0056b3;
+    
+    .chart-btn.active,
+    .chart-btn:hover {
+      background: var(--primary-color);
+      color: var(--text-white);
+      border-color: var(--primary-color);
     }
-
-    /* Past Budget Stats Section */
-    .past-stats {
-      max-width: 1200px;
-      margin: 2rem auto;
-      padding: 2rem;
-      background-color: #ffffff;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
-    }
-    .past-stats h2 {
-      font-size: 1.75rem;
-      color: #007bff;
-      margin-bottom: 1.5rem;
-      text-align: center;
-    }
-    .stats-table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    .stats-table th,
-    .stats-table td {
-      padding: 1rem;
-      text-align: left;
-      border-bottom: 1px solid #ddd;
-    }
-    .stats-table th {
-      background-color: #f8f9fa;
-      font-weight: 600;
-    }
-    .stats-table tr:hover {
-      background-color: #f1f1f1;
-    }
-
-    /* Footer Section */
-    footer {
-      text-align: center;
-      padding: 1rem;
-      background-color: #ffffff;
-      font-size: 0.9rem;
-      color: #777;
+    
+    .chart-wrapper {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 300px;
       position: relative;
-      bottom: 0;
+    }
+    
+    .chart-canvas {
+      width: 100% !important;
+      height: 100% !important;
+      max-height: none !important;
+    }
+    
+    /* Settings Panel */
+    .settings-panel {
+      background: var(--bg-primary);
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-xl);
+      border: 1px solid var(--border-light);
+      box-shadow: var(--shadow-md);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+    
+    .settings-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--spacing-lg);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+    
+    .settings-form {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-lg);
+    }
+    
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-xs);
+    }
+    
+    .form-label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    .form-input {
+      padding: var(--spacing-md);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      font-size: 1rem;
+      transition: border-color 0.2s ease;
+      background: var(--bg-secondary);
+    }
+    
+    .form-input:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      background: var(--bg-primary);
+    }
+    
+    .form-select {
+      padding: var(--spacing-md);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      font-size: 1rem;
+      background: var(--bg-secondary);
+      cursor: pointer;
+    }
+    
+    .btn-primary {
+      background: var(--primary-gradient);
+      color: var(--text-white);
+      border: none;
+      padding: var(--spacing-md) var(--spacing-lg);
+      border-radius: var(--radius-md);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--spacing-sm);
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+    
+    /* Category Breakdown */
+    .category-section {
+      background: var(--bg-primary);
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-xl);
+      border: 1px solid var(--border-light);
+      box-shadow: var(--shadow-md);
+      animation: fadeInUp 0.8s ease 0.6s both;
+    }
+    
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--spacing-lg);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+    
+    .category-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--spacing-xl);
+    }
+    
+    .category-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-md);
+    }
+    
+    .category-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--spacing-md);
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-light);
+    }
+    
+    .category-info {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+    }
+    
+    .category-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-white);
+      font-size: 1rem;
+    }
+    
+    .category-details {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .category-name {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    .category-progress {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+    
+    .category-amount {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    .progress-bar {
       width: 100%;
-      box-shadow: 0 -1px 4px rgba(0,0,0,0.05);
-      margin-top: 1.5rem;
+      height: 8px;
+      background: var(--bg-tertiary);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: var(--spacing-xs);
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: var(--primary-gradient);
+      border-radius: 4px;
+      transition: width 0.5s ease;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 1024px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .category-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .nav-links {
+        display: none;
+      }
+      
+      .main-content {
+        padding: 100px var(--spacing-md) var(--spacing-lg);
+      }
+      
+      .quick-stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--spacing-md);
+      }
+      
+      .chart-wrapper {
+        min-height: 250px;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .quick-stats {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    /* Animations */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    /* Focus styles for accessibility */
+    .btn-primary:focus,
+    .form-input:focus,
+    .form-select:focus,
+    .chart-btn:focus {
+      outline: 2px solid var(--primary-color);
+      outline-offset: 2px;
     }
   </style>
 </head>
 <body>
+  <!-- Header -->
+  <header class="header">
+    <div class="nav-container">
+      <a href="{{ url_for('shopping.home') }}" class="logo">
+        <div class="logo-icon">
+          <i class="fas fa-shopping-cart" aria-hidden="true"></i>
+        </div>
+        SmartKart
+      </a>
+      
+      <nav>
+        <ul class="nav-links">
+          <li><a href="{{ url_for('shopping.home') }}" class="nav-link">
+            <i class="fas fa-home" style="margin-right: 8px;"></i>Home
+          </a></li>
+          <li><a href="{{ url_for('shopping.shopping_trip') }}" class="nav-link">
+            <i class="fas fa-cart-plus" style="margin-right: 8px;"></i>New Trip
+          </a></li>
+          <li><a href="{{ url_for('shopping.shopping_lists') }}" class="nav-link">
+            <i class="fas fa-list-ul" style="margin-right: 8px;"></i>Lists
+          </a></li>
+          <li><a href="{{ url_for('shopping.rewards') }}" class="nav-link">
+            <i class="fas fa-trophy" style="margin-right: 8px;"></i>Rewards
+          </a></li>
+          <li><a href="{{ url_for('auth.logout') }}" class="nav-link logout">
+            <i class="fas fa-sign-out-alt" style="margin-right: 8px;"></i>Logout
+          </a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
 
-  <!-- Navigation Bar -->
-  <nav class="navbar">
-    <a href="#" class="brand">SmartKart</a>
-    <ul>
-        <li><a href="/home">Home</a></li>
-        <li><a href="/shopping-trip">New Trip</a></li>
-        <li><a href="/budget">Budget</a></li>
-        <li><a href="/rewards">Rewards</a></li>
-    </ul>
-  </nav>
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="budget-container">
+      <!-- Page Header -->
+      <section class="page-header">
+        <h1 class="page-title">Budget & Analytics</h1>
+        <p class="page-subtitle">Track your spending, set goals, and analyze your shopping patterns</p>
+      </section>
 
-  <!-- Hero Section -->
-  <section class="hero">
-    <h1>Budget Goals</h1>
-    <p>
-      Set your monthly grocery budget goals and track your spending over time to stay on top of your finances.
-    </p>
-  </section>
+      <!-- Quick Stats -->
+      <section class="quick-stats">
+        <div class="stat-card primary">
+          <div class="stat-icon">
+            <i class="fas fa-wallet" aria-hidden="true"></i>
+          </div>
+          <div class="stat-value" id="monthlyBudget">$1,000</div>
+          <div class="stat-label">Monthly Budget</div>
+        </div>
+        
+        <div class="stat-card success">
+          <div class="stat-icon">
+            <i class="fas fa-dollar-sign" aria-hidden="true"></i>
+          </div>
+          <div class="stat-value" id="totalSpent">$743.50</div>
+          <div class="stat-label">Spent This Month</div>
+        </div>
+        
+        <div class="stat-card warning">
+          <div class="stat-icon">
+            <i class="fas fa-piggy-bank" aria-hidden="true"></i>
+          </div>
+          <div class="stat-value" id="remaining">$256.50</div>
+          <div class="stat-label">Remaining</div>
+        </div>
+        
+        <div class="stat-card error">
+          <div class="stat-icon">
+            <i class="fas fa-chart-line" aria-hidden="true"></i>
+          </div>
+          <div class="stat-value" id="avgDaily">$24.61</div>
+          <div class="stat-label">Daily Average</div>
+        </div>
+      </section>
 
-  <!-- Budget Goals Section -->
-  <section class="budget-goals">
-    <h2>Set Your Budget Goal</h2>
-    <form class="budget-form">
-      <label for="monthly-budget">Monthly Budget ($)</label>
-      <input type="number" id="monthly-budget" placeholder="Enter your monthly budget" required>
-      <button type="submit">Set Budget</button>
-    </form>
-  </section>
+      <!-- Dashboard Grid -->
+      <div class="dashboard-grid">
+        <!-- Spending Chart -->
+        <div class="chart-container">
+          <div class="chart-header">
+            <h3 class="chart-title">Spending Trends</h3>
+            <div class="chart-controls">
+              <button class="chart-btn active" data-period="week">7D</button>
+              <button class="chart-btn" data-period="month">1M</button>
+              <button class="chart-btn" data-period="quarter">3M</button>
+              <button class="chart-btn" data-period="year">1Y</button>
+            </div>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="spendingChart" class="chart-canvas"></canvas>
+          </div>
+        </div>
 
-  <!-- Past Budget Stats Section -->
-  <section class="past-stats">
-    <h2>Past Budget Statistics</h2>
-    <table class="stats-table">
-      <thead>
-        <tr>
-          <th>Month</th>
-          <th>Budget</th>
-          <th>Spent</th>
-          <th>Saved</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>January 2024</td>
-          <td>$500</td>
-          <td>$450</td>
-          <td>$50</td>
-        </tr>
-        <tr>
-          <td>February 2024</td>
-          <td>$500</td>
-          <td>$480</td>
-          <td>$20</td>
-        </tr>
-        <tr>
-          <td>March 2024</td>
-          <td>$500</td>
-          <td>$510</td>
-          <td>-$10</td>
-        </tr>
-      </tbody>
-    </table>
-  </section>
+        <!-- Settings Panel -->
+        <div class="settings-panel">
+          <h3 class="settings-title">
+            <i class="fas fa-cog" aria-hidden="true"></i>
+            Budget Settings
+          </h3>
+          <form class="settings-form" id="budgetSettingsForm">
+            <div class="form-group">
+              <label for="monthlyBudgetInput" class="form-label">Monthly Budget</label>
+              <input type="number" id="monthlyBudgetInput" class="form-input" 
+                     value="1000" min="0" step="10" placeholder="Enter amount">
+            </div>
+            
+            <div class="form-group">
+              <label for="budgetPeriod" class="form-label">Budget Period</label>
+              <select id="budgetPeriod" class="form-select">
+                <option value="monthly">Monthly</option>
+                <option value="weekly">Weekly</option>
+                <option value="biweekly">Bi-weekly</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label for="alertThreshold" class="form-label">Alert Threshold (%)</label>
+              <input type="number" id="alertThreshold" class="form-input" 
+                     value="80" min="50" max="100" step="5">
+            </div>
+            
+            <div class="form-group">
+              <label for="categoryLimit" class="form-label">Category Limits</label>
+              <select id="categoryLimit" class="form-select">
+                <option value="enabled">Enabled</option>
+                <option value="disabled">Disabled</option>
+              </select>
+            </div>
+            
+            <button type="submit" class="btn-primary">
+              <i class="fas fa-save" aria-hidden="true"></i>
+              Save Settings
+            </button>
+          </form>
+        </div>
+      </div>
 
-  <!-- Footer Section -->
-  <footer>
-    &copy; 2025 SmartKart. All rights reserved.
-  </footer>
+      <!-- Category Breakdown -->
+      <section class="category-section">
+        <h2 class="section-title">
+          <i class="fas fa-chart-pie" aria-hidden="true"></i>
+          Category Breakdown
+        </h2>
+        <div class="category-grid">
+          <div class="category-list">
+            <div class="category-item">
+              <div class="category-info">
+                <div class="category-icon" style="background: var(--success-gradient);">
+                  <i class="fas fa-apple-alt"></i>
+                </div>
+                <div class="category-details">
+                  <div class="category-name">Fresh Produce</div>
+                  <div class="category-progress">$120 of $200</div>
+                  <div class="progress-bar">
+                    <div class="progress-fill" style="width: 60%;"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="category-amount">$120.00</div>
+            </div>
+            
+            <div class="category-item">
+              <div class="category-info">
+                <div class="category-icon" style="background: var(--warning-gradient);">
+                  <i class="fas fa-bread-slice"></i>
+                </div>
+                <div class="category-details">
+                  <div class="category-name">Bakery & Dairy</div>
+                  <div class="category-progress">$85 of $150</div>
+                  <div class="progress-bar">
+                    <div class="progress-fill" style="width: 57%;"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="category-amount">$85.00</div>
+            </div>
+            
+            <div class="category-item">
+              <div class="category-info">
+                <div class="category-icon" style="background: var(--primary-gradient);">
+                  <i class="fas fa-fish"></i>
+                </div>
+                <div class="category-details">
+                  <div class="category-name">Meat & Seafood</div>
+                  <div class="category-progress">$180 of $250</div>
+                  <div class="progress-bar">
+                    <div class="progress-fill" style="width: 72%;"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="category-amount">$180.00</div>
+            </div>
+          </div>
+          
+          <div class="chart-container">
+            <div class="chart-header">
+              <h3 class="chart-title">Category Distribution</h3>
+            </div>
+            <div class="chart-wrapper" style="min-height: 280px;">
+              <canvas id="categoryChart" class="chart-canvas"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
 
+  <script>
+    // Initialize charts and functionality
+    let spendingChart;
+    let categoryChart;
+    
+    // Sample data - in production this would come from your API
+    const mockData = {
+      spending: {
+        week: [
+          { date: '2025-01-15', amount: 45.30 },
+          { date: '2025-01-16', amount: 32.75 },
+          { date: '2025-01-17', amount: 67.20 },
+          { date: '2025-01-18', amount: 23.45 },
+          { date: '2025-01-19', amount: 89.60 },
+          { date: '2025-01-20', amount: 41.25 },
+          { date: '2025-01-21', amount: 55.80 }
+        ],
+        month: [
+          { date: '2025-01-01', amount: 234.50 },
+          { date: '2025-01-08', amount: 198.75 },
+          { date: '2025-01-15', amount: 267.40 },
+          { date: '2025-01-22', amount: 189.30 }
+        ]
+      },
+      categories: [
+        { name: 'Fresh Produce', amount: 120, color: '#10b981' },
+        { name: 'Meat & Seafood', amount: 180, color: '#667eea' },
+        { name: 'Bakery & Dairy', amount: 85, color: '#f59e0b' },
+        { name: 'Pantry Items', amount: 95, color: '#ef4444' },
+        { name: 'Frozen Foods', amount: 65, color: '#8b5cf6' },
+        { name: 'Beverages', amount: 45, color: '#06b6d4' }
+      ]
+    };
+    
+    // Initialize spending chart
+    function initSpendingChart() {
+      const ctx = document.getElementById('spendingChart').getContext('2d');
+      
+      spendingChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          datasets: [{
+            label: 'Daily Spending',
+            data: mockData.spending.week.map(item => ({
+              x: item.date,
+              y: item.amount
+            })),
+            borderColor: '#667eea',
+            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: '#667eea',
+            pointBorderColor: '#ffffff',
+            pointBorderWidth: 2,
+            pointRadius: 6,
+            pointHoverRadius: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            x: {
+              type: 'time',
+              time: {
+                unit: 'day',
+                displayFormats: {
+                  day: 'MMM dd'
+                }
+              },
+              grid: {
+                display: false
+              },
+              border: {
+                display: false
+              }
+            },
+            y: {
+              beginAtZero: true,
+              grid: {
+                color: 'rgba(0, 0, 0, 0.1)'
+              },
+              border: {
+                display: false
+              },
+              ticks: {
+                callback: function(value) {
+                  return '$' + value.toFixed(2);
+                }
+              }
+            }
+          },
+          interaction: {
+            intersect: false,
+            mode: 'index'
+          }
+        }
+      });
+    }
+    
+    // Initialize category chart
+    function initCategoryChart() {
+      const ctx = document.getElementById('categoryChart').getContext('2d');
+      
+      categoryChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: mockData.categories.map(cat => cat.name),
+          datasets: [{
+            data: mockData.categories.map(cat => cat.amount),
+            backgroundColor: mockData.categories.map(cat => cat.color),
+            borderWidth: 0,
+            hoverOffset: 10
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                padding: 20,
+                usePointStyle: true,
+                font: {
+                  size: 12
+                }
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                  const percentage = ((context.raw / total) * 100).toFixed(1);
+                  return context.label + ': $' + context.raw + ' (' + percentage + '%)';
+                }
+              }
+            }
+          },
+          cutout: '60%'
+        }
+      });
+    }
+    
+    // Update chart based on time period
+    function updateChart(period) {
+      const data = mockData.spending[period] || mockData.spending.week;
+      
+      spendingChart.data.datasets[0].data = data.map(item => ({
+        x: item.date,
+        y: item.amount
+      }));
+      
+      // Update time unit based on period
+      let timeUnit = 'day';
+      if (period === 'month' || period === 'quarter') {
+        timeUnit = 'week';
+      } else if (period === 'year') {
+        timeUnit = 'month';
+      }
+      
+      spendingChart.options.scales.x.time.unit = timeUnit;
+      spendingChart.update('active');
+      
+      // Update active button
+      document.querySelectorAll('.chart-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      document.querySelector(`[data-period="${period}"]`).classList.add('active');
+    }
+    
+    // Update budget stats
+    function updateBudgetStats(budget, spent) {
+      const remaining = budget - spent;
+      const dailyAvg = spent / new Date().getDate();
+      
+      document.getElementById('monthlyBudget').textContent = '$' + budget.toLocaleString();
+      document.getElementById('totalSpent').textContent = '$' + spent.toFixed(2);
+      document.getElementById('remaining').textContent = '$' + remaining.toFixed(2);
+      document.getElementById('avgDaily').textContent = '$' + dailyAvg.toFixed(2);
+      
+      // Update stat card colors based on remaining budget
+      const remainingCard = document.querySelector('#remaining').closest('.stat-card');
+      remainingCard.className = 'stat-card ' + (remaining > 0 ? 'warning' : 'error');
+    }
+    
+    // Handle budget settings form
+    function handleBudgetSettings(event) {
+      event.preventDefault();
+      
+      const budget = parseFloat(document.getElementById('monthlyBudgetInput').value);
+      const period = document.getElementById('budgetPeriod').value;
+      const threshold = parseInt(document.getElementById('alertThreshold').value);
+      const categoryLimits = document.getElementById('categoryLimit').value;
+      
+      // In production, send this to your API
+      console.log('Budget settings updated:', {
+        budget,
+        period,
+        threshold,
+        categoryLimits
+      });
+      
+      // Update the display
+      updateBudgetStats(budget, 743.50); // Use current spent amount
+      
+      // Show success message (you could implement a toast notification)
+      alert('Budget settings saved successfully!');
+    }
+    
+    // Load real data from API
+    async function loadBudgetData() {
+      try {
+        const response = await fetch('/api/budget/overview');
+        if (response.ok) {
+          const data = await response.json();
+          updateBudgetStats(data.monthly_budget, data.total_spent);
+          
+          // Update settings form with current values
+          document.getElementById('monthlyBudgetInput').value = data.monthly_budget;
+          document.getElementById('alertThreshold').value = data.alert_threshold;
+          document.getElementById('budgetPeriod').value = data.budget_period;
+        }
+      } catch (error) {
+        console.error('Error loading budget data:', error);
+      }
+    }
+    
+    // Load spending trends from API
+    async function loadSpendingTrends(period = 'week') {
+      try {
+        const response = await fetch(`/api/budget/spending-trends?period=${period}`);
+        if (response.ok) {
+          const data = await response.json();
+          
+          if (data.trends && data.trends.length > 0) {
+            spendingChart.data.datasets[0].data = data.trends.map(item => ({
+              x: item.date,
+              y: item.amount
+            }));
+            
+            // Update time unit based on period
+            let timeUnit = 'day';
+            if (period === 'month' || period === 'quarter') {
+              timeUnit = 'week';
+            } else if (period === 'year') {
+              timeUnit = 'month';
+            }
+            
+            spendingChart.options.scales.x.time.unit = timeUnit;
+            spendingChart.update('active');
+          }
+        }
+      } catch (error) {
+        console.error('Error loading spending trends:', error);
+      }
+    }
+    
+    // Load category data from API
+    async function loadCategoryData() {
+      try {
+        const response = await fetch('/api/budget/categories');
+        if (response.ok) {
+          const data = await response.json();
+          
+          if (data.categories) {
+            // Update category chart
+            const categories = Object.keys(data.categories).filter(key => data.categories[key].amount > 0);
+            const amounts = categories.map(key => data.categories[key].amount);
+            const colors = ['#10b981', '#667eea', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
+            
+            categoryChart.data.labels = categories;
+            categoryChart.data.datasets[0].data = amounts;
+            categoryChart.data.datasets[0].backgroundColor = colors.slice(0, categories.length);
+            categoryChart.update();
+            
+            // Update category list in DOM
+            updateCategoryList(data.categories);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading category data:', error);
+      }
+    }
+    
+    // Update category list display
+    function updateCategoryList(categories) {
+      const categoryList = document.querySelector('.category-list');
+      if (!categoryList) return;
+      
+      const colors = {
+        'Fresh Produce': 'var(--success-gradient)',
+        'Meat & Seafood': 'var(--primary-gradient)',
+        'Bakery & Dairy': 'var(--warning-gradient)',
+        'Pantry Items': 'var(--error-gradient)',
+        'Frozen Foods': 'var(--secondary-gradient)',
+        'Beverages': 'var(--accent-gradient)'
+      };
+      
+      const icons = {
+        'Fresh Produce': 'fas fa-apple-alt',
+        'Meat & Seafood': 'fas fa-fish',
+        'Bakery & Dairy': 'fas fa-bread-slice',
+        'Pantry Items': 'fas fa-box',
+        'Frozen Foods': 'fas fa-snowflake',
+        'Beverages': 'fas fa-glass-water'
+      };
+      
+      categoryList.innerHTML = '';
+      
+      Object.entries(categories).forEach(([name, data]) => {
+        if (data.amount > 0) {
+          const percentage = Math.min((data.amount / 250) * 100, 100); // Assuming max $250 per category
+          
+          const categoryItem = document.createElement('div');
+          categoryItem.className = 'category-item';
+          categoryItem.innerHTML = `
+            <div class="category-info">
+              <div class="category-icon" style="background: ${colors[name] || 'var(--primary-gradient)'};">
+                <i class="${icons[name] || 'fas fa-shopping-bag'}"></i>
+              </div>
+              <div class="category-details">
+                <div class="category-name">${name}</div>
+                <div class="category-progress">$${data.amount.toFixed(2)} spent</div>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: ${percentage}%;"></div>
+                </div>
+              </div>
+            </div>
+            <div class="category-amount">$${data.amount.toFixed(2)}</div>
+          `;
+          
+          categoryList.appendChild(categoryItem);
+        }
+      });
+    }
+    
+    // Update chart based on time period
+    function updateChart(period) {
+      loadSpendingTrends(period);
+      
+      // Update active button
+      document.querySelectorAll('.chart-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      document.querySelector(`[data-period="${period}"]`).classList.add('active');
+    }
+    
+    // Handle budget settings form
+    async function handleBudgetSettings(event) {
+      event.preventDefault();
+      
+      const budget = parseFloat(document.getElementById('monthlyBudgetInput').value);
+      const period = document.getElementById('budgetPeriod').value;
+      const threshold = parseInt(document.getElementById('alertThreshold').value);
+      const categoryLimits = document.getElementById('categoryLimit').value;
+      
+      try {
+        const response = await fetch('/api/budget/settings', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            monthly_budget: budget,
+            budget_period: period,
+            alert_threshold: threshold,
+            category_limits: categoryLimits
+          })
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          alert('Budget settings saved successfully!');
+          
+          // Reload budget data to reflect changes
+          loadBudgetData();
+        } else {
+          const errorData = await response.json();
+          alert('Failed to save budget settings: ' + errorData.error);
+        }
+      } catch (error) {
+        console.error('Error saving budget settings:', error);
+        alert('An error occurred while saving budget settings.');
+      }
+    }
+
+    // Initialize everything when DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+      initSpendingChart();
+      initCategoryChart();
+      
+      // Chart period controls
+      document.querySelectorAll('.chart-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          updateChart(btn.dataset.period);
+        });
+      });
+      
+      // Budget settings form
+      document.getElementById('budgetSettingsForm').addEventListener('submit', handleBudgetSettings);
+      
+      // Load real data
+      loadBudgetData();
+      loadSpendingTrends('week');
+      loadCategoryData();
+    });
+  </script>
 </body>
 </html>

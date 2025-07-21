@@ -558,6 +558,9 @@
           <li><a href="{{ url_for('shopping.shopping_lists') }}" class="nav-link">
             <i class="fas fa-list-ul" style="margin-right: 8px;"></i>Shopping List
           </a></li>
+          <li><a href="{{ url_for('shopping.budget') }}" class="nav-link">
+            <i class="fas fa-chart-line" style="margin-right: 8px;"></i>Budget & Analytics
+          </a></li>
           <li><a href="{{ url_for('shopping.rewards') }}" class="nav-link">
             <i class="fas fa-trophy" style="margin-right: 8px;"></i>Rewards
           </a></li>
@@ -598,6 +601,14 @@
           </div>
           <h3 class="action-title">Manage Lists</h3>
           <p class="action-description">Create and organize your shopping lists</p>
+        </a>
+        
+        <a href="{{ url_for('shopping.budget') }}" class="action-card">
+          <div class="action-icon">
+            <i class="fas fa-chart-line" aria-hidden="true"></i>
+          </div>
+          <h3 class="action-title">Budget & Analytics</h3>
+          <p class="action-description">Track spending, analyze trends, and manage your budget</p>
         </a>
         
         <a href="{{ url_for('shopping.rewards') }}" class="action-card">

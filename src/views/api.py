@@ -260,6 +260,248 @@ def learn():
     helper.model_learn(carbs, sugar, sodium, fat)
     return jsonify({'status': 'learned'}), 200
 
+# Budget API Routes
+
+@api_bp.route('/budget/overview', methods=['GET'])
+def get_budget_overview():
+    """Get budget overview with spending data"""
+    if 'user_ID' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    user_ID = session['user_ID']
+    db = get_db()
+    cursor = db.cursor()
+    
+    try:
+        # Get user's current budget settings (or default)
+        budget_query = """
+            SELECT monthly_budget, alert_threshold, budget_period 
+            FROM user_budget_settings 
+            WHERE user_id = %s
+        """
+        cursor.execute(budget_query, (user_ID,))
+        budget_settings = cursor.fetchone()
+        
+        if not budget_settings:
+            # Default values if no settings exist
+            monthly_budget = 1000
+            alert_threshold = 80
+            budget_period = 'monthly'
+        else:
+            monthly_budget = budget_settings['monthly_budget']
+            alert_threshold = budget_settings['alert_threshold']
+            budget_period = budget_settings['budget_period']
+        
+        # Get current month's spending
+        current_month_query = """
+            SELECT SUM(i.price * i.quantity) as total_spent,
+                   COUNT(DISTINCT c.cart_ID) as total_trips
+            FROM cart c
+            JOIN item i ON c.cart_ID = i.cart_ID
+            WHERE c.user_ID = %s 
+              AND c.status = 'purchased'
+              AND MONTH(c.created_at) = MONTH(CURRENT_DATE())
+              AND YEAR(c.created_at) = YEAR(CURRENT_DATE())
+        """
+        cursor.execute(current_month_query, (user_ID,))
+        current_stats = cursor.fetchone()
+        
+        total_spent = float(current_stats['total_spent'] or 0)
+        total_trips = current_stats['total_trips'] or 0
+        remaining = monthly_budget - total_spent
+        
+        # Calculate daily average (based on current day of month)
+        from datetime import datetime
+        current_day = datetime.now().day
+        daily_avg = total_spent / current_day if current_day > 0 else 0
+        
+        cursor.close()
+        
+        return jsonify({
+            'monthly_budget': monthly_budget,
+            'total_spent': total_spent,
+            'remaining': remaining,
+            'daily_average': daily_avg,
+            'total_trips': total_trips,
+            'alert_threshold': alert_threshold,
+            'budget_period': budget_period
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'Failed to get budget overview: {str(e)}'}), 500
+    finally:
+        cursor.close()
+
+@api_bp.route('/budget/spending-trends', methods=['GET'])
+def get_spending_trends():
+    """Get spending trends for charts"""
+    if 'user_ID' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    user_ID = session['user_ID']
+    period = request.args.get('period', 'week')  # week, month, quarter, year
+    
+    db = get_db()
+    cursor = db.cursor()
+    
+    try:
+        if period == 'week':
+            # Last 7 days
+            query = """
+                SELECT DATE(c.created_at) as date, 
+                       COALESCE(SUM(i.price * i.quantity), 0) as amount
+                FROM cart c
+                LEFT JOIN item i ON c.cart_ID = i.cart_ID
+                WHERE c.user_ID = %s 
+                  AND c.status = 'purchased'
+                  AND c.created_at >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
+                GROUP BY DATE(c.created_at)
+                ORDER BY date
+            """
+        elif period == 'month':
+            # Last 4 weeks
+            query = """
+                SELECT DATE(DATE_SUB(c.created_at, INTERVAL DAYOFWEEK(c.created_at)-1 DAY)) as date,
+                       COALESCE(SUM(i.price * i.quantity), 0) as amount
+                FROM cart c
+                LEFT JOIN item i ON c.cart_ID = i.cart_ID
+                WHERE c.user_ID = %s 
+                  AND c.status = 'purchased'
+                  AND c.created_at >= DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH)
+                GROUP BY WEEK(c.created_at)
+                ORDER BY date
+            """
+        else:  # quarter or year - simplified to show last 3 months
+            query = """
+                SELECT DATE(CONCAT(YEAR(c.created_at), '-', LPAD(MONTH(c.created_at), 2, '0'), '-01')) as date,
+                       COALESCE(SUM(i.price * i.quantity), 0) as amount
+                FROM cart c
+                LEFT JOIN item i ON c.cart_ID = i.cart_ID
+                WHERE c.user_ID = %s 
+                  AND c.status = 'purchased'
+                  AND c.created_at >= DATE_SUB(CURRENT_DATE(), INTERVAL 3 MONTH)
+                GROUP BY YEAR(c.created_at), MONTH(c.created_at)
+                ORDER BY date
+            """
+        
+        cursor.execute(query, (user_ID,))
+        trends = cursor.fetchall()
+        
+        # Convert to list of dictionaries with proper date formatting
+        formatted_trends = []
+        for trend in trends:
+            formatted_trends.append({
+                'date': trend['date'].strftime('%Y-%m-%d'),
+                'amount': float(trend['amount'])
+            })
+        
+        cursor.close()
+        
+        return jsonify({'trends': formatted_trends})
+        
+    except Exception as e:
+        return jsonify({'error': f'Failed to get spending trends: {str(e)}'}), 500
+    finally:
+        cursor.close()
+
+@api_bp.route('/budget/categories', methods=['GET'])
+def get_category_breakdown():
+    """Get spending breakdown by category"""
+    if 'user_ID' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    user_ID = session['user_ID']
+    db = get_db()
+    cursor = db.cursor()
+    
+    try:
+        # Get current month's items
+        query = """
+            SELECT i.item_name, SUM(i.price * i.quantity) as amount
+            FROM cart c
+            JOIN item i ON c.cart_ID = i.cart_ID
+            WHERE c.user_ID = %s 
+              AND c.status = 'purchased'
+              AND MONTH(c.created_at) = MONTH(CURRENT_DATE())
+              AND YEAR(c.created_at) = YEAR(CURRENT_DATE())
+            GROUP BY i.item_name
+            ORDER BY amount DESC
+        """
+        cursor.execute(query, (user_ID,))
+        items = cursor.fetchall()
+        
+        # Simple categorization logic
+        categories = {
+            'Fresh Produce': {'amount': 0, 'items': []},
+            'Meat & Seafood': {'amount': 0, 'items': []},
+            'Bakery & Dairy': {'amount': 0, 'items': []},
+            'Pantry Items': {'amount': 0, 'items': []},
+            'Frozen Foods': {'amount': 0, 'items': []},
+            'Beverages': {'amount': 0, 'items': []}
+        }
+        
+        # Categorization keywords
+        category_keywords = {
+            'Fresh Produce': ['apple', 'banana', 'orange', 'lettuce', 'tomato', 'potato', 'carrot', 'onion', 'fruit', 'vegetable'],
+            'Meat & Seafood': ['chicken', 'beef', 'pork', 'fish', 'salmon', 'turkey', 'ham', 'meat'],
+            'Bakery & Dairy': ['milk', 'cheese', 'yogurt', 'butter', 'bread', 'bagel', 'muffin', 'dairy'],
+            'Frozen Foods': ['frozen', 'ice cream', 'pizza'],
+            'Beverages': ['juice', 'soda', 'water', 'coffee', 'tea', 'beer', 'wine', 'drink']
+        }
+        
+        for item in items:
+            item_name = item['item_name'].lower()
+            amount = float(item['amount'])
+            
+            categorized = False
+            for category, keywords in category_keywords.items():
+                if any(keyword in item_name for keyword in keywords):
+                    categories[category]['amount'] += amount
+                    categories[category]['items'].append(item['item_name'])
+                    categorized = True
+                    break
+            
+            if not categorized:
+                categories['Pantry Items']['amount'] += amount
+                categories['Pantry Items']['items'].append(item['item_name'])
+        
+        cursor.close()
+        
+        return jsonify({'categories': categories})
+        
+    except Exception as e:
+        return jsonify({'error': f'Failed to get category breakdown: {str(e)}'}), 500
+    finally:
+        cursor.close()
+
+@api_bp.route('/budget/settings', methods=['POST'])
+def update_budget_settings():
+    """Update user's budget settings"""
+    if 'user_ID' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    user_ID = session['user_ID']
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
+    
+    monthly_budget = data.get('monthly_budget', 1000)
+    budget_period = data.get('budget_period', 'monthly')
+    alert_threshold = data.get('alert_threshold', 80)
+    category_limits = data.get('category_limits', 'enabled')
+    
+    # For now, we'll store this in session since we don't have a user_budget_settings table
+    # In production, you'd create this table
+    session['budget_settings'] = {
+        'monthly_budget': monthly_budget,
+        'budget_period': budget_period,
+        'alert_threshold': alert_threshold,
+        'category_limits_enabled': category_limits == 'enabled'
+    }
+    
+    return jsonify({'status': 'success', 'message': 'Budget settings updated successfully'})
+
 # Shopping Lists API Routes
 
 @api_bp.route('/shopping-lists', methods=['GET'])
