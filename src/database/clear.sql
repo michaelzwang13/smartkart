@@ -7,6 +7,16 @@ USE hacknyu25;
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- Drop tables in reverse dependency order
+-- Gamification tables first (dependent tables)
+DROP TABLE IF EXISTS xp_transactions;
+DROP TABLE IF EXISTS user_owned_items;
+DROP TABLE IF EXISTS virtual_items;
+DROP TABLE IF EXISTS pantry_updates;
+DROP TABLE IF EXISTS meals_logged;
+DROP TABLE IF EXISTS user_streaks;
+DROP TABLE IF EXISTS user_progress;
+
+-- Original tables
 DROP TABLE IF EXISTS user_achievements;
 DROP TABLE IF EXISTS achievements;
 DROP TABLE IF EXISTS shopping_list_items;

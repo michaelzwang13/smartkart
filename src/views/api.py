@@ -1248,3 +1248,565 @@ def delete_item_from_list(list_id, item_id):
         return jsonify({'error': f'Failed to delete item: {str(e)}'}), 500
     finally:
         cursor.close()
+
+# GAMIFICATION API ROUTES
+
+@api_bp.route('/progress/overview', methods=['GET'])
+def get_progress_overview():
+    """Get comprehensive progress overview including XP, level, stats, and streaks"""
+    if 'user_ID' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    user_ID = session['user_ID']
+    db = get_db()
+    cursor = db.cursor()
+    
+    try:
+        # Initialize user progress record if it doesn't exist
+        init_query = """
+            INSERT IGNORE INTO user_progress (user_id) VALUES (%s);
+            INSERT IGNORE INTO user_streaks (user_id) VALUES (%s);
+        """
+        cursor.execute(init_query, (user_ID, user_ID))
+        db.commit()
+        
+        # Get user progress data
+        progress_query = """
+            SELECT total_xp, current_level, meals_cooked_total, items_used_before_expiry, 
+                   items_expired, total_items_added, days_active
+            FROM user_progress 
+            WHERE user_id = %s
+        """
+        cursor.execute(progress_query, (user_ID,))
+        progress = cursor.fetchone()
+        
+        # Get user streaks data
+        streaks_query = """
+            SELECT cooking_streak_days, under_budget_streak, days_active_streak, waste_avoidance_streak
+            FROM user_streaks 
+            WHERE user_id = %s
+        """
+        cursor.execute(streaks_query, (user_ID,))
+        streaks = cursor.fetchone()
+        
+        # Calculate level progress
+        current_level = progress['current_level']
+        total_xp = progress['total_xp']
+        xp_for_current_level = (current_level - 1) * 50
+        xp_for_next_level = current_level * 50
+        xp_progress = total_xp - xp_for_current_level
+        xp_needed = xp_for_next_level - total_xp
+        
+        # Calculate waste prevention ratio
+        total_waste_tracked = progress['items_used_before_expiry'] + progress['items_expired']
+        waste_prevention_ratio = 0
+        if total_waste_tracked > 0:
+            waste_prevention_ratio = (progress['items_used_before_expiry'] / total_waste_tracked) * 100
+        
+        # Get current month budget data for budget control ratio
+        budget_query = """
+            SELECT ubs.monthly_budget, b.total_spent
+            FROM user_budget_settings ubs
+            LEFT JOIN budget b ON ubs.user_id = b.user_id 
+                AND MONTH(b.created_at) = MONTH(CURRENT_DATE())
+                AND YEAR(b.created_at) = YEAR(CURRENT_DATE())
+            WHERE ubs.user_id = %s
+        """
+        cursor.execute(budget_query, (user_ID,))
+        budget_data = cursor.fetchone()
+        
+        budget_control_ratio = 0
+        monthly_budget = 1000  # Default
+        monthly_spent = 0
+        
+        if budget_data:
+            monthly_budget = float(budget_data['monthly_budget'] or 1000)
+            monthly_spent = float(budget_data['total_spent'] or 0)
+            if monthly_budget > 0:
+                budget_control_ratio = (monthly_spent / monthly_budget) * 100
+        
+        cursor.close()
+        
+        return jsonify({
+            'level': {
+                'current_level': current_level,
+                'total_xp': total_xp,
+                'xp_progress': xp_progress,
+                'xp_needed': xp_needed,
+                'progress_percentage': min((xp_progress / 50) * 100, 100)
+            },
+            'stats': {
+                'meals_cooked': progress['meals_cooked_total'],
+                'meals_this_week': 0,  # TODO: Calculate from meals_logged table
+                'avg_meals_per_day': round(progress['meals_cooked_total'] / max(progress['days_active'], 1), 1),
+                'waste_ratio': round(waste_prevention_ratio, 0),
+                'items_used': progress['items_used_before_expiry'],
+                'items_expired': progress['items_expired'],
+                'budget_ratio': round(budget_control_ratio, 0),
+                'monthly_budget': monthly_budget,
+                'monthly_spent': monthly_spent,
+                'active_days': progress['days_active'],
+                'items_added': progress['total_items_added'],
+                'pantry_updates': 0  # TODO: Calculate from pantry_updates table
+            },
+            'streaks': {
+                'cooking': streaks['cooking_streak_days'],
+                'budget': streaks['under_budget_streak'],
+                'active': streaks['days_active_streak'],
+                'waste': streaks['waste_avoidance_streak']
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'Failed to get progress overview: {str(e)}'}), 500
+    finally:
+        cursor.close()
+
+@api_bp.route('/progress/log-meal', methods=['POST'])
+def log_meal():
+    """Log a meal and award XP"""
+    if 'user_ID' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    user_ID = session['user_ID']
+    data = request.get_json()
+    meal_name = data.get('meal_name', 'Cooked Meal')
+    recipe_id = data.get('recipe_id')
+    
+    db = get_db()
+    cursor = db.cursor()
+    
+    try:
+        from datetime import date
+        today = date.today()
+        
+        # Check if user already logged a meal today
+        check_query = """
+            SELECT meal_id FROM meals_logged 
+            WHERE user_id = %s AND date_logged = %s
+        """
+        cursor.execute(check_query, (user_ID, today))
+        existing_meal = cursor.fetchone()
+        
+        if existing_meal:
+            return jsonify({'error': 'You have already logged a meal today!'}), 400
+        
+        # Insert meal log
+        xp_earned = 5
+        meal_query = """
+            INSERT INTO meals_logged (user_id, date_logged, meal_name, recipe_id, xp_earned)
+            VALUES (%s, %s, %s, %s, %s)
+        """
+        cursor.execute(meal_query, (user_ID, today, meal_name, recipe_id, xp_earned))
+        meal_id = cursor.lastrowid
+        
+        # Update user progress
+        update_progress_query = """
+            UPDATE user_progress 
+            SET total_xp = total_xp + %s, 
+                current_level = FLOOR((total_xp + %s) / 50) + 1,
+                meals_cooked_total = meals_cooked_total + 1,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE user_id = %s
+        """
+        cursor.execute(update_progress_query, (xp_earned, xp_earned, user_ID))
+        
+        # Update cooking streak
+        streak_query = """
+            UPDATE user_streaks 
+            SET cooking_streak_days = CASE 
+                WHEN cooking_streak_last_date = DATE_SUB(%s, INTERVAL 1 DAY) THEN cooking_streak_days + 1
+                WHEN cooking_streak_last_date IS NULL OR cooking_streak_last_date < DATE_SUB(%s, INTERVAL 1 DAY) THEN 1
+                ELSE cooking_streak_days 
+            END,
+            cooking_streak_last_date = %s,
+            updated_at = CURRENT_TIMESTAMP
+            WHERE user_id = %s
+        """
+        cursor.execute(streak_query, (today, today, today, user_ID))
+        
+        # Log XP transaction
+        xp_transaction_query = """
+            INSERT INTO xp_transactions (user_id, xp_amount, xp_source, source_reference_id, description)
+            VALUES (%s, %s, 'meal_cooked', %s, %s)
+        """
+        cursor.execute(xp_transaction_query, (user_ID, xp_earned, meal_id, f'Logged meal: {meal_name}'))
+        
+        # Get updated progress
+        cursor.execute("SELECT total_xp, current_level FROM user_progress WHERE user_id = %s", (user_ID,))
+        updated_progress = cursor.fetchone()
+        
+        db.commit()
+        cursor.close()
+        
+        # Check for level up
+        new_level = updated_progress['current_level']
+        level_up = False
+        old_level = new_level - 1 if updated_progress['total_xp'] - xp_earned < new_level * 50 - 50 else new_level
+        if new_level > old_level:
+            level_up = True
+        
+        return jsonify({
+            'success': True,
+            'xp_earned': xp_earned,
+            'total_xp': updated_progress['total_xp'],
+            'current_level': new_level,
+            'level_up': level_up,
+            'message': f'Great! You earned {xp_earned} XP for logging your meal!'
+        })
+        
+    except Exception as e:
+        db.rollback()
+        return jsonify({'error': f'Failed to log meal: {str(e)}'}), 500
+    finally:
+        cursor.close()
+
+@api_bp.route('/progress/update-pantry', methods=['POST'])
+def update_pantry_activity():
+    """Log pantry update activity and award XP"""
+    if 'user_ID' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    user_ID = session['user_ID']
+    data = request.get_json()
+    items_added = data.get('items_added', 0)
+    items_removed = data.get('items_removed', 0)
+    
+    if items_added < 0 or items_removed < 0:
+        return jsonify({'error': 'Invalid item counts'}), 400
+    
+    if items_added == 0 and items_removed == 0:
+        return jsonify({'error': 'No changes to log'}), 400
+    
+    db = get_db()
+    cursor = db.cursor()
+    
+    try:
+        from datetime import date
+        today = date.today()
+        
+        # Check if user already updated pantry today
+        check_query = """
+            SELECT update_id, items_added, items_removed FROM pantry_updates 
+            WHERE user_id = %s AND date_updated = %s
+        """
+        cursor.execute(check_query, (user_ID, today))
+        existing_update = cursor.fetchone()
+        
+        xp_earned = 2
+        
+        if existing_update:
+            # Update existing record
+            new_items_added = existing_update['items_added'] + items_added
+            new_items_removed = existing_update['items_removed'] + items_removed
+            
+            update_pantry_query = """
+                UPDATE pantry_updates 
+                SET items_added = %s, items_removed = %s, xp_earned = xp_earned + %s
+                WHERE user_id = %s AND date_updated = %s
+            """
+            cursor.execute(update_pantry_query, (new_items_added, new_items_removed, xp_earned, user_ID, today))
+            update_id = existing_update['update_id']
+        else:
+            # Insert new record
+            pantry_query = """
+                INSERT INTO pantry_updates (user_id, date_updated, items_added, items_removed, xp_earned)
+                VALUES (%s, %s, %s, %s, %s)
+            """
+            cursor.execute(pantry_query, (user_ID, today, items_added, items_removed, xp_earned))
+            update_id = cursor.lastrowid
+        
+        # Update user progress
+        update_progress_query = """
+            UPDATE user_progress 
+            SET total_xp = total_xp + %s, 
+                current_level = FLOOR((total_xp + %s) / 50) + 1,
+                total_items_added = total_items_added + %s,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE user_id = %s
+        """
+        cursor.execute(update_progress_query, (xp_earned, xp_earned, items_added, user_ID))
+        
+        # Log XP transaction
+        xp_transaction_query = """
+            INSERT INTO xp_transactions (user_id, xp_amount, xp_source, source_reference_id, description)
+            VALUES (%s, %s, 'daily_active', %s, %s)
+        """
+        description = f'Pantry update: +{items_added} items, -{items_removed} items'
+        cursor.execute(xp_transaction_query, (user_ID, xp_earned, update_id, description))
+        
+        # Get updated progress
+        cursor.execute("SELECT total_xp, current_level FROM user_progress WHERE user_id = %s", (user_ID,))
+        updated_progress = cursor.fetchone()
+        
+        db.commit()
+        cursor.close()
+        
+        return jsonify({
+            'success': True,
+            'xp_earned': xp_earned,
+            'total_xp': updated_progress['total_xp'],
+            'current_level': updated_progress['current_level'],
+            'message': f'Pantry updated! You earned {xp_earned} XP for staying organized!'
+        })
+        
+    except Exception as e:
+        db.rollback()
+        return jsonify({'error': f'Failed to update pantry: {str(e)}'}), 500
+    finally:
+        cursor.close()
+
+@api_bp.route('/progress/virtual-kitchen', methods=['GET'])
+def get_virtual_kitchen():
+    """Get user's virtual kitchen items and available unlocks"""
+    if 'user_ID' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    user_ID = session['user_ID']
+    db = get_db()
+    cursor = db.cursor()
+    
+    try:
+        # Get user's current progress for unlock checks
+        progress_query = """
+            SELECT total_xp, current_level, meals_cooked_total
+            FROM user_progress WHERE user_id = %s
+        """
+        cursor.execute(progress_query, (user_ID,))
+        progress = cursor.fetchone()
+        
+        if not progress:
+            return jsonify({'error': 'User progress not found'}), 404
+        
+        current_level = progress['current_level']
+        
+        # Get user's current streaks for unlock checks
+        streaks_query = """
+            SELECT cooking_streak_days, under_budget_streak, days_active_streak, waste_avoidance_streak
+            FROM user_streaks WHERE user_id = %s
+        """
+        cursor.execute(streaks_query, (user_ID,))
+        streaks = cursor.fetchone()
+        
+        # Get user's owned items
+        owned_query = """
+            SELECT vi.item_id, vi.item_name, vi.item_icon, vi.item_category, uoi.date_unlocked
+            FROM user_owned_items uoi
+            JOIN virtual_items vi ON uoi.item_id = vi.item_id
+            WHERE uoi.user_id = %s
+            ORDER BY uoi.date_unlocked ASC
+        """
+        cursor.execute(owned_query, (user_ID,))
+        owned_items = cursor.fetchall()
+        
+        # Get all available virtual items
+        all_items_query = """
+            SELECT item_id, item_name, item_icon, item_category, unlock_type, 
+                   unlock_requirement, unlock_description
+            FROM virtual_items
+            ORDER BY unlock_requirement ASC, item_name ASC
+        """
+        cursor.execute(all_items_query, ())
+        all_items = cursor.fetchall()
+        
+        # Process items and determine unlock status
+        owned_item_ids = {item['item_id'] for item in owned_items}
+        available_items = []
+        locked_items = []
+        
+        for item in all_items:
+            item_dict = {
+                'id': item['item_id'],
+                'name': item['item_name'],
+                'icon': item['item_icon'],
+                'category': item['item_category'],
+                'unlock_type': item['unlock_type'],
+                'unlock_requirement': item['unlock_requirement'],
+                'description': item['unlock_description'],
+                'owned': item['item_id'] in owned_item_ids
+            }
+            
+            # Check if item can be unlocked
+            can_unlock = False
+            if item['unlock_type'] == 'level':
+                can_unlock = current_level >= item['unlock_requirement']
+            elif item['unlock_type'] == 'streak':
+                max_streak = max(
+                    streaks['cooking_streak_days'] or 0,
+                    streaks['under_budget_streak'] or 0, 
+                    streaks['days_active_streak'] or 0,
+                    streaks['waste_avoidance_streak'] or 0
+                )
+                can_unlock = max_streak >= item['unlock_requirement']
+            elif item['unlock_type'] == 'achievement':
+                # For now, assume achievement unlocks are not implemented
+                can_unlock = False
+            
+            item_dict['can_unlock'] = can_unlock
+            
+            if item['item_id'] in owned_item_ids:
+                item_dict['unlocked'] = True
+                available_items.append(item_dict)
+            elif can_unlock:
+                item_dict['unlocked'] = False
+                available_items.append(item_dict)
+            else:
+                item_dict['unlocked'] = False
+                locked_items.append(item_dict)
+        
+        cursor.close()
+        
+        return jsonify({
+            'owned_items': [
+                {
+                    'id': item['item_id'],
+                    'name': item['item_name'],
+                    'icon': item['item_icon'],
+                    'category': item['item_category'],
+                    'date_unlocked': item['date_unlocked'].isoformat() if item['date_unlocked'] else None
+                }
+                for item in owned_items
+            ],
+            'available_items': available_items,
+            'locked_items': locked_items,
+            'total_owned': len(owned_items),
+            'total_available': len(all_items)
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'Failed to get virtual kitchen: {str(e)}'}), 500
+    finally:
+        cursor.close()
+
+@api_bp.route('/progress/unlock-item', methods=['POST'])
+def unlock_virtual_item():
+    """Unlock a virtual item if user meets requirements"""
+    if 'user_ID' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    user_ID = session['user_ID']
+    data = request.get_json()
+    item_id = data.get('item_id')
+    
+    if not item_id:
+        return jsonify({'error': 'Item ID is required'}), 400
+    
+    db = get_db()
+    cursor = db.cursor()
+    
+    try:
+        # Check if item exists and get requirements
+        item_query = """
+            SELECT item_id, item_name, unlock_type, unlock_requirement, unlock_description
+            FROM virtual_items WHERE item_id = %s
+        """
+        cursor.execute(item_query, (item_id,))
+        item = cursor.fetchone()
+        
+        if not item:
+            return jsonify({'error': 'Item not found'}), 404
+        
+        # Check if user already owns this item
+        owned_query = """
+            SELECT user_id FROM user_owned_items 
+            WHERE user_id = %s AND item_id = %s
+        """
+        cursor.execute(owned_query, (user_ID, item_id))
+        if cursor.fetchone():
+            return jsonify({'error': 'Item already owned'}), 400
+        
+        # Get user's progress and streaks for verification
+        progress_query = """
+            SELECT up.current_level, us.cooking_streak_days, us.under_budget_streak, 
+                   us.days_active_streak, us.waste_avoidance_streak
+            FROM user_progress up
+            JOIN user_streaks us ON up.user_id = us.user_id
+            WHERE up.user_id = %s
+        """
+        cursor.execute(progress_query, (user_ID,))
+        user_data = cursor.fetchone()
+        
+        if not user_data:
+            return jsonify({'error': 'User progress not found'}), 404
+        
+        # Verify unlock requirements
+        can_unlock = False
+        if item['unlock_type'] == 'level':
+            can_unlock = user_data['current_level'] >= item['unlock_requirement']
+        elif item['unlock_type'] == 'streak':
+            max_streak = max(
+                user_data['cooking_streak_days'] or 0,
+                user_data['under_budget_streak'] or 0,
+                user_data['days_active_streak'] or 0,
+                user_data['waste_avoidance_streak'] or 0
+            )
+            can_unlock = max_streak >= item['unlock_requirement']
+        elif item['unlock_type'] == 'achievement':
+            # For now, achievement unlocks are not implemented
+            can_unlock = False
+        
+        if not can_unlock:
+            return jsonify({'error': 'Requirements not met for this item'}), 400
+        
+        # Unlock the item
+        unlock_query = """
+            INSERT INTO user_owned_items (user_id, item_id) VALUES (%s, %s)
+        """
+        cursor.execute(unlock_query, (user_ID, item_id))
+        
+        db.commit()
+        cursor.close()
+        
+        return jsonify({
+            'success': True,
+            'item_name': item['item_name'],
+            'message': f'🎉 Congratulations! You unlocked {item["item_name"]}!'
+        })
+        
+    except Exception as e:
+        db.rollback()
+        return jsonify({'error': f'Failed to unlock item: {str(e)}'}), 500
+    finally:
+        cursor.close()
+
+@api_bp.route('/progress/xp-history', methods=['GET'])
+def get_xp_history():
+    """Get user's XP transaction history"""
+    if 'user_ID' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    user_ID = session['user_ID']
+    limit = request.args.get('limit', 50, type=int)
+    
+    db = get_db()
+    cursor = db.cursor()
+    
+    try:
+        query = """
+            SELECT xp_amount, xp_source, description, created_at
+            FROM xp_transactions 
+            WHERE user_id = %s 
+            ORDER BY created_at DESC 
+            LIMIT %s
+        """
+        cursor.execute(query, (user_ID, limit))
+        transactions = cursor.fetchall()
+        
+        formatted_transactions = [
+            {
+                'xp_amount': transaction['xp_amount'],
+                'source': transaction['xp_source'],
+                'description': transaction['description'],
+                'date': transaction['created_at'].isoformat() if transaction['created_at'] else None
+            }
+            for transaction in transactions
+        ]
+        
+        cursor.close()
+        
+        return jsonify({'transactions': formatted_transactions})
+        
+    except Exception as e:
+        return jsonify({'error': f'Failed to get XP history: {str(e)}'}), 500
+    finally:
+        cursor.close()

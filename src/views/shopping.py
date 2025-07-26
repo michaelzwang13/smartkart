@@ -143,10 +143,13 @@ def shopping_lists():
     return render_template('shopping_list.html')
 
 
-@shopping_bp.route('/rewards')
-def rewards():
-    return render_template('reward.html')
-
 @shopping_bp.route('/budget')
 def budget():
     return render_template('budget.html')
+
+@shopping_bp.route('/progress')
+def progress():
+    """Show the gamification/progress tracking view"""
+    if 'user_ID' not in session:
+        return redirect(url_for('auth.login'))
+    return render_template('progress.html')
