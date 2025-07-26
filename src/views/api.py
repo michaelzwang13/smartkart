@@ -1143,11 +1143,23 @@ def add_item_to_list(list_id):
     cursor = db.cursor()
     
     try:
-        # Verify the list belongs to the user
-        verify_query = "SELECT list_id FROM shopping_lists WHERE list_id = %s AND user_id = %s AND is_active = TRUE"
+        # Verify the list belongs to the user and check item count
+        verify_query = """
+            SELECT sl.list_id, COUNT(sli.item_id) as item_count
+            FROM shopping_lists sl
+            LEFT JOIN shopping_list_items sli ON sl.list_id = sli.list_id
+            WHERE sl.list_id = %s AND sl.user_id = %s AND sl.is_active = TRUE
+            GROUP BY sl.list_id
+        """
         cursor.execute(verify_query, (list_id, user_ID))
-        if not cursor.fetchone():
+        result = cursor.fetchone()
+        
+        if not result:
             return jsonify({'error': 'Shopping list not found'}), 404
+        
+        # Check 25 item limit
+        if result['item_count'] >= 25:
+            return jsonify({'error': 'Cannot add more items. Maximum 25 items per list.'}), 400
         
         # Insert new item
         query = """
