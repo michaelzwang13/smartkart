@@ -192,7 +192,7 @@ def get_cart_items():
     cursor = db.cursor()
     
     # Get items
-    query = 'SELECT item_ID, item_name, price, quantity, image_url FROM item WHERE cart_ID = %s'
+    query = 'SELECT item_ID, item_name, price, quantity, image_url FROM cart_item WHERE cart_ID = %s'
     cursor.execute(query, (session['cart_ID'],))
     items = cursor.fetchall()
     
@@ -214,25 +214,92 @@ def get_cart_items():
 
 @api_bp.route('/searchitem', methods=['GET'])
 def searchitem():
+    """Search for item by UPC using Nutritionix API"""
     api_id = current_app.config.get('NUTRITIONIX_API_ID')
     api_key = current_app.config.get('NUTRITIONIX_API_KEY')
 
-    if not api_id or not api_key or api_id == "YOUR_API_ID_HERE":
-        return jsonify({'error': 'Nutritionix API keys are not configured'}), 500
+    if not api_id or not api_key:
+        return jsonify({
+            'error': 'Nutritionix API keys are not configured',
+            'foods': []
+        }), 500
 
     upc = request.args.get('upc')
     if not upc:
         return jsonify({'error': 'UPC parameter is required'}), 400
 
+    # Clean UPC - remove any whitespace and validate basic format
+    upc = upc.strip()
+    if not upc.isdigit() or len(upc) < 8:
+        return jsonify({
+            'error': 'Invalid UPC format',
+            'foods': []
+        }), 400
+
     url = f'https://trackapi.nutritionix.com/v2/search/item?upc={upc}'
-    headers = {'x-app-id': api_id, 'x-app-key': api_key}
+    headers = {
+        'x-app-id': api_id, 
+        'x-app-key': api_key,
+        'Content-Type': 'application/json'
+    }
 
     try:
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers, timeout=10)
+        
+        if response.status_code == 404:
+            # Item not found in Nutritionix database
+            return jsonify({
+                'foods': [],
+                'message': 'Product not found in database',
+                'fallback': create_fallback_item(upc)
+            })
+        
         response.raise_for_status()
-        return jsonify(response.json())
+        api_data = response.json()
+        
+        # Return the API response with enhanced structure
+        return jsonify({
+            'foods': api_data.get('foods', []),
+            'message': 'Product found successfully',
+            'upc': upc
+        })
+        
+    except requests.exceptions.Timeout:
+        return jsonify({
+            'error': 'API request timed out',
+            'foods': [],
+            'fallback': create_fallback_item(upc)
+        }), 408
+        
     except requests.exceptions.RequestException as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({
+            'error': f'API request failed: {str(e)}',
+            'foods': [],
+            'fallback': create_fallback_item(upc)
+        }), 500
+
+def create_fallback_item(upc):
+    """Create a fallback item when API fails or item not found"""
+    return {
+        'food_name': f'Unknown Product (UPC: {upc})',
+        'brand_name': 'Unknown Brand',
+        'nf_total_carbohydrate': 0,
+        'nf_sugars': 0,
+        'nf_sodium': 0,
+        'nf_saturated_fat': 0,
+        'nf_calories': 0,
+        'photo': {
+            'thumb': 'https://t4.ftcdn.net/jpg/02/51/95/53/360_F_251955356_FAQH0U1y1TZw3ZcdPGybwUkH90a3VAhb.jpg'
+        },
+        'upc': upc,
+        'is_fallback': True
+    }
+
+# Additional route alias for better API consistency
+@api_bp.route('/upc-lookup', methods=['GET'])
+def upc_lookup():
+    """Alias for searchitem endpoint for better API naming"""
+    return searchitem()
 
 @api_bp.route('/predict')
 def predict():
