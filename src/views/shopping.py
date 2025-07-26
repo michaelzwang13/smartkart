@@ -173,6 +173,9 @@ def finish_shopping():
         if 'user_ID' in session and total_spent > 0:
             from src.views.api import update_budget_spending
             update_budget_spending(session['user_ID'], total_spent)
+        
+        # Redirect to pantry transfer page
+        return redirect(url_for('shopping.pantry_transfer', cart_id=cart_ID))
     
     return redirect(url_for('shopping.home'))
 
@@ -205,3 +208,42 @@ def rewards():
 @shopping_bp.route('/budget')
 def budget():
     return render_template('budget.html')
+
+@shopping_bp.route('/pantry-transfer')
+def pantry_transfer():
+    """Show pantry transfer page after completing shopping trip"""
+    if 'user_ID' not in session:
+        return redirect(url_for('auth.login'))
+    
+    cart_id = request.args.get('cart_id')
+    if not cart_id:
+        return redirect(url_for('shopping.home'))
+    
+    db = get_db()
+    cursor = db.cursor()
+    
+    # Get cart details and items
+    cart_query = 'SELECT * FROM shopping_cart WHERE cart_ID = %s AND user_ID = %s'
+    cursor.execute(cart_query, (cart_id, session['user_ID']))
+    cart = cursor.fetchone()
+    
+    if not cart:
+        cursor.close()
+        return redirect(url_for('shopping.home'))
+    
+    # Get cart items
+    items_query = 'SELECT * FROM cart_item WHERE cart_ID = %s'
+    cursor.execute(items_query, (cart_id,))
+    items = cursor.fetchall()
+    
+    cursor.close()
+    
+    return render_template('pantry_transfer.html', cart=cart, items=items)
+
+@shopping_bp.route('/pantry')
+def pantry():
+    """Show user's pantry management page"""
+    if 'user_ID' not in session:
+        return redirect(url_for('auth.login'))
+    
+    return render_template('pantry.html')

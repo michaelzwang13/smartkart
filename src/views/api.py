@@ -1391,3 +1391,399 @@ def delete_item_from_list(list_id, item_id):
         return jsonify({'error': f'Failed to delete item: {str(e)}'}), 500
     finally:
         cursor.close()
+
+# =============================================================================
+# PANTRY INTEGRATION API ENDPOINTS
+# =============================================================================
+
+@api_bp.route('/pantry/items', methods=['GET'])
+def get_pantry_items():
+    """Get all pantry items for the current user"""
+    if 'user_ID' not in session:
+        return jsonify({'success': False, 'message': 'Not authenticated'})
+    
+    user_ID = session['user_ID']
+    db = get_db()
+    cursor = db.cursor()
+    
+    # Get filter parameters
+    storage_filter = request.args.get('storage_type', '')
+    category_filter = request.args.get('category', '')
+    expiry_filter = request.args.get('expiry_status', '')
+    
+    try:
+        # Build query with filters
+        query = """
+            SELECT p.*, 
+                   CASE 
+                       WHEN p.expiration_date IS NULL THEN 'no_expiry'
+                       WHEN p.expiration_date < CURDATE() THEN 'expired'
+                       WHEN p.expiration_date <= DATE_ADD(CURDATE(), INTERVAL 3 DAY) THEN 'expiring_soon'
+                       ELSE 'fresh'
+                   END as expiry_status,
+                   DATEDIFF(p.expiration_date, CURDATE()) as days_until_expiry
+            FROM pantry_items p
+            WHERE p.user_id = %s AND p.is_consumed = FALSE
+        """
+        params = [user_ID]
+        
+        # Add storage filter
+        if storage_filter:
+            query += " AND p.storage_type = %s"
+            params.append(storage_filter)
+        
+        # Add category filter
+        if category_filter:
+            query += " AND p.category = %s"
+            params.append(category_filter)
+        
+        query += " ORDER BY p.expiration_date ASC, p.date_added DESC"
+        
+        cursor.execute(query, params)
+        all_items = cursor.fetchall()
+        
+        # Apply expiry filter if needed (post-query filtering for computed field)
+        items = []
+        for item in all_items:
+            if expiry_filter:
+                if expiry_filter == 'expired' and item['expiry_status'] != 'expired':
+                    continue
+                elif expiry_filter == 'expiring_soon' and item['expiry_status'] != 'expiring_soon':
+                    continue
+                elif expiry_filter == 'fresh' and item['expiry_status'] not in ['fresh', 'no_expiry']:
+                    continue
+            items.append(item)
+        
+        # Group items by category for better organization
+        categorized_items = {}
+        for item in items:
+            category = item['category'] or 'Other'
+            if category not in categorized_items:
+                categorized_items[category] = []
+            categorized_items[category].append(item)
+        
+        return jsonify({
+            'success': True,
+            'items': items,
+            'categorized_items': categorized_items,
+            'total_items': len(items)
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Failed to get pantry items: {str(e)}'})
+    finally:
+        cursor.close()
+
+@api_bp.route('/pantry/items', methods=['POST'])
+def add_pantry_item():
+    """Add a new item to pantry manually"""
+    if 'user_ID' not in session:
+        return jsonify({'success': False, 'message': 'Not authenticated'})
+    
+    data = request.get_json()
+    user_ID = session['user_ID']
+    
+    # Required fields
+    item_name = data.get('item_name', '').strip()
+    quantity = data.get('quantity', 1)
+    unit = data.get('unit', 'pcs')
+    
+    # Optional fields
+    category = data.get('category', 'Other')
+    storage_type = data.get('storage_type', 'pantry')
+    expiration_date = data.get('expiration_date')  # YYYY-MM-DD format
+    use_ai_prediction = data.get('ai_predict_expiry', False)  # Fixed parameter name
+    notes = data.get('notes', '')
+    
+    if not item_name:
+        return jsonify({'success': False, 'message': 'Item name is required'})
+    
+    try:
+        quantity = float(quantity)
+        if quantity <= 0:
+            return jsonify({'success': False, 'message': 'Quantity must be positive'})
+    except (ValueError, TypeError):
+        return jsonify({'success': False, 'message': 'Invalid quantity'})
+    
+    db = get_db()
+    cursor = db.cursor()
+    
+    try:
+        # Handle AI expiration prediction
+        is_ai_predicted = False
+        if use_ai_prediction and not expiration_date:
+            predicted_expiry = predict_expiration_date(item_name, storage_type)
+            if predicted_expiry:
+                expiration_date = predicted_expiry
+                is_ai_predicted = True
+        
+        # Insert pantry item
+        query = """
+            INSERT INTO pantry_items (
+                user_id, item_name, quantity, unit, category, storage_type,
+                expiration_date, source_type, is_ai_predicted_expiry, notes
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        
+        # Debug: print the values being inserted
+        print(f"DEBUG: Inserting pantry item - user_ID: {user_ID}, item_name: {item_name}, quantity: {quantity}")
+        
+        cursor.execute(query, (
+            user_ID, item_name, quantity, unit, category, storage_type,
+            expiration_date, 'manual', is_ai_predicted, notes
+        ))
+        
+        item_id = cursor.lastrowid
+        db.commit()
+        
+        # Return the created item
+        cursor.execute("SELECT * FROM pantry_items WHERE pantry_item_id = %s", (item_id,))
+        new_item = cursor.fetchone()
+        
+        return jsonify({
+            'success': True,
+            'item': new_item,
+            'ai_predicted': is_ai_predicted,
+            'message': 'Item added successfully'
+        })
+        
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'message': f'Failed to add pantry item: {str(e)}'})
+    finally:
+        cursor.close()
+
+@api_bp.route('/pantry/transfer-from-trip', methods=['POST'])
+def transfer_shopping_trip_to_pantry():
+    """Transfer items from a completed shopping trip to pantry"""
+    if 'user_ID' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    data = request.get_json()
+    user_ID = session['user_ID']
+    cart_id = data.get('cart_id')
+    items_data = data.get('items', [])  # List of items with pantry details
+    
+    if not cart_id:
+        return jsonify({'error': 'Cart ID is required'}), 400
+    
+    db = get_db()
+    cursor = db.cursor()
+    
+    try:
+        # Verify cart belongs to user and is completed
+        verify_query = """
+            SELECT cart_ID FROM shopping_cart 
+            WHERE cart_ID = %s AND user_ID = %s AND status = 'purchased'
+        """
+        cursor.execute(verify_query, (cart_id, user_ID))
+        if not cursor.fetchone():
+            return jsonify({'error': 'Shopping trip not found or not completed'}), 404
+        
+        # Check if already transferred
+        check_query = "SELECT transfer_id FROM pantry_transfer_sessions WHERE cart_id = %s"
+        cursor.execute(check_query, (cart_id,))
+        if cursor.fetchone():
+            return jsonify({'error': 'Items from this trip have already been transferred'}), 400
+        
+        # Create transfer session
+        session_query = """
+            INSERT INTO pantry_transfer_sessions (user_id, cart_id, items_transferred)
+            VALUES (%s, %s, %s)
+        """
+        cursor.execute(session_query, (user_ID, cart_id, len(items_data)))
+        transfer_id = cursor.lastrowid
+        
+        # Add items to pantry
+        items_added = 0
+        for item_data in items_data:
+            item_name = item_data.get('item_name', '').strip()
+            quantity = item_data.get('quantity', 1)
+            unit = item_data.get('unit', 'pcs')
+            category = item_data.get('category', 'Other')
+            storage_type = item_data.get('storage_type', 'pantry')
+            expiration_date = item_data.get('expiration_date')
+            use_ai_prediction = item_data.get('use_ai_prediction', False)
+            
+            if not item_name:
+                continue
+            
+            # Handle AI prediction if requested
+            is_ai_predicted = False
+            if use_ai_prediction and not expiration_date:
+                predicted_expiry = predict_expiration_date(item_name, storage_type)
+                if predicted_expiry:
+                    expiration_date = predicted_expiry
+                    is_ai_predicted = True
+            
+            # Insert pantry item
+            insert_query = """
+                INSERT INTO pantry_items (
+                    user_id, item_name, quantity, unit, category, storage_type,
+                    expiration_date, source_type, source_cart_id, is_ai_predicted_expiry
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """
+            cursor.execute(insert_query, (
+                user_ID, item_name, quantity, unit, category, storage_type,
+                expiration_date, 'shopping_trip', cart_id, is_ai_predicted
+            ))
+            items_added += 1
+        
+        db.commit()
+        cursor.close()
+        
+        return jsonify({
+            'success': True,
+            'transfer_id': transfer_id,
+            'items_added': items_added
+        })
+        
+    except Exception as e:
+        db.rollback()
+        return jsonify({'error': f'Failed to transfer items: {str(e)}'}), 500
+    finally:
+        cursor.close()
+
+def predict_expiration_date(item_name, storage_type):
+    """Predict expiration date using AI or cached predictions"""
+    db = get_db()
+    cursor = db.cursor()
+    
+    try:
+        # First check if we have a cached prediction
+        cache_query = """
+            SELECT predicted_days FROM expiry_predictions 
+            WHERE item_name = %s AND storage_type = %s
+        """
+        cursor.execute(cache_query, (item_name.lower(), storage_type))
+        cached = cursor.fetchone()
+        
+        if cached:
+            # Update usage count
+            cursor.execute("""
+                UPDATE expiry_predictions 
+                SET used_count = used_count + 1 
+                WHERE item_name = %s AND storage_type = %s
+            """, (item_name.lower(), storage_type))
+            
+            # Calculate expiration date
+            from datetime import datetime, timedelta
+            expiry_date = datetime.now().date() + timedelta(days=cached['predicted_days'])
+            cursor.close()
+            return expiry_date.strftime('%Y-%m-%d')
+        
+        # For now, use simple heuristics based on category/storage
+        predicted_days = get_simple_prediction(item_name, storage_type)
+        
+        if predicted_days:
+            # Cache the prediction
+            cursor.execute("""
+                INSERT INTO expiry_predictions (item_name, storage_type, predicted_days)
+                VALUES (%s, %s, %s)
+                ON DUPLICATE KEY UPDATE 
+                used_count = used_count + 1, 
+                predicted_days = VALUES(predicted_days)
+            """, (item_name.lower(), storage_type, predicted_days))
+            
+            # Calculate expiration date
+            from datetime import datetime, timedelta
+            expiry_date = datetime.now().date() + timedelta(days=predicted_days)
+            cursor.close()
+            return expiry_date.strftime('%Y-%m-%d')
+        
+        cursor.close()
+        return None
+        
+    except Exception as e:
+        print(f"Error predicting expiration: {str(e)}")
+        cursor.close()
+        return None
+
+def get_simple_prediction(item_name, storage_type):
+    """Simple heuristic-based expiration prediction"""
+    item_lower = item_name.lower()
+    
+    # Storage-based multipliers
+    storage_multiplier = {
+        'freezer': 30,
+        'fridge': 1,
+        'pantry': 1
+    }
+    
+    # Item category predictions (base days for fridge)
+    if any(word in item_lower for word in ['milk', 'dairy', 'yogurt', 'cheese']):
+        return 14 * storage_multiplier.get(storage_type, 1)
+    elif any(word in item_lower for word in ['meat', 'chicken', 'beef', 'pork', 'fish']):
+        return 3 * storage_multiplier.get(storage_type, 1)
+    elif any(word in item_lower for word in ['bread', 'bagel', 'muffin']):
+        return 5 * storage_multiplier.get(storage_type, 1)
+    elif any(word in item_lower for word in ['apple', 'banana', 'orange', 'fruit', 'vegetable']):
+        return 7 * storage_multiplier.get(storage_type, 1)
+    elif any(word in item_lower for word in ['rice', 'pasta', 'grain', 'cereal']):
+        return 365 * storage_multiplier.get(storage_type, 1)
+    elif any(word in item_lower for word in ['canned', 'can', 'jar']):
+        return 730 * storage_multiplier.get(storage_type, 1)
+    else:
+        # Default prediction
+        base_days = 30 if storage_type == 'pantry' else 14 if storage_type == 'fridge' else 90
+        return base_days
+    
+    return None
+
+@api_bp.route('/pantry/items/<int:item_id>', methods=['DELETE'])
+def delete_pantry_item(item_id):
+    """Delete a pantry item"""
+    if 'user_ID' not in session:
+        return jsonify({'success': False, 'message': 'Not authenticated'})
+    
+    user_id = session['user_ID']
+    
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        
+        # Verify the item belongs to the user before deleting
+        query = 'SELECT pantry_item_id FROM pantry_items WHERE pantry_item_id = %s AND user_id = %s'
+        cursor.execute(query, (item_id, user_id))
+        item = cursor.fetchone()
+        
+        if not item:
+            cursor.close()
+            return jsonify({'success': False, 'message': 'Item not found or access denied'})
+        
+        # Delete the item
+        delete_query = 'DELETE FROM pantry_items WHERE pantry_item_id = %s AND user_id = %s'
+        cursor.execute(delete_query, (item_id, user_id))
+        db.commit()
+        cursor.close()
+        
+        return jsonify({'success': True, 'message': 'Item deleted successfully'})
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Database error: {str(e)}'})
+
+@api_bp.route('/pantry/test', methods=['GET'])
+def test_pantry():
+    """Test endpoint to check pantry functionality"""
+    if 'user_ID' not in session:
+        return jsonify({'success': False, 'message': 'Not authenticated'})
+    
+    user_ID = session['user_ID']
+    db = get_db()
+    cursor = db.cursor()
+    
+    try:
+        # Test basic connection and table access
+        cursor.execute("SELECT COUNT(*) as count FROM pantry_items WHERE user_id = %s", (user_ID,))
+        result = cursor.fetchone()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Pantry test successful. User {user_ID} has {result["count"]} items.',
+            'user_id': user_ID
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Pantry test failed: {str(e)}'})
+    finally:
+        cursor.close()
