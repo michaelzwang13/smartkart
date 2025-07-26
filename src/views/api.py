@@ -1213,6 +1213,70 @@ def toggle_item_completion(list_id, item_id):
     finally:
         cursor.close()
 
+@api_bp.route('/shopping-lists/<int:list_id>/items/<int:item_id>', methods=['PATCH'])
+def update_shopping_list_item(list_id, item_id):
+    """Update a shopping list item (name or quantity)"""
+    if 'user_ID' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    data = request.get_json()
+    user_ID = session['user_ID']
+    
+    db = get_db()
+    cursor = db.cursor()
+    
+    try:
+        # Verify the item belongs to a list owned by the user
+        verify_query = """
+            SELECT sli.item_id
+            FROM shopping_list_items sli
+            JOIN shopping_lists sl ON sli.list_id = sl.list_id
+            WHERE sli.item_id = %s AND sli.list_id = %s AND sl.user_id = %s AND sl.is_active = TRUE
+        """
+        cursor.execute(verify_query, (item_id, list_id, user_ID))
+        if not cursor.fetchone():
+            return jsonify({'error': 'Item not found'}), 404
+        
+        # Update the item
+        update_fields = []
+        update_values = []
+        
+        if 'name' in data:
+            item_name = data['name'].strip()
+            if not item_name:
+                return jsonify({'error': 'Item name cannot be empty'}), 400
+            update_fields.append('item_name = %s')
+            update_values.append(item_name)
+        
+        if 'quantity' in data:
+            try:
+                quantity = int(data['quantity'])
+                if quantity < 1:
+                    return jsonify({'error': 'Quantity must be at least 1'}), 400
+                update_fields.append('quantity = %s')
+                update_values.append(quantity)
+            except (ValueError, TypeError):
+                return jsonify({'error': 'Invalid quantity'}), 400
+        
+        if not update_fields:
+            return jsonify({'error': 'No valid fields to update'}), 400
+        
+        # Add updated timestamp and item_id for WHERE clause
+        update_fields.append('updated_at = CURRENT_TIMESTAMP')
+        update_values.append(item_id)
+        
+        query = f"UPDATE shopping_list_items SET {', '.join(update_fields)} WHERE item_id = %s"
+        cursor.execute(query, update_values)
+        db.commit()
+        
+        return jsonify({'success': True})
+        
+    except Exception as e:
+        db.rollback()
+        return jsonify({'error': f'Failed to update item: {str(e)}'}), 500
+    finally:
+        cursor.close()
+
 @api_bp.route('/shopping-lists/<int:list_id>/items/<int:item_id>', methods=['DELETE'])
 def delete_item_from_list(list_id, item_id):
     """Delete an item from a shopping list"""
