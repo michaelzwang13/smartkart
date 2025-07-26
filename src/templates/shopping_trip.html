@@ -13,8 +13,7 @@
   <!-- Font Awesome for icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
-  <!-- QuaggaJS for barcode scanning -->
-  <script src="https://unpkg.com/quagga@0.12.1/dist/quagga.min.js"></script>
+  <!-- QuaggaJS temporarily disabled for UPC testing -->
   
   <style>
     /* CSS Variables matching theme */
@@ -892,157 +891,7 @@
       }
     }
     
-    /* Barcode Scanner Styles */
-    .scanner-modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.9);
-      z-index: 2000;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      animation: fadeIn 0.3s ease;
-    }
-    
-    .scanner-modal.active {
-      display: flex;
-    }
-    
-    .scanner-container {
-      background: var(--bg-primary);
-      border-radius: var(--radius-xl);
-      padding: var(--spacing-xl);
-      max-width: 500px;
-      width: 90vw;
-      position: relative;
-    }
-    
-    .scanner-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: var(--spacing-lg);
-    }
-    
-    .scanner-title {
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin: 0;
-    }
-    
-    .scanner-close {
-      width: 32px;
-      height: 32px;
-      border: none;
-      border-radius: var(--radius-md);
-      background: var(--error-color);
-      color: var(--text-white);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.3s ease;
-    }
-    
-    .scanner-close:hover {
-      background: #dc2626;
-    }
-    
-    .scanner-viewport {
-      position: relative;
-      width: 100%;
-      height: 300px;
-      background: #000;
-      border-radius: var(--radius-lg);
-      overflow: hidden;
-      margin-bottom: var(--spacing-lg);
-    }
-    
-    #scanner-video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    
-    .scanner-overlay {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 200px;
-      height: 100px;
-      border: 2px solid var(--primary-color);
-      border-radius: var(--radius-md);
-      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.3);
-    }
-    
-    .scanner-instructions {
-      text-align: center;
-      color: var(--text-secondary);
-      font-size: 0.875rem;
-      margin-bottom: var(--spacing-lg);
-    }
-    
-    .scanner-result {
-      background: var(--bg-tertiary);
-      border-radius: var(--radius-lg);
-      padding: var(--spacing-md);
-      margin-bottom: var(--spacing-lg);
-      display: none;
-    }
-    
-    .scanner-result.show {
-      display: block;
-    }
-    
-    .scanner-barcode {
-      font-family: monospace;
-      font-size: 1rem;
-      font-weight: bold;
-      color: var(--primary-color);
-      margin-bottom: var(--spacing-sm);
-    }
-    
-    .scanner-actions {
-      display: flex;
-      gap: var(--spacing-sm);
-      justify-content: center;
-    }
-    
-    .btn-scanner {
-      padding: var(--spacing-sm) var(--spacing-md);
-      border: none;
-      border-radius: var(--radius-md);
-      font-size: 0.875rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-xs);
-    }
-    
-    .btn-scanner-primary {
-      background: var(--primary-color);
-      color: var(--text-white);
-    }
-    
-    .btn-scanner-primary:hover {
-      background: var(--secondary-color);
-    }
-    
-    .btn-scanner-secondary {
-      background: var(--bg-tertiary);
-      color: var(--text-primary);
-    }
-    
-    .btn-scanner-secondary:hover {
-      background: var(--border-medium);
-    }
+    /* Barcode scanner styles temporarily removed */
 
     /* Focus styles for accessibility */
     .btn-primary:focus,
@@ -1182,21 +1031,15 @@
           
           <form id="addItemForm" class="add-item-form">
             <div class="form-group">
-              <label for="itemName" class="form-label">Product Barcode</label>
-              <div style="display: flex; gap: var(--spacing-xs);">
-                <input
-                  type="text"
-                  id="itemName"
-                  name="itemName"
-                  class="form-input"
-                  placeholder="Scan or enter barcode"
-                  required
-                  style="flex: 1;"
-                />
-                <button type="button" class="btn-primary" onclick="openBarcodeScanner()" title="Scan barcode" style="background: var(--accent-color); padding: var(--spacing-md);">
-                  <i class="fas fa-barcode"></i>
-                </button>
-              </div>
+              <label for="itemName" class="form-label">Product UPC Code</label>
+              <input
+                type="text"
+                id="itemName"
+                name="itemName"
+                class="form-input"
+                placeholder="Enter UPC code (e.g., 028400064057)"
+                required
+              />
             </div>
             
             <div class="form-group">
@@ -1310,49 +1153,6 @@
     </div>
   </main>
 
-  <!-- Barcode Scanner Modal -->
-  <div class="scanner-modal" id="scannerModal">
-    <div class="scanner-container">
-      <div class="scanner-header">
-        <h3 class="scanner-title">Scan Barcode</h3>
-        <button class="scanner-close" onclick="closeBarcodeScanner()">
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
-      
-      <div class="scanner-viewport">
-        <div id="scanner-video"></div>
-        <div class="scanner-overlay"></div>
-      </div>
-      
-      <div class="scanner-instructions">
-        Position the barcode within the frame above
-      </div>
-      
-      <!-- Temporary test button for debugging -->
-      <div style="text-align: center; margin-bottom: var(--spacing-md);">
-        <button type="button" class="btn-scanner btn-scanner-secondary" onclick="simulateBarcodeScan()">
-          <i class="fas fa-test-tube"></i>
-          Test Scan (Debug)
-        </button>
-      </div>
-      
-      <div class="scanner-result" id="scannerResult">
-        <div class="scanner-barcode" id="scannedBarcode"></div>
-        <div class="scanner-actions">
-          <button class="btn-scanner btn-scanner-primary" onclick="useScannedBarcode()">
-            <i class="fas fa-check"></i>
-            Use Barcode
-          </button>
-          <button class="btn-scanner btn-scanner-secondary" onclick="scanAgain()">
-            <i class="fas fa-redo"></i>
-            Scan Again
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- Footer -->
   <footer class="footer">
     <p>&copy; 2025 SmartKart. All rights reserved. Shop smarter, live better.</p>
@@ -1364,9 +1164,7 @@
     const REMAINING_BUDGET = JSON.parse('{{ remaining | default(1000) | tojson }}');
     const CART_SESSION_EXISTS = JSON.parse('{{ cart_session | default(false) | tojson }}');
     
-    // Barcode scanner variables
-    let scannedBarcode = null;
-    let isScanning = false;
+    // Removed barcode scanner for testing UPC input
     
     // Initialize when DOM is ready
     document.addEventListener("DOMContentLoaded", function () {
@@ -1514,13 +1312,59 @@
         }
 
         try {
-            // Temporarily simplified - just show what was entered
-            showNotification(`📝 Processing item with barcode: ${itemName}, Price: $${itemPrice}, Quantity: ${itemQty}`, 'info');
+            // Show processing message
+            showNotification(`🔍 Looking up UPC: ${itemName}...`, 'info');
             
-            // For now, just create a simple item name
-            const combinedName = `Test Product (UPC: ${itemName})`;
-            
-            // Simple test - try to add to cart with minimal data
+            // 1) Search for item by UPC using Nutritionix API
+            const searchResponse = await fetch(`{{ url_for('api.searchitem') }}?upc=${encodeURIComponent(itemName)}`);
+            const searchData = await searchResponse.json();
+
+            // 2) Extract food data with improved fallback handling
+            let brandName = "Unknown Brand";
+            let foodName = "Unknown Item";
+            let imageUrl = "https://t4.ftcdn.net/jpg/02/51/95/53/360_F_251955356_FAQH0U1y1TZw3ZcdPGybwUkH90a3VAhb.jpg";
+            let carbs = 0, sugar = 0, sodium = 0, fat = 0;
+
+            console.log('Nutritionix API Response:', searchData);
+
+            // Check if we found data in Nutritionix API
+            if (searchData.foods && searchData.foods.length > 0) {
+                const firstItem = searchData.foods[0];
+                brandName = firstItem.brand_name || brandName;
+                foodName = firstItem.food_name || foodName;
+                imageUrl = firstItem.photo?.thumb || imageUrl;
+                carbs = firstItem.nf_total_carbohydrate || 0;
+                sugar = firstItem.nf_sugars || 0;
+                sodium = firstItem.nf_sodium || 0;
+                fat = firstItem.nf_saturated_fat || 0;
+                
+                // Show success message if found
+                console.log('Product found in Nutritionix database:', searchData.message);
+                showNotification(`✅ Found: ${brandName} - ${foodName}`, 'success');
+            } else if (searchData.fallback) {
+                // Use fallback data if API failed or item not found
+                const fallbackItem = searchData.fallback;
+                brandName = fallbackItem.brand_name || brandName;
+                foodName = fallbackItem.food_name || foodName;
+                imageUrl = fallbackItem.photo?.thumb || imageUrl;
+                carbs = fallbackItem.nf_total_carbohydrate || 0;
+                sugar = fallbackItem.nf_sugars || 0;
+                sodium = fallbackItem.nf_sodium || 0;
+                fat = fallbackItem.nf_saturated_fat || 0;
+                
+                // Show warning about fallback data
+                console.warn('Using fallback data:', searchData.message || searchData.error);
+                showNotification('⚠️ Product not found in database. Using generic data.', 'warning');
+            } else {
+                // Last resort - completely manual entry
+                foodName = `Manual Entry (${itemName})`;
+                console.warn('No product data available, using manual entry');
+                showNotification('⚠️ No product data available. Adding as manual entry.', 'warning');
+            }
+
+            const combinedName = `${brandName} - ${foodName}`;
+
+            // 3) Add item to cart
             const addItemResponse = await fetch("{{ url_for('api.add_item') }}", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -1529,12 +1373,12 @@
                     price: itemPrice,
                     quantity: itemQty,
                     itemName: combinedName,
-                    imageUrl: "https://t4.ftcdn.net/jpg/02/51/95/53/360_F_251955356_FAQH0U1y1TZw3ZcdPGybwUkH90a3VAhb.jpg"
+                    imageUrl: imageUrl
                 })
             });
 
             const resultData = await addItemResponse.json();
-            
+
             if (addItemResponse.ok && resultData.items) {
                 updateCartDOM(resultData.items);
                 
@@ -1544,9 +1388,23 @@
                 const allocatedBudget = JSON.parse('{{ allocated_budget or 1000 }}');
                 updateBudgetOverview(allocatedBudget, totalSpent, totalItems, allocatedBudget - totalSpent);
                 
-                showNotification(`✅ Item added successfully! UPC: ${itemName}`, 'success');
+                showNotification(`✅ Added to cart: ${combinedName}`, 'success');
             } else {
                 showNotification(`❌ Failed to add item: ${resultData.error || 'Unknown error'}`, 'error');
+            }
+
+            // 4) Check for impulse purchase if we have nutritional data
+            if (carbs > 0 || sugar > 0 || sodium > 0 || fat > 0) {
+                try {
+                    const predictResponse = await fetch(`{{ url_for('api.predict') }}?carbs=${carbs}&sugar=${sugar}&sodium=${sodium}&fat=${fat}`);
+                    const predictData = await predictResponse.json();
+
+                    if (predictData.prediction == 1) {
+                        showImpulsePopup(carbs, sugar, sodium, fat);
+                    }
+                } catch (predictError) {
+                    console.warn('Impulse prediction failed:', predictError);
+                }
             }
 
             // Clear form
@@ -1751,118 +1609,7 @@
       }
     }
 
-    // Barcode Scanner Functions
-    function openBarcodeScanner() {
-      console.log('Opening barcode scanner...');
-      document.getElementById('scannerModal').classList.add('active');
-      document.body.style.overflow = 'hidden';
-      startScanner();
-    }
-    
-    function closeBarcodeScanner() {
-      document.getElementById('scannerModal').classList.remove('active');
-      document.body.style.overflow = '';
-      stopScanner();
-      resetScannerResult();
-    }
-    
-    function startScanner() {
-      if (isScanning) {
-        console.log('Scanner already running');
-        return;
-      }
-      
-      console.log('Initializing Quagga scanner...');
-      
-      Quagga.init({
-        inputStream: {
-          name: "Live",
-          type: "LiveStream",
-          target: document.querySelector('#scanner-video'),
-          constraints: {
-            width: 480,
-            height: 320,
-            facingMode: "environment"
-          }
-        },
-        decoder: {
-          readers: [
-            "upc_reader",
-            "upc_e_reader",
-            "ean_reader"  // EAN is compatible with UPC and widely used
-          ]
-        }
-      }, function(err) {
-        if (err) {
-          console.error('Error starting scanner:', err);
-          showNotification('❌ Unable to access camera. Please check permissions.', 'error');
-          closeBarcodeScanner();
-          return;
-        }
-        
-        console.log('Scanner initialized successfully');
-        isScanning = true;
-        Quagga.start();
-        console.log('Scanner started');
-      });
-      
-      Quagga.onDetected(function(result) {
-        console.log('Barcode detected:', result);
-        if (result && result.codeResult && result.codeResult.code) {
-          scannedBarcode = result.codeResult.code;
-          console.log('Scanned barcode:', scannedBarcode);
-          showScanResult(scannedBarcode);
-          stopScanner();
-        }
-      });
-    }
-    
-    function stopScanner() {
-      if (!isScanning) return;
-      
-      Quagga.stop();
-      isScanning = false;
-    }
-    
-    function showScanResult(barcode) {
-      document.getElementById('scannedBarcode').textContent = `Barcode: ${barcode}`;
-      document.getElementById('scannerResult').classList.add('show');
-    }
-    
-    function resetScannerResult() {
-      document.getElementById('scannerResult').classList.remove('show');
-      scannedBarcode = null;
-    }
-    
-    function scanAgain() {
-      resetScannerResult();
-      startScanner();
-    }
-    
-    function useScannedBarcode() {
-      if (!scannedBarcode) return;
-      
-      // Fill the barcode input field with the scanned code
-      document.getElementById('itemName').value = scannedBarcode;
-      
-      // Close the scanner modal
-      closeBarcodeScanner();
-      
-      // Show success message with the scanned barcode
-      showNotification(`✅ Barcode scanned successfully: ${scannedBarcode}`, 'success');
-      
-      // Focus on the price input
-      document.getElementById('itemPrice').focus();
-    }
-    
-    // Temporary test function to simulate barcode scanning
-    function simulateBarcodeScan() {
-      console.log('Simulating barcode scan...');
-      const testBarcode = "028400064057"; // Test UPC that we know works
-      scannedBarcode = testBarcode;
-      showScanResult(testBarcode);
-      showNotification('🧪 Test barcode simulated: ' + testBarcode, 'info');
-    }
+    // Barcode scanner functions temporarily disabled for UPC testing
 
     // Notification system
     function showNotification(message, type = 'info') {

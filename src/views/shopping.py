@@ -33,18 +33,39 @@ def home():
   
   db = get_db()
   cursor = db.cursor()
+  
+  # Get cart history (completed carts)
   query = """
     SELECT c.cart_ID, c.store_name, 
            (SELECT COUNT(*) FROM cart_item i WHERE i.cart_ID = c.cart_ID) as total_items,
            (SELECT SUM(i.price * i.quantity) FROM cart_item i WHERE i.cart_ID = c.cart_ID) as total_spent
     FROM shopping_cart c
     WHERE c.user_ID = %s 
+      AND c.status = 'purchased'
       AND EXISTS (SELECT 1 FROM cart_item i WHERE i.cart_ID = c.cart_ID)
+    ORDER BY c.created_at DESC
     """
   cursor.execute(query, (user_ID,))
   cart_history = cursor.fetchall()
   
-  return render_template('home.html', user_ID=user_ID, cart_history=cart_history)
+  # Check for active shopping trip
+  active_query = """
+    SELECT c.cart_ID, c.store_name, c.created_at,
+           (SELECT COUNT(*) FROM cart_item i WHERE i.cart_ID = c.cart_ID) as total_items,
+           (SELECT SUM(i.price * i.quantity) FROM cart_item i WHERE i.cart_ID = c.cart_ID) as total_spent
+    FROM shopping_cart c
+    WHERE c.user_ID = %s AND c.status = 'active'
+    ORDER BY c.created_at DESC LIMIT 1
+  """
+  cursor.execute(active_query, (user_ID,))
+  active_trip = cursor.fetchone()
+  
+  cursor.close()
+  
+  return render_template('home.html', 
+                        user_ID=user_ID, 
+                        cart_history=cart_history,
+                        active_trip=active_trip)
 
 @shopping_bp.route('/start-shopping', methods=['POST'])
 def start_shopping():
@@ -54,13 +75,25 @@ def start_shopping():
     db = get_db()
     cursor = db.cursor()
     
-    ins = 'INSERT INTO shopping_cart (user_ID, store_name, status) VALUES(%s, %s, %s)'
-    cursor.execute(ins, (user_ID, store_name, "active"))
-    db.commit()
-    session['cart_ID'] = cursor.lastrowid
-    cursor.close()
+    # Check if user already has an active cart
+    query = 'SELECT cart_ID FROM shopping_cart WHERE user_ID = %s AND status = "active" ORDER BY created_at DESC LIMIT 1'
+    cursor.execute(query, (user_ID,))
+    existing_cart = cursor.fetchone()
     
-    return redirect(url_for('shopping.shopping_trip'))
+    if existing_cart:
+        # Use existing active cart
+        session['cart_ID'] = existing_cart['cart_ID']
+        cursor.close()
+        return redirect(url_for('shopping.shopping_trip'))
+    else:
+        # Create new cart
+        ins = 'INSERT INTO shopping_cart (user_ID, store_name, status) VALUES(%s, %s, %s)'
+        cursor.execute(ins, (user_ID, store_name, "active"))
+        db.commit()
+        session['cart_ID'] = cursor.lastrowid
+        cursor.close()
+        
+        return redirect(url_for('shopping.shopping_trip'))
     
 @shopping_bp.route('/shopping-trip')
 def shopping_trip():
@@ -71,17 +104,39 @@ def shopping_trip():
     items = []
     total_items = 0
     total_spent = 0
+    cart_ID = None
 
+    # First check if cart_ID is in session
     if "cart_ID" in session and session['cart_ID']:
         cart_ID = session['cart_ID']
+    else:
+        # If not in session, look for active cart in database
+        user_ID = session['user_ID']
         db = get_db()
         cursor = db.cursor()
-        query = 'SELECT * FROM shopping_cart WHERE cart_ID = %s'
+        query = 'SELECT cart_ID FROM shopping_cart WHERE user_ID = %s AND status = "active" ORDER BY created_at DESC LIMIT 1'
+        cursor.execute(query, (user_ID,))
+        active_cart = cursor.fetchone()
+        
+        if active_cart:
+            cart_ID = active_cart['cart_ID']
+            session['cart_ID'] = cart_ID  # Restore to session
+        
+        cursor.close()
+
+    # If we have a cart_ID, get the cart details
+    if cart_ID:
+        db = get_db()
+        cursor = db.cursor()
+        query = 'SELECT * FROM shopping_cart WHERE cart_ID = %s AND status = "active"'
         cursor.execute(query, (cart_ID,))
         cart_session = cursor.fetchone()
         
         if cart_session:
             items, total_items, total_spent = retrieve_totals(cart_ID)
+        else:
+            # Cart was completed or doesn't exist, clear from session
+            session.pop('cart_ID', None)
         
         cursor.close()
 
