@@ -1557,7 +1557,7 @@ def add_pantry_item():
 def transfer_shopping_trip_to_pantry():
     """Transfer items from a completed shopping trip to pantry"""
     if 'user_ID' not in session:
-        return jsonify({'error': 'Not authenticated'}), 401
+        return jsonify({'success': False, 'message': 'Not authenticated'})
     
     data = request.get_json()
     user_ID = session['user_ID']
@@ -1565,7 +1565,9 @@ def transfer_shopping_trip_to_pantry():
     items_data = data.get('items', [])  # List of items with pantry details
     
     if not cart_id:
-        return jsonify({'error': 'Cart ID is required'}), 400
+        return jsonify({'success': False, 'message': 'Cart ID is required'})
+    
+    print(f"DEBUG: Transfer request - cart_id: {cart_id}, items: {len(items_data)}")
     
     db = get_db()
     cursor = db.cursor()
@@ -1578,13 +1580,13 @@ def transfer_shopping_trip_to_pantry():
         """
         cursor.execute(verify_query, (cart_id, user_ID))
         if not cursor.fetchone():
-            return jsonify({'error': 'Shopping trip not found or not completed'}), 404
+            return jsonify({'success': False, 'message': 'Shopping trip not found or not completed'})
         
         # Check if already transferred
         check_query = "SELECT transfer_id FROM pantry_transfer_sessions WHERE cart_id = %s"
         cursor.execute(check_query, (cart_id,))
         if cursor.fetchone():
-            return jsonify({'error': 'Items from this trip have already been transferred'}), 400
+            return jsonify({'success': False, 'message': 'Items from this trip have already been transferred'})
         
         # Create transfer session
         session_query = """
@@ -1597,13 +1599,28 @@ def transfer_shopping_trip_to_pantry():
         # Add items to pantry
         items_added = 0
         for item_data in items_data:
-            item_name = item_data.get('item_name', '').strip()
-            quantity = item_data.get('quantity', 1)
-            unit = item_data.get('unit', 'pcs')
+            item_id = item_data.get('item_id')
+            
+            # Get the original item details from cart_item table
+            item_query = "SELECT * FROM cart_item WHERE item_ID = %s AND cart_ID = %s"
+            cursor.execute(item_query, (item_id, cart_id))
+            original_item = cursor.fetchone()
+            
+            if not original_item:
+                print(f"DEBUG: Item {item_id} not found in cart {cart_id}")
+                continue
+            
+            # Use original item name, but allow override of other properties
+            item_name = original_item['item_name']
+            quantity = item_data.get('quantity', original_item.get('quantity', 1))
+            unit = item_data.get('unit', original_item.get('unit', 'pcs'))
             category = item_data.get('category', 'Other')
             storage_type = item_data.get('storage_type', 'pantry')
             expiration_date = item_data.get('expiration_date')
-            use_ai_prediction = item_data.get('use_ai_prediction', False)
+            use_ai_prediction = item_data.get('ai_predict_expiry', False)  # Fixed parameter name
+            notes = item_data.get('notes', '')
+            
+            print(f"DEBUG: Processing item - name: {item_name}, quantity: {quantity}, ai_predict: {use_ai_prediction}")
             
             if not item_name:
                 continue
@@ -1620,27 +1637,29 @@ def transfer_shopping_trip_to_pantry():
             insert_query = """
                 INSERT INTO pantry_items (
                     user_id, item_name, quantity, unit, category, storage_type,
-                    expiration_date, source_type, source_cart_id, is_ai_predicted_expiry
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    expiration_date, source_type, source_cart_id, is_ai_predicted_expiry, notes
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """
             cursor.execute(insert_query, (
                 user_ID, item_name, quantity, unit, category, storage_type,
-                expiration_date, 'shopping_trip', cart_id, is_ai_predicted
+                expiration_date, 'shopping_trip', cart_id, is_ai_predicted, notes
             ))
             items_added += 1
+            print(f"DEBUG: Added item {item_name} to pantry")
         
         db.commit()
-        cursor.close()
         
         return jsonify({
             'success': True,
             'transfer_id': transfer_id,
-            'items_added': items_added
+            'items_added': items_added,
+            'message': f'Successfully added {items_added} items to pantry'
         })
         
     except Exception as e:
         db.rollback()
-        return jsonify({'error': f'Failed to transfer items: {str(e)}'}), 500
+        print(f"DEBUG: Transfer error: {str(e)}")
+        return jsonify({'success': False, 'message': f'Failed to transfer items: {str(e)}'})
     finally:
         cursor.close()
 
