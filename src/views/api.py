@@ -1691,8 +1691,8 @@ def predict_expiration_date(item_name, storage_type):
             cursor.close()
             return expiry_date.strftime('%Y-%m-%d')
         
-        # For now, use simple heuristics based on category/storage
-        predicted_days = get_simple_prediction(item_name, storage_type)
+        # Use Gemini AI to predict expiration
+        predicted_days = get_gemini_prediction(item_name, storage_type)
         
         if predicted_days:
             # Cache the prediction
@@ -1717,6 +1717,73 @@ def predict_expiration_date(item_name, storage_type):
         print(f"Error predicting expiration: {str(e)}")
         cursor.close()
         return None
+
+def get_gemini_prediction(item_name, storage_type):
+    """Use Gemini AI to predict expiration date based on item and storage type"""
+    import os
+    import google.generativeai as genai
+    
+    try:
+        # Configure Gemini with API key from environment
+        api_key = os.getenv('GEMINI_API_KEY')
+        if not api_key:
+            print("WARNING: GEMINI_API_KEY not found in environment, falling back to simple prediction")
+            return get_simple_prediction(item_name, storage_type)
+        
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel('gemini-1.5-flash-latest')
+        
+        # Create a specific prompt for food expiration prediction
+        prompt = f"""You are a food safety expert. I need to know how many days a food item will last.
+
+Item: {item_name}
+Storage: {storage_type} (pantry, fridge, or freezer)
+
+Based on typical food safety guidelines, how many days will this item last from today if stored in the {storage_type}?
+
+Important instructions:
+- Only respond with a single number (the number of days)
+- Consider typical shelf life for opened/unopened items
+- Use conservative estimates for food safety
+- For pantry items, assume they are in a cool, dry place
+- For fridge items, assume proper refrigeration (35-40°F)
+- For freezer items, assume proper freezing (0°F or below)
+
+Examples:
+- Fresh milk in fridge: 7
+- Bread in pantry: 5
+- Frozen chicken in freezer: 365
+- Bananas in pantry: 5
+
+Just respond with the number of days:"""
+
+        # Generate prediction
+        response = model.generate_content(prompt)
+        prediction_text = response.text.strip()
+        
+        # Log the actual response for debugging
+        print(f"DEBUG: Gemini raw response for {item_name} in {storage_type}: '{prediction_text}'")
+        
+        # Extract number from response
+        import re
+        numbers = re.findall(r'\d+', prediction_text)
+        if numbers:
+            predicted_days = int(numbers[0])
+            print(f"DEBUG: Extracted {predicted_days} days from response: '{prediction_text}'")
+            
+            # Validate the prediction (sanity check)
+            if 1 <= predicted_days <= 3650:  # Between 1 day and 10 years
+                return predicted_days
+            else:
+                print(f"WARNING: Gemini prediction {predicted_days} days seems unrealistic, falling back")
+                return get_simple_prediction(item_name, storage_type)
+        else:
+            print(f"WARNING: Could not parse Gemini response: {prediction_text}")
+            return get_simple_prediction(item_name, storage_type)
+            
+    except Exception as e:
+        print(f"ERROR: Gemini prediction failed: {str(e)}, falling back to simple prediction")
+        return get_simple_prediction(item_name, storage_type)
 
 def get_simple_prediction(item_name, storage_type):
     """Simple heuristic-based expiration prediction"""
@@ -1806,3 +1873,24 @@ def test_pantry():
         return jsonify({'success': False, 'message': f'Pantry test failed: {str(e)}'})
     finally:
         cursor.close()
+
+@api_bp.route('/pantry/test-gemini', methods=['GET'])
+def test_gemini():
+    """Test Gemini AI integration"""
+    item_name = request.args.get('item_name', 'banana')
+    storage_type = request.args.get('storage_type', 'pantry')
+    
+    try:
+        predicted_days = get_gemini_prediction(item_name, storage_type)
+        return jsonify({
+            'success': True,
+            'item_name': item_name,
+            'storage_type': storage_type,
+            'predicted_days': predicted_days,
+            'message': f'Gemini predicted {predicted_days} days for {item_name} in {storage_type}'
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Gemini test failed: {str(e)}'
+        })

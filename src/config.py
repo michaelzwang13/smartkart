@@ -18,3 +18,6 @@ class Config:
     # Nutritionix API configuration
     NUTRITIONIX_API_ID = os.getenv('NUTRITIONIX_API_ID')
     NUTRITIONIX_API_KEY = os.getenv('NUTRITIONIX_API_KEY')
+    
+    # Gemini AI configuration
+    GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
