@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Budget & Analytics - SmartKart</title>
+  <title>Budget & Analytics - Preppr</title>
   
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,9 +21,9 @@
   <style>
     /* CSS Variables matching theme */
     :root {
-      --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-      --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      --primary-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      --secondary-gradient: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+      --accent-gradient: linear-gradient(135deg, #6ee7b7 0%, #34d399 100%);
       --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
       --warning-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
       --error-gradient: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
@@ -798,10 +798,8 @@
   <header class="header">
     <div class="nav-container">
       <a href="{{ url_for('shopping.home') }}" class="logo">
-        <div class="logo-icon">
-          <i class="fas fa-shopping-cart" aria-hidden="true"></i>
-        </div>
-        SmartKart
+        <img src="{{ url_for('static', filename='images/preppr-logo.png') }}" alt="Preppr Logo" style="width: 40px; height: 40px; border-radius: var(--radius-lg);">
+        Preppr
       </a>
       
       <nav>

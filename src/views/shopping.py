@@ -247,3 +247,39 @@ def pantry():
         return redirect(url_for('auth.login'))
     
     return render_template('pantry.html')
+
+@shopping_bp.route('/meal-plans')
+def meal_plans():
+    """Show meal plans page"""
+    if 'user_ID' not in session:
+        return redirect(url_for('auth.login'))
+    
+    return render_template('meal_plans.html')
+
+@shopping_bp.route('/meal-plans/<int:plan_id>')
+def meal_plan_details(plan_id):
+    """Show detailed view of a specific meal plan"""
+    if 'user_ID' not in session:
+        return redirect(url_for('auth.login'))
+    
+    user_id = session['user_ID']
+    db = get_db()
+    cursor = db.cursor()
+    
+    try:
+        # Verify plan belongs to user and get basic info
+        verify_query = "SELECT * FROM meal_plans WHERE plan_id = %s AND user_id = %s"
+        cursor.execute(verify_query, (plan_id, user_id))
+        plan = cursor.fetchone()
+        
+        if not plan:
+            flash('Meal plan not found.', 'error')
+            return redirect(url_for('shopping.meal_plans'))
+        
+        cursor.close()
+        return render_template('meal_plan_details.html', plan_id=plan_id, plan=plan)
+        
+    except Exception as e:
+        cursor.close()
+        flash(f'Error loading meal plan: {str(e)}', 'error')
+        return redirect(url_for('shopping.meal_plans'))

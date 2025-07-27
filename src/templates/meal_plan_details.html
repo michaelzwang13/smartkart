@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meal Plan Details - Preppr</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    /* CSS Variables matching theme */
+    :root {
+      --primary-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      --secondary-gradient: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+      --accent-gradient: linear-gradient(135deg, #6ee7b7 0%, #34d399 100%);
+      --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      --warning-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      
+      --primary-color: #10b981;
+      --secondary-color: #059669;
+      --accent-color: #34d399;
+      --success-color: #10b981;
+      --warning-color: #f59e0b;
+      --error-color: #ef4444;
+      
+      --text-primary: #1f2937;
+      --text-secondary: #6b7280;
+      --text-muted: #9ca3af;
+      --text-white: #ffffff;
+      
+      --bg-primary: #ffffff;
+      --bg-secondary: #f9fafb;
+      --bg-tertiary: #f3f4f6;
+      
+      --border-light: #e5e7eb;
+      --border-medium: #d1d5db;
+      
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      
+      --radius-sm: 0.375rem;
+      --radius-md: 0.5rem;
+      --radius-lg: 0.75rem;
+      --radius-xl: 1rem;
+      
+      --spacing-xs: 0.5rem;
+      --spacing-sm: 0.75rem;
+      --spacing-md: 1rem;
+      --spacing-lg: 1.5rem;
+      --spacing-xl: 2rem;
+      --spacing-2xl: 3rem;
+      
+      --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    
+    /* Reset and base styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: var(--font-family);
+      color: var(--text-primary);
+      line-height: 1.6;
+      background: var(--bg-secondary);
+    }
+    
+    /* Header */
+    .header {
+      background: var(--bg-primary);
+      border-bottom: 1px solid var(--border-light);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    .nav-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 var(--spacing-lg);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 80px;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary-color);
+      text-decoration: none;
+      transition: transform 0.3s ease;
+    }
+    
+    .logo:hover {
+      transform: scale(1.05);
+    }
+    
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xl);
+      list-style: none;
+    }
+    
+    .nav-link {
+      color: var(--text-primary);
+      text-decoration: none;
+      font-weight: 500;
+      padding: var(--spacing-xs) var(--spacing-md);
+      border-radius: var(--radius-md);
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+    }
+    
+    .nav-link:hover {
+      background: var(--bg-tertiary);
+      color: var(--primary-color);
+    }
+    
+    .nav-link.active {
+      background: var(--primary-color);
+      color: var(--text-white);
+    }
+    
+    /* Main content */
+    .main-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: var(--spacing-xl);
+    }
+    
+    .page-header {
+      margin-bottom: var(--spacing-2xl);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-lg);
+    }
+    
+    .back-btn {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      padding: var(--spacing-sm) var(--spacing-md);
+      border: 2px solid var(--border-light);
+      border-radius: var(--radius-md);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+      transition: all 0.3s ease;
+    }
+    
+    .back-btn:hover {
+      background: var(--bg-tertiary);
+      color: var(--primary-color);
+    }
+    
+    .page-title {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    
+    /* Plan info */
+    .plan-info {
+      background: var(--bg-primary);
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-xl);
+      margin-bottom: var(--spacing-2xl);
+      box-shadow: var(--shadow-md);
+    }
+    
+    .plan-meta {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--spacing-lg);
+      margin-bottom: var(--spacing-lg);
+    }
+    
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+    
+    .meta-icon {
+      color: var(--primary-color);
+    }
+    
+    /* Loading state */
+    .loading {
+      text-align: center;
+      padding: var(--spacing-2xl);
+    }
+    
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--border-light);
+      border-top: 3px solid var(--primary-color);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto var(--spacing-lg);
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    /* Days grid */
+    .days-grid {
+      display: grid;
+      gap: var(--spacing-xl);
+    }
+    
+    .day-card {
+      background: var(--bg-primary);
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-xl);
+      box-shadow: var(--shadow-md);
+    }
+    
+    .day-header {
+      border-bottom: 2px solid var(--border-light);
+      padding-bottom: var(--spacing-md);
+      margin-bottom: var(--spacing-lg);
+    }
+    
+    .day-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    .meals-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: var(--spacing-lg);
+    }
+    
+    .meal-card {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-lg);
+      border-left: 4px solid var(--primary-color);
+    }
+    
+    .meal-header {
+      display: flex;
+      justify-content: between;
+      align-items: start;
+      margin-bottom: var(--spacing-md);
+    }
+    
+    .meal-type {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--primary-color);
+      text-transform: uppercase;
+      margin-bottom: var(--spacing-xs);
+    }
+    
+    .meal-name {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--spacing-sm);
+    }
+    
+    .meal-meta {
+      display: flex;
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-md);
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+    
+    .meal-description {
+      color: var(--text-secondary);
+      margin-bottom: var(--spacing-md);
+    }
+    
+    .ingredients-section {
+      margin-bottom: var(--spacing-lg);
+    }
+    
+    .section-label {
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--spacing-sm);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+    }
+    
+    .ingredients-list {
+      list-style: none;
+      padding-left: var(--spacing-md);
+    }
+    
+    .ingredient-item {
+      padding: var(--spacing-xs) 0;
+      color: var(--text-secondary);
+    }
+    
+    .instructions-section {
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-md);
+    }
+    
+    .instructions {
+      white-space: pre-wrap;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    
+    /* Batch prep section */
+    .batch-prep {
+      background: var(--bg-primary);
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-xl);
+      margin-top: var(--spacing-2xl);
+      box-shadow: var(--shadow-md);
+    }
+    
+    .section-title {
+      font-size: 1.875rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--spacing-lg);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+    
+    .prep-steps {
+      display: grid;
+      gap: var(--spacing-lg);
+    }
+    
+    .prep-step {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-lg);
+      border-left: 4px solid var(--accent-color);
+    }
+    
+    .step-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--spacing-md);
+    }
+    
+    .step-name {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    .step-time {
+      background: var(--accent-color);
+      color: var(--text-white);
+      padding: var(--spacing-xs) var(--spacing-sm);
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+    
+    .step-description {
+      color: var(--text-secondary);
+      margin-bottom: var(--spacing-sm);
+    }
+    
+    .step-tips {
+      font-style: italic;
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+    
+    /* Shopping list section */
+    .shopping-list {
+      background: var(--bg-primary);
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-xl);
+      margin-top: var(--spacing-2xl);
+      box-shadow: var(--shadow-md);
+    }
+    
+    .shopping-categories {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: var(--spacing-lg);
+    }
+    
+    .category-card {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-lg);
+    }
+    
+    .category-name {
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--spacing-md);
+      padding-bottom: var(--spacing-sm);
+      border-bottom: 2px solid var(--border-light);
+    }
+    
+    .shopping-items {
+      list-style: none;
+    }
+    
+    .shopping-item {
+      padding: var(--spacing-xs) 0;
+      color: var(--text-secondary);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .item-cost {
+      color: var(--primary-color);
+      font-weight: 500;
+    }
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+      .nav-links {
+        display: none;
+      }
+      
+      .main-content {
+        padding: var(--spacing-md);
+      }
+      
+      .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-md);
+      }
+      
+      .page-title {
+        font-size: 2rem;
+      }
+      
+      .plan-meta {
+        grid-template-columns: 1fr;
+      }
+      
+      .meals-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .shopping-categories {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="nav-container">
+      <a href="{{ url_for('shopping.home') }}" class="logo">
+        <img src="{{ url_for('static', filename='images/preppr-logo.png') }}" alt="Preppr Logo" style="width: 40px; height: 40px; border-radius: var(--radius-lg); margin-right: 10px;">
+        Preppr
+      </a>
+      
+      <nav>
+        <ul class="nav-links">
+          <li><a href="{{ url_for('shopping.home') }}" class="nav-link">
+            <i class="fas fa-home" style="margin-right: 6px; font-size: 0.85em;"></i>Home
+          </a></li>
+          <li><a href="{{ url_for('shopping.shopping_trip') }}" class="nav-link">
+            <i class="fas fa-shopping-cart" style="margin-right: 6px; font-size: 0.85em;"></i>Shopping Trip
+          </a></li>
+          <li><a href="{{ url_for('shopping.shopping_lists') }}" class="nav-link">
+            <i class="fas fa-list" style="margin-right: 6px; font-size: 0.85em;"></i>Shopping Lists
+          </a></li>
+          <li><a href="{{ url_for('shopping.pantry') }}" class="nav-link">
+            <i class="fas fa-archive" style="margin-right: 6px; font-size: 0.85em;"></i>Pantry
+          </a></li>
+          <li><a href="{{ url_for('shopping.meal_plans') }}" class="nav-link active">
+            <i class="fas fa-utensils" style="margin-right: 6px; font-size: 0.85em;"></i>Meal Plans
+          </a></li>
+          <li><a href="{{ url_for('shopping.budget') }}" class="nav-link">
+            <i class="fas fa-chart-line" style="margin-right: 6px; font-size: 0.85em;"></i>Budget
+          </a></li>
+          <li><a href="{{ url_for('auth.logout') }}" class="nav-link">
+            <i class="fas fa-sign-out-alt" style="margin-right: 6px; font-size: 0.85em;"></i>Logout
+          </a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Page Header -->
+    <div class="page-header">
+      <a href="{{ url_for('shopping.meal_plans') }}" class="back-btn">
+        <i class="fas fa-arrow-left"></i>
+        Back to Meal Plans
+      </a>
+      <h1 class="page-title" id="planTitle">Meal Plan Details</h1>
+    </div>
+
+    <!-- Loading State -->
+    <div class="loading" id="loadingState">
+      <div class="spinner"></div>
+      <p>Loading meal plan details...</p>
+    </div>
+
+    <!-- Plan Content -->
+    <div id="planContent" style="display: none;">
+      <!-- Plan Info -->
+      <section class="plan-info" id="planInfo">
+        <!-- Will be populated by JavaScript -->
+      </section>
+
+      <!-- Days and Recipes -->
+      <div class="days-grid" id="daysGrid">
+        <!-- Will be populated by JavaScript -->
+      </div>
+
+      <!-- Batch Prep Steps -->
+      <section class="batch-prep" id="batchPrep" style="display: none;">
+        <h2 class="section-title">
+          <i class="fas fa-tasks"></i>
+          Batch Prep Instructions
+        </h2>
+        <div class="prep-steps" id="prepSteps">
+          <!-- Will be populated by JavaScript -->
+        </div>
+      </section>
+
+      <!-- Shopping List -->
+      <section class="shopping-list" id="shoppingList" style="display: none;">
+        <h2 class="section-title">
+          <i class="fas fa-shopping-bag"></i>
+          Shopping List
+        </h2>
+        <div class="shopping-categories" id="shoppingCategories">
+          <!-- Will be populated by JavaScript -->
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const planId = {{ plan_id }};
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      loadMealPlanDetails();
+    });
+    
+    async function loadMealPlanDetails() {
+      try {
+        const response = await fetch(`/api/meal-plans/${planId}`);
+        const data = await response.json();
+        
+        if (data.success) {
+          displayMealPlan(data.meal_plan);
+          document.getElementById('loadingState').style.display = 'none';
+          document.getElementById('planContent').style.display = 'block';
+        } else {
+          throw new Error(data.message || 'Failed to load meal plan');
+        }
+      } catch (error) {
+        console.error('Error loading meal plan:', error);
+        document.getElementById('loadingState').innerHTML = `
+          <div style="text-align: center; color: var(--error-color);">
+            <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+            <p>Error loading meal plan details</p>
+            <p style="font-size: 0.875rem; margin-top: 0.5rem;">${error.message}</p>
+          </div>
+        `;
+      }
+    }
+    
+    function displayMealPlan(mealPlan) {
+      const { plan_info, recipes, batch_prep, shopping_list } = mealPlan;
+      
+      // Update page title
+      document.getElementById('planTitle').textContent = plan_info.plan_name;
+      
+      // Display plan info
+      displayPlanInfo(plan_info);
+      
+      // Display recipes by day
+      displayRecipes(recipes);
+      
+      // Display batch prep steps
+      if (batch_prep && batch_prep.length > 0) {
+        displayBatchPrep(batch_prep);
+      }
+      
+      // Display shopping list
+      if (shopping_list && shopping_list.length > 0) {
+        displayShoppingList(shopping_list);
+      }
+    }
+    
+    function displayPlanInfo(plan) {
+      const startDate = new Date(plan.start_date).toLocaleDateString();
+      const endDate = new Date(plan.end_date).toLocaleDateString();
+      
+      document.getElementById('planInfo').innerHTML = `
+        <div class="plan-meta">
+          <div class="meta-item">
+            <i class="fas fa-calendar-alt meta-icon"></i>
+            <span>${startDate} - ${endDate}</span>
+          </div>
+          <div class="meta-item">
+            <i class="fas fa-clock meta-icon"></i>
+            <span>${plan.total_days} days</span>
+          </div>
+          <div class="meta-item">
+            <i class="fas fa-leaf meta-icon"></i>
+            <span>${plan.dietary_preference || 'No restrictions'}</span>
+          </div>
+          <div class="meta-item">
+            <i class="fas fa-dollar-sign meta-icon"></i>
+            <span>${plan.budget_limit ? '$' + plan.budget_limit : 'No budget limit'}</span>
+          </div>
+          <div class="meta-item">
+            <i class="fas fa-fire meta-icon"></i>
+            <span>Max ${plan.max_cooking_time} min/day</span>
+          </div>
+          <div class="meta-item">
+            <i class="fas fa-robot meta-icon"></i>
+            <span>Generated with ${plan.ai_model_used || 'AI'}</span>
+          </div>
+        </div>
+      `;
+    }
+    
+    function displayRecipes(recipes) {
+      const daysGrid = document.getElementById('daysGrid');
+      daysGrid.innerHTML = '';
+      
+      // Sort days
+      const sortedDays = Object.keys(recipes).sort((a, b) => parseInt(a) - parseInt(b));
+      
+      sortedDays.forEach(dayNum => {
+        const dayRecipes = recipes[dayNum];
+        const dayCard = document.createElement('div');
+        dayCard.className = 'day-card';
+        
+        const dayName = getDayName(parseInt(dayNum));
+        
+        dayCard.innerHTML = `
+          <div class="day-header">
+            <h3 class="day-title">Day ${dayNum} - ${dayName}</h3>
+          </div>
+          <div class="meals-grid" id="day${dayNum}Meals">
+          </div>
+        `;
+        
+        daysGrid.appendChild(dayCard);
+        
+        // Add meals for this day
+        const mealsGrid = document.getElementById(`day${dayNum}Meals`);
+        const mealTypes = ['breakfast', 'lunch', 'dinner'];
+        
+        mealTypes.forEach(mealType => {
+          if (dayRecipes[mealType]) {
+            const mealCard = createMealCard(mealType, dayRecipes[mealType]);
+            mealsGrid.appendChild(mealCard);
+          }
+        });
+      });
+    }
+    
+    function createMealCard(mealType, recipe) {
+      const mealCard = document.createElement('div');
+      mealCard.className = 'meal-card';
+      
+      const ingredientsList = recipe.ingredients.map(ing => 
+        `<li class="ingredient-item">${ing.quantity} ${ing.unit} ${ing.name}${ing.notes ? ' (' + ing.notes + ')' : ''}</li>`
+      ).join('');
+      
+      mealCard.innerHTML = `
+        <div class="meal-header">
+          <div>
+            <div class="meal-type">${mealType}</div>
+            <h4 class="meal-name">${recipe.name}</h4>
+          </div>
+        </div>
+        
+        <div class="meal-meta">
+          <span><i class="fas fa-clock"></i> ${recipe.prep_time + recipe.cook_time} min</span>
+          <span><i class="fas fa-users"></i> ${recipe.servings} servings</span>
+          <span><i class="fas fa-dollar-sign"></i> $${recipe.estimated_cost || '0.00'}</span>
+          <span><i class="fas fa-signal"></i> ${recipe.difficulty}</span>
+        </div>
+        
+        ${recipe.description ? `<p class="meal-description">${recipe.description}</p>` : ''}
+        
+        <div class="ingredients-section">
+          <div class="section-label">
+            <i class="fas fa-list-ul"></i>
+            Ingredients
+          </div>
+          <ul class="ingredients-list">
+            ${ingredientsList}
+          </ul>
+        </div>
+        
+        <div class="instructions-section">
+          <div class="section-label">
+            <i class="fas fa-clipboard-list"></i>
+            Instructions
+          </div>
+          <div class="instructions">${recipe.instructions}</div>
+        </div>
+        
+        ${recipe.notes ? `<div style="margin-top: 1rem; font-style: italic; color: var(--text-muted); font-size: 0.875rem;"><i class="fas fa-lightbulb"></i> ${recipe.notes}</div>` : ''}
+      `;
+      
+      return mealCard;
+    }
+    
+    function displayBatchPrep(prepSteps) {
+      document.getElementById('batchPrep').style.display = 'block';
+      const stepsContainer = document.getElementById('prepSteps');
+      stepsContainer.innerHTML = '';
+      
+      prepSteps.forEach(step => {
+        const stepCard = document.createElement('div');
+        stepCard.className = 'prep-step';
+        
+        stepCard.innerHTML = `
+          <div class="step-header">
+            <h4 class="step-name">${step.prep_session_name}</h4>
+            <span class="step-time">${step.estimated_time} min</span>
+          </div>
+          <p class="step-description">${step.description}</p>
+          ${step.equipment_needed ? `<p><strong>Equipment:</strong> ${step.equipment_needed}</p>` : ''}
+          ${step.tips ? `<p class="step-tips"><i class="fas fa-lightbulb"></i> ${step.tips}</p>` : ''}
+        `;
+        
+        stepsContainer.appendChild(stepCard);
+      });
+    }
+    
+    function displayShoppingList(items) {
+      document.getElementById('shoppingList').style.display = 'block';
+      const categoriesContainer = document.getElementById('shoppingCategories');
+      categoriesContainer.innerHTML = '';
+      
+      // Group items by category
+      const categories = {};
+      items.forEach(item => {
+        const category = item.category || 'Other';
+        if (!categories[category]) {
+          categories[category] = [];
+        }
+        categories[category].push(item);
+      });
+      
+      // Create category cards
+      Object.keys(categories).forEach(categoryName => {
+        const categoryCard = document.createElement('div');
+        categoryCard.className = 'category-card';
+        
+        const itemsList = categories[categoryName].map(item => 
+          `<li class="shopping-item">
+            <span>${item.total_quantity} ${item.unit} ${item.ingredient_name}</span>
+            <span class="item-cost">$${item.estimated_cost || '0.00'}</span>
+          </li>`
+        ).join('');
+        
+        categoryCard.innerHTML = `
+          <h4 class="category-name">${categoryName}</h4>
+          <ul class="shopping-items">
+            ${itemsList}
+          </ul>
+        `;
+        
+        categoriesContainer.appendChild(categoryCard);
+      });
+    }
+    
+    function getDayName(dayNum) {
+      const today = new Date();
+      const targetDate = new Date(today);
+      targetDate.setDate(today.getDate() + dayNum - 1);
+      return targetDate.toLocaleDateString('en-US', { weekday: 'long' });
+    }
+  </script>
+</body>
+</html>

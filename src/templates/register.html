@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Register - SmartKart</title>
+  <title>Register - Preppr</title>
   
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,13 +16,13 @@
   <style>
     /* CSS Variables matching index.html theme */
     :root {
-      --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-      --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      --primary-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      --secondary-gradient: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+      --accent-gradient: linear-gradient(135deg, #6ee7b7 0%, #34d399 100%);
       
-      --primary-color: #667eea;
-      --secondary-color: #764ba2;
-      --accent-color: #4facfe;
+      --primary-color: #10b981;
+      --secondary-color: #059669;
+      --accent-color: #34d399;
       --success-color: #10b981;
       --warning-color: #f59e0b;
       --error-color: #ef4444;
@@ -544,10 +544,8 @@
   <header class="header">
     <div class="nav-container">
       <a href="{{ url_for('shopping.index') }}" class="logo">
-        <div class="logo-icon">
-          <i class="fas fa-shopping-cart" aria-hidden="true"></i>
-        </div>
-        SmartKart
+        <img src="{{ url_for('static', filename='images/preppr-logo.png') }}" alt="Preppr Logo" style="width: 40px; height: 40px; border-radius: var(--radius-lg);">
+        Preppr
       </a>
       
       <nav>
@@ -567,7 +565,7 @@
           <div class="register-icon">
             <i class="fas fa-user-plus" aria-hidden="true"></i>
           </div>
-          <h1 class="register-title">Join SmartKart</h1>
+          <h1 class="register-title">Join Preppr</h1>
           <p class="register-subtitle">Create your account and start shopping smarter</p>
         </div>
 
@@ -666,7 +664,7 @@
 
   <!-- Footer -->
   <footer class="footer">
-    <p>&copy; 2025 SmartKart. All rights reserved. Shop smarter, live better.</p>
+    <p>&copy; 2025 Preppr. All rights reserved. Prep smarter. Save time. Eat better.</p>
   </footer>
 
   <script>

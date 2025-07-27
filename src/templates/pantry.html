@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Pantry - SmartKart</title>
+  <title>My Pantry - Preppr</title>
   
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,15 +16,15 @@
   <style>
     /* CSS Variables matching theme */
     :root {
-      --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-      --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      --primary-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      --secondary-gradient: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+      --accent-gradient: linear-gradient(135deg, #6ee7b7 0%, #34d399 100%);
       --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
       --warning-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
       
-      --primary-color: #667eea;
-      --secondary-color: #764ba2;
-      --accent-color: #4facfe;
+      --primary-color: #10b981;
+      --secondary-color: #059669;
+      --accent-color: #34d399;
       --success-color: #10b981;
       --warning-color: #f59e0b;
       --error-color: #ef4444;
@@ -484,7 +484,8 @@
   <header class="header">
     <div class="nav-container">
       <a href="{{ url_for('shopping.home') }}" class="logo">
-        SmartKart
+        <img src="{{ url_for('static', filename='images/preppr-logo.png') }}" alt="Preppr Logo" style="width: 40px; height: 40px; border-radius: var(--radius-lg); margin-right: 10px;">
+        Preppr
       </a>
       
       <nav>
@@ -674,12 +675,101 @@
     </div>
   </div>
 
+  <!-- Edit Item Modal -->
+  <div id="editItemModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Edit Pantry Item</h3>
+            <button class="close-btn">&times;</button>
+        </div>
+        
+        <form id="editItemForm">
+            <input type="hidden" id="editItemId" name="item_id">
+            
+            <div class="form-group">
+                <label>Item Name:</label>
+                <input type="text" id="editItemName" name="item_name" required>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Quantity:</label>
+                    <input type="number" step="0.01" id="editQuantity" name="quantity" min="0.01" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Unit:</label>
+                    <select id="editUnit" name="unit">
+                        <option value="pcs">pieces</option>
+                        <option value="g">grams</option>
+                        <option value="kg">kilograms</option>
+                        <option value="ml">milliliters</option>
+                        <option value="l">liters</option>
+                        <option value="oz">ounces</option>
+                        <option value="lbs">pounds</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Storage:</label>
+                    <select id="editStorageType" name="storage_type">
+                        <option value="pantry">Pantry</option>
+                        <option value="fridge">Refrigerator</option>
+                        <option value="freezer">Freezer</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Category:</label>
+                    <select id="editCategory" name="category">
+                        <option value="Other">Other</option>
+                        <option value="Produce">Produce</option>
+                        <option value="Meat">Meat</option>
+                        <option value="Dairy">Dairy</option>
+                        <option value="Grains">Grains</option>
+                        <option value="Canned Goods">Canned Goods</option>
+                        <option value="Frozen Foods">Frozen Foods</option>
+                        <option value="Beverages">Beverages</option>
+                        <option value="Snacks">Snacks</option>
+                        <option value="Condiments">Condiments</option>
+                        <option value="Spices">Spices</option>
+                        <option value="Bread">Bread</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Expiration Date (optional):</label>
+                <input type="date" id="editExpirationDate" name="expiration_date">
+                <label class="ai-predict">
+                    <input type="checkbox" id="editAiPredict" name="ai_predict_expiry">
+                    Use AI prediction if no date provided
+                </label>
+            </div>
+            
+            <div class="form-group">
+                <label>Notes (optional):</label>
+                <textarea id="editNotes" name="notes" rows="3"></textarea>
+            </div>
+            
+            <div class="modal-actions">
+                <button type="button" class="btn-secondary close-btn">Cancel</button>
+                <button type="submit" class="btn-primary">Update Item</button>
+            </div>
+        </form>
+    </div>
+  </div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const addItemBtn = document.getElementById('addItemBtn');
     const addFirstItemBtn = document.getElementById('addFirstItemBtn');
     const addItemModal = document.getElementById('addItemModal');
     const addItemForm = document.getElementById('addItemForm');
+    const editItemModal = document.getElementById('editItemModal');
+    const editItemForm = document.getElementById('editItemForm');
     const pantryItems = document.getElementById('pantryItems');
     const emptyState = document.getElementById('emptyState');
     
@@ -688,7 +778,10 @@ document.addEventListener('DOMContentLoaded', function() {
     addFirstItemBtn.addEventListener('click', () => addItemModal.style.display = 'flex');
     
     document.querySelectorAll('.close-btn').forEach(btn => {
-        btn.addEventListener('click', () => addItemModal.style.display = 'none');
+        btn.addEventListener('click', () => {
+            addItemModal.style.display = 'none';
+            editItemModal.style.display = 'none';
+        });
     });
     
     // Load pantry items on page load
@@ -736,6 +829,47 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
             console.error('Add item error:', error);
             alert('Error adding item. Please try again.');
+        }
+    });
+    
+    // Edit item form submission
+    editItemForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(editItemForm);
+        const itemId = formData.get('item_id');
+        const itemData = {
+            item_name: formData.get('item_name'),
+            quantity: parseFloat(formData.get('quantity')),
+            unit: formData.get('unit'),
+            storage_type: formData.get('storage_type'),
+            category: formData.get('category'),
+            expiration_date: formData.get('expiration_date') || null,
+            ai_predict_expiry: formData.get('ai_predict_expiry') === 'on',
+            notes: formData.get('notes') || null
+        };
+        
+        try {
+            const response = await fetch(`/api/pantry/items/${itemId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(itemData)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                editItemModal.style.display = 'none';
+                editItemForm.reset();
+                loadPantryItems();
+            } else {
+                alert('Error updating item: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Edit item error:', error);
+            alert('Error updating item. Please try again.');
         }
     });
     
@@ -787,8 +921,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="item-header">
                     <h4 class="item-name">${item.item_name}</h4>
                     <div class="item-actions">
-                        <button onclick="editItem(${item.pantry_item_id})" title="Edit">✏️</button>
-                        <button onclick="deleteItem(${item.pantry_item_id})" title="Delete">🗑️</button>
+                        <button onclick="editItem(${item.pantry_item_id})" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button onclick="deleteItem(${item.pantry_item_id})" title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
                     </div>
                 </div>
                 <div class="item-details">
@@ -839,9 +977,38 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Global functions for item actions
-    window.editItem = function(itemId) {
-        // TODO: Implement edit functionality
-        alert('Edit functionality coming soon!');
+    window.editItem = async function(itemId) {
+        try {
+            // Fetch the current item data
+            const response = await fetch(`/api/pantry/items/${itemId}`, {
+                method: 'GET'
+            });
+            
+            const result = await response.json();
+            
+            if (result.success && result.item) {
+                const item = result.item;
+                
+                // Populate the edit form
+                document.getElementById('editItemId').value = item.pantry_item_id;
+                document.getElementById('editItemName').value = item.item_name;
+                document.getElementById('editQuantity').value = item.quantity;
+                document.getElementById('editUnit').value = item.unit;
+                document.getElementById('editStorageType').value = item.storage_type;
+                document.getElementById('editCategory').value = item.category;
+                document.getElementById('editExpirationDate').value = item.expiration_date || '';
+                document.getElementById('editAiPredict').checked = false; // Reset AI prediction
+                document.getElementById('editNotes').value = item.notes || '';
+                
+                // Show the edit modal
+                editItemModal.style.display = 'flex';
+            } else {
+                alert('Error loading item details: ' + (result.message || 'Item not found'));
+            }
+        } catch (error) {
+            console.error('Error loading item for edit:', error);
+            alert('Error loading item details. Please try again.');
+        }
     };
     
     window.deleteItem = async function(itemId) {
