@@ -51,6 +51,7 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 tests/
+testing/
 
 # Translations
 *.mo
@@ -146,3 +147,6 @@ desktop.ini
 
 # Claude
 claude/
+
+# logs
+logs/
