@@ -143,8 +143,9 @@
       font-weight: 500;
       position: relative;
       transition: color 0.3s ease;
-      padding: var(--spacing-sm) var(--spacing-md);
+      padding: var(--spacing-md) var(--spacing-lg);
       border-radius: var(--radius-md);
+      white-space: nowrap;
     }
     
     .nav-link:hover {
@@ -160,6 +161,108 @@
     .nav-link.logout:hover {
       background: #dc2626;
       color: var(--text-white);
+    }
+
+    /* Dropdown Styles */
+    .nav-dropdown {
+      position: relative;
+    }
+
+    .dropdown-toggle {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .dropdown-arrow {
+      transition: transform 0.3s ease;
+    }
+
+    .nav-dropdown:hover .dropdown-arrow {
+      transform: rotate(180deg);
+    }
+
+    .dropdown-menu {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%) translateY(-8px);
+      background: var(--bg-primary);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg);
+      min-width: 160px;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.2s ease;
+      z-index: 1000;
+      list-style: none;
+      padding: var(--spacing-xs) 0;
+      margin: 0;
+    }
+
+    .dropdown-menu::before {
+      content: '';
+      position: absolute;
+      top: -4px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 8px;
+      height: 8px;
+      background: var(--bg-primary);
+      border: 1px solid var(--border-light);
+      border-bottom: none;
+      border-right: none;
+      transform: translateX(-50%) rotate(45deg);
+    }
+
+    .nav-dropdown:hover .dropdown-menu {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .dropdown-link {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-sm) var(--spacing-md);
+      color: var(--text-primary);
+      text-decoration: none;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      border: none;
+      background: none;
+      font-size: 0.9rem;
+    }
+
+    .dropdown-link:hover {
+      background: var(--bg-secondary);
+      color: var(--primary-color);
+    }
+
+    .dropdown-link.logout {
+      color: var(--error-color);
+    }
+
+    .dropdown-link.logout:hover {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--error-color);
+    }
+
+    .dropdown-link i {
+      font-size: 0.85rem;
+      width: 14px;
+      text-align: center;
+    }
+
+    /* Add subtle separators in dropdown */
+    .dropdown-menu li:not(:last-child) {
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .dropdown-menu li:last-child .dropdown-link {
+      border-bottom: none;
     }
     
     /* Main Content */
@@ -493,6 +596,27 @@
       .mobile-menu-btn {
         display: block;
       }
+
+      /* Mobile dropdown adjustments */
+      .dropdown-menu {
+        position: fixed;
+        top: 80px;
+        left: 0;
+        right: 0;
+        min-width: 100%;
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+        box-shadow: var(--shadow-xl);
+        transform: translateY(-10px);
+      }
+
+      .nav-dropdown:hover .dropdown-menu,
+      .nav-dropdown.active .dropdown-menu {
+        transform: translateY(0);
+        opacity: 1;
+        visibility: visible;
+      }
       
       .main-content {
         padding: 100px var(--spacing-md) var(--spacing-lg);
@@ -727,24 +851,51 @@
       
       <nav>
         <ul class="nav-links">
-          <li><a href="{{ url_for('shopping.shopping_trip') }}" class="nav-link">
-            <i class="fas fa-cart-plus" style="margin-right: 6px; font-size: 0.85em;"></i>New Trip
-          </a></li>
-          <li><a href="{{ url_for('shopping.shopping_lists') }}" class="nav-link">
-            <i class="fas fa-list-ul" style="margin-right: 6px; font-size: 0.85em;"></i>Shopping List
-          </a></li>
+          <li class="nav-dropdown">
+            <a href="#" class="nav-link dropdown-toggle">
+              <i class="fas fa-shopping-cart" style="margin-right: 6px; font-size: 0.85em;"></i>Shopping
+              <i class="fas fa-chevron-down dropdown-arrow" style="margin-left: 6px; font-size: 0.7em;"></i>
+            </a>
+            <ul class="dropdown-menu">
+              <li><a href="{{ url_for('shopping.shopping_trip') }}" class="dropdown-link">
+                <i class="fas fa-cart-plus"></i>New Trip
+              </a></li>
+              <li><a href="{{ url_for('shopping.shopping_lists') }}" class="dropdown-link">
+                <i class="fas fa-list-ul"></i>Lists
+              </a></li>
+            </ul>
+          </li>
           <li><a href="{{ url_for('shopping.budget') }}" class="nav-link">
             <i class="fas fa-chart-line" style="margin-right: 6px; font-size: 0.85em;"></i>Budget & Analytics
           </a></li>
-          <li><a href="{{ url_for('shopping.pantry') }}" class="nav-link">
-            <i class="fas fa-warehouse" style="margin-right: 6px; font-size: 0.85em;"></i>My Pantry
-          </a></li>
-          <li><a href="{{ url_for('shopping.rewards') }}" class="nav-link">
-            <i class="fas fa-trophy" style="margin-right: 6px; font-size: 0.85em;"></i>Rewards
-          </a></li>
-          <li><a href="{{ url_for('auth.logout') }}" class="nav-link logout">
-            <i class="fas fa-sign-out-alt" style="margin-right: 6px; font-size: 0.85em;"></i>Logout
-          </a></li>
+          <li class="nav-dropdown">
+            <a href="#" class="nav-link dropdown-toggle">
+              <i class="fas fa-utensils" style="margin-right: 6px; font-size: 0.85em;"></i>Kitchen
+              <i class="fas fa-chevron-down dropdown-arrow" style="margin-left: 6px; font-size: 0.7em;"></i>
+            </a>
+            <ul class="dropdown-menu">
+              <li><a href="{{ url_for('shopping.pantry') }}" class="dropdown-link">
+                <i class="fas fa-warehouse"></i>My Pantry
+              </a></li>
+              <li><a href="{{ url_for('shopping.meal_plans') }}" class="dropdown-link">
+                <i class="fas fa-calendar-alt"></i>Meal Plans
+              </a></li>
+            </ul>
+          </li>
+          <li class="nav-dropdown">
+            <a href="#" class="nav-link dropdown-toggle">
+              <i class="fas fa-user" style="margin-right: 6px; font-size: 0.85em;"></i>Account
+              <i class="fas fa-chevron-down dropdown-arrow" style="margin-left: 6px; font-size: 0.7em;"></i>
+            </a>
+            <ul class="dropdown-menu">
+              <li><a href="{{ url_for('shopping.rewards') }}" class="dropdown-link">
+                <i class="fas fa-trophy"></i>Rewards
+              </a></li>
+              <li><a href="{{ url_for('auth.logout') }}" class="dropdown-link logout">
+                <i class="fas fa-sign-out-alt"></i>Logout
+              </a></li>
+            </ul>
+          </li>
         </ul>
         
         <button class="mobile-menu-btn" aria-label="Toggle mobile menu">
@@ -1029,6 +1180,58 @@
       }
     }
 
+    // Dropdown menu functionality
+    function initializeDropdowns() {
+      const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
+      
+      dropdownToggles.forEach(toggle => {
+        // Prevent default link behavior
+        toggle.addEventListener('click', function(e) {
+          e.preventDefault();
+        });
+
+        // Handle mobile click behavior
+        if (window.innerWidth <= 768) {
+          toggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            const dropdown = this.closest('.nav-dropdown');
+            const menu = dropdown.querySelector('.dropdown-menu');
+            
+            // Close other dropdowns
+            document.querySelectorAll('.nav-dropdown').forEach(otherDropdown => {
+              if (otherDropdown !== dropdown) {
+                otherDropdown.classList.remove('active');
+              }
+            });
+            
+            // Toggle current dropdown
+            dropdown.classList.toggle('active');
+          });
+        }
+      });
+
+      // Close dropdowns when clicking outside
+      document.addEventListener('click', function(e) {
+        if (!e.target.closest('.nav-dropdown')) {
+          document.querySelectorAll('.nav-dropdown').forEach(dropdown => {
+            dropdown.classList.remove('active');
+          });
+        }
+      });
+    }
+
+    // Handle window resize for dropdown behavior
+    function handleDropdownResize() {
+      window.addEventListener('resize', function() {
+        // Remove active class when switching to desktop
+        if (window.innerWidth > 768) {
+          document.querySelectorAll('.nav-dropdown').forEach(dropdown => {
+            dropdown.classList.remove('active');
+          });
+        }
+      });
+    }
+
     // Shopping Details Modal Functions - TEMPORARILY DISABLED
     /*
     async function openShoppingDetails(cartId) {
@@ -1120,6 +1323,8 @@
       initializeHoverEffects();
       initializeScrollEffects();
       initializeMobileMenu();
+      initializeDropdowns();
+      handleDropdownResize();
       
       // Update time-based greeting every minute
       setInterval(updateWelcomeMessage, 60000);
