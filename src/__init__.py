@@ -1,7 +1,6 @@
 from flask import Flask, request, g
 import uuid
 
-
 def create_app():
     """Create and configure an instance of the Flask application."""
 
@@ -56,15 +55,18 @@ def create_app():
         return response
 
     # Register blueprints for different parts of the app
-    from .views import auth, shopping, api
+    from src.backend.views import auth, shopping
 
     app.register_blueprint(auth.auth_bp)
     app.register_blueprint(shopping.shopping_bp)
-    app.register_blueprint(api.api_bp)
     
     # Register new refactored blueprints
-    from src.views import shopping_trip_routes
-    app.register_blueprint(shopping_trip_routes.shopping_trip_bp)
+    from src.backend.apis import shopping_trip, shopping_list, budget, pantry
+    app.register_blueprint(shopping_trip.shopping_trip_bp)
+    app.register_blueprint(shopping_list.shopping_list_bp)
+    app.register_blueprint(budget.budget_bp)
+    app.register_blueprint(pantry.pantry_bp)
+    
     logger.info("Blueprints registered successfully")
 
     logger.info("Flask application created successfully")

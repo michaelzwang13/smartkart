@@ -412,6 +412,7 @@ def upc_lookup():
     return searchitem()
 
 
+
 @shopping_trip_bp.route("/predict")
 def predict():
     carbs = request.args.get("carbs", 0)

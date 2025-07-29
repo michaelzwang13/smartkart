@@ -68,8 +68,8 @@ def home():
     return render_template(
         "home.html", user_ID=user_ID, cart_history=cart_history, active_trip=active_trip
     )
-
-
+    
+    
 @shopping_bp.route("/start-shopping", methods=["POST"])
 def start_shopping():
     store_name = request.form.get("storeName")
@@ -99,8 +99,8 @@ def start_shopping():
         cursor.close()
 
         return redirect(url_for("shopping.shopping_trip"))
-
-
+    
+    
 @shopping_bp.route("/shopping-trip")
 def shopping_trip():
     if "user_ID" not in session:
@@ -178,7 +178,7 @@ def finish_shopping():
 
         # Update budget with this spending
         if "user_ID" in session and total_spent > 0:
-            from src.views.api import update_budget_spending
+            from src.backend.apis.budget import update_budget_spending
 
             update_budget_spending(session["user_ID"], total_spent)
 
