@@ -269,6 +269,7 @@ REQUIREMENTS:
 - Prioritize using available ingredients first
 
 IMPORTANT: Respond with a valid JSON object in exactly this format:
+Do not use fractions like 1/2 — convert them to decimals (e.g., 0.5) to ensure valid JSON
 
 {{
   "days": [
@@ -348,7 +349,8 @@ Generate the complete meal plan now:"""
             return meal_plan
         except json.JSONDecodeError as e:
             print(f"DEBUG: JSON parse error: {str(e)}")
-            print(f"DEBUG: Response text: {response_text[:500]}...")
+            # print(f"DEBUG: Response text: {response_text[:500]}...")
+            print("FULL RAW RESPONSE:\n", response.text)
             return None
 
     except Exception as e:
