@@ -61,11 +61,13 @@ def create_app():
     app.register_blueprint(shopping.shopping_bp)
     
     # Register new refactored blueprints
-    from src.backend.apis import shopping_trip, shopping_list, budget, pantry
+    from src.backend.apis import shopping_trip, shopping_list, budget, pantry, meal_plan
     app.register_blueprint(shopping_trip.shopping_trip_bp)
     app.register_blueprint(shopping_list.shopping_list_bp)
     app.register_blueprint(budget.budget_bp)
     app.register_blueprint(pantry.pantry_bp)
+    app.register_blueprint(meal_plan.meal_plan_bp)
+    
     
     logger.info("Blueprints registered successfully")
 

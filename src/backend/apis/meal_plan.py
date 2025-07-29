@@ -452,7 +452,7 @@ def get_meal_plans():
     user_id = session["user_ID"]
     db = get_db()
     cursor = db.cursor()
-
+    
     try:
         # Get meal plans
         query = """

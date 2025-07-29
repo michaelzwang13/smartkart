@@ -267,7 +267,7 @@ def meal_plans():
     """Show meal plans page"""
     if "user_ID" not in session:
         return redirect(url_for("auth.login"))
-
+    
     return render_template("meal_plans.html")
 
 
@@ -280,7 +280,7 @@ def meal_plan_details(plan_id):
     user_id = session["user_ID"]
     db = get_db()
     cursor = db.cursor()
-
+    
     try:
         # Verify plan belongs to user and get basic info
         verify_query = "SELECT * FROM meal_plans WHERE plan_id = %s AND user_id = %s"

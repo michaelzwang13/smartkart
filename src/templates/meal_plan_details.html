@@ -566,7 +566,7 @@
   </main>
 
   <script>
-    const planId = {{ plan_id }};
+    const planId = JSON.parse('{{ plan_id }}');
     
     document.addEventListener('DOMContentLoaded', function() {
       loadMealPlanDetails();
