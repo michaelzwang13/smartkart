@@ -105,13 +105,18 @@
     }
     
     .logo {
-      font-size: 1.75rem;
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      font-size: 1.5rem;
       font-weight: 700;
-      background: var(--primary-gradient);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      color: var(--primary-color);
       text-decoration: none;
+      transition: transform 0.3s ease;
+    }
+    
+    .logo:hover {
+      transform: scale(1.05);
     }
     
     .nav-links {
@@ -609,7 +614,7 @@
   <header class="header">
     <div class="nav-container">
       <a href="{{ url_for('shopping.home') }}" class="logo">
-        <img src="{{ url_for('static', filename='images/preppr-logo.png') }}" alt="Preppr Logo" style="width: 40px; height: 40px; border-radius: var(--radius-lg); margin-right: 10px;">
+        <img src="{{ url_for('static', filename='images/preppr-logo.png') }}" alt="Preppr Logo" style="width: 40px; height: 40px; border-radius: var(--radius-lg);">
         Preppr
       </a>
       
