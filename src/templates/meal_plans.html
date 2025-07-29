@@ -506,6 +506,32 @@
       box-shadow: var(--shadow-md);
     }
     
+    .calendar-container {
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border-medium) var(--bg-secondary);
+    }
+    
+    .calendar-container::-webkit-scrollbar {
+      height: 8px;
+    }
+    
+    .calendar-container::-webkit-scrollbar-track {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-sm);
+    }
+    
+    .calendar-container::-webkit-scrollbar-thumb {
+      background: var(--border-medium);
+      border-radius: var(--radius-sm);
+    }
+    
+    .calendar-container::-webkit-scrollbar-thumb:hover {
+      background: var(--text-muted);
+    }
+    
     .calendar-header {
       display: flex;
       justify-content: space-between;
@@ -548,11 +574,13 @@
     
     .calendar-grid {
       display: grid;
-      grid-template-columns: repeat(7, 1fr);
+      grid-template-columns: repeat(7, minmax(120px, 1fr));
       gap: 1px;
       background: var(--border-light);
       border-radius: var(--radius-lg);
-      overflow: hidden;
+      overflow-x: auto;
+      overflow-y: hidden;
+      min-width: 840px; /* 7 days * 120px minimum width */
     }
     
     .calendar-day-header {
@@ -755,6 +783,11 @@
         order: 1;
       }
       
+      .calendar-grid {
+        grid-template-columns: repeat(7, minmax(100px, 1fr));
+        min-width: 700px; /* Reduced for mobile */
+      }
+      
       .calendar-day {
         min-height: 80px;
         padding: 4px;
@@ -876,8 +909,10 @@
         </div>
       </div>
       
-      <div class="calendar-grid" id="calendarGrid">
-        <!-- Calendar will be generated here -->
+      <div class="calendar-container">
+        <div class="calendar-grid" id="calendarGrid">
+          <!-- Calendar will be generated here -->
+        </div>
       </div>
       
       <div class="calendar-legend">
