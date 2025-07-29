@@ -61,6 +61,10 @@ def create_app():
     app.register_blueprint(auth.auth_bp)
     app.register_blueprint(shopping.shopping_bp)
     app.register_blueprint(api.api_bp)
+    
+    # Register new refactored blueprints
+    from src.views import shopping_trip_routes
+    app.register_blueprint(shopping_trip_routes.shopping_trip_bp)
     logger.info("Blueprints registered successfully")
 
     logger.info("Flask application created successfully")
