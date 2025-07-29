@@ -941,19 +941,20 @@
       .dropdown-menu {
         position: fixed;
         top: 80px;
-        left: 0;
-        right: 0;
-        min-width: 100%;
-        border-radius: 0;
-        border-left: none;
-        border-right: none;
-        box-shadow: var(--shadow-xl);
-        transform: translateY(-10px);
+        left: var(--spacing-md);
+        right: var(--spacing-md);
+        min-width: calc(100% - 2 * var(--spacing-md));
+        border-radius: var(--radius-xl);
+        box-shadow: 
+          0 20px 40px rgba(0, 0, 0, 0.15),
+          0 8px 16px rgba(0, 0, 0, 0.1);
+        transform: translateY(-20px) scale(0.95);
+        backdrop-filter: blur(20px);
       }
 
       .nav-dropdown:hover .dropdown-menu,
       .nav-dropdown.active .dropdown-menu {
-        transform: translateY(0);
+        transform: translateY(0) scale(1);
         opacity: 1;
         visibility: visible;
       }
