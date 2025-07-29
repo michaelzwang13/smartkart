@@ -1376,7 +1376,7 @@
     // Load cart items from API
     async function loadCartItems() {
       try {
-        const response = await fetch("{{ url_for('api.get_cart_items') }}", {
+        const response = await fetch("{{ url_for('shopping_trip.get_cart_items') }}", {
           method: "GET",
           headers: { "Content-Type": "application/json" }
         });
@@ -1508,7 +1508,7 @@
             showNotification(`🔍 Looking up UPC: ${itemName}...`, 'info');
             
             // 1) Search for item by UPC using Nutritionix API
-            const searchResponse = await fetch(`{{ url_for('api.searchitem') }}?upc=${encodeURIComponent(itemName)}`);
+            const searchResponse = await fetch(`{{ url_for('shopping_trip.searchitem') }}?upc=${encodeURIComponent(itemName)}`);
             const searchData = await searchResponse.json();
 
             // 2) Extract food data with improved fallback handling
@@ -1557,7 +1557,7 @@
             const combinedName = `${brandName} - ${foodName}`;
 
             // 3) Add item to cart
-            const addItemResponse = await fetch("{{ url_for('api.add_item') }}", {
+            const addItemResponse = await fetch("{{ url_for('shopping_trip.add_item') }}", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -1588,7 +1588,7 @@
             // 4) Check for impulse purchase if we have nutritional data
             if (carbs > 0 || sugar > 0 || sodium > 0 || fat > 0) {
                 try {
-                    const predictResponse = await fetch(`{{ url_for('api.predict') }}?carbs=${carbs}&sugar=${sugar}&sodium=${sodium}&fat=${fat}`);
+                    const predictResponse = await fetch(`{{ url_for('shopping_trip.predict') }}?carbs=${carbs}&sugar=${sugar}&sodium=${sodium}&fat=${fat}`);
                     const predictData = await predictResponse.json();
 
                     if (predictData.prediction == 1) {
@@ -1660,7 +1660,7 @@
 
       // Send feedback to ML model
       const label = wasImpulse ? 1 : 0;
-      fetch(`{{ url_for('api.learn') }}?carbs=${carbs}&sugar=${sugar}&sodium=${sodium}&fat=${fat}&label=${label}`)
+      fetch(`{{ url_for('shopping_trip.learn') }}?carbs=${carbs}&sugar=${sugar}&sodium=${sodium}&fat=${fat}&label=${label}`)
         .catch(error => console.error("ML feedback failed:", error));
 
       if (wasImpulse) {
