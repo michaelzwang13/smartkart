@@ -497,6 +497,197 @@
       margin: 0 auto;
     }
     
+    /* Calendar Styles */
+    .calendar-section {
+      background: var(--bg-primary);
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-xl);
+      margin-bottom: var(--spacing-2xl);
+      box-shadow: var(--shadow-md);
+    }
+    
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--spacing-lg);
+    }
+    
+    .calendar-nav {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+    }
+    
+    .calendar-nav-btn {
+      background: var(--bg-tertiary);
+      border: none;
+      border-radius: var(--radius-md);
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: all 0.3s ease;
+    }
+    
+    .calendar-nav-btn:hover {
+      background: var(--primary-color);
+      color: var(--text-white);
+    }
+    
+    .calendar-month-year {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      min-width: 200px;
+      text-align: center;
+    }
+    
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 1px;
+      background: var(--border-light);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    
+    .calendar-day-header {
+      background: var(--bg-tertiary);
+      padding: var(--spacing-sm);
+      text-align: center;
+      font-weight: 600;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+    
+    .calendar-day {
+      background: var(--bg-primary);
+      min-height: 120px;
+      padding: var(--spacing-xs);
+      position: relative;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .calendar-day:hover {
+      background: var(--bg-secondary);
+    }
+    
+    .calendar-day.other-month {
+      background: var(--bg-secondary);
+      color: var(--text-muted);
+    }
+    
+    .calendar-day.today {
+      background: rgba(16, 185, 129, 0.1);
+      border: 2px solid var(--primary-color);
+    }
+    
+    .calendar-day.has-meals {
+      background: rgba(16, 185, 129, 0.05);
+    }
+    
+    .calendar-day-number {
+      font-weight: 600;
+      font-size: 0.875rem;
+      margin-bottom: var(--spacing-xs);
+    }
+    
+    .calendar-meals {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    
+    .calendar-meal {
+      background: var(--primary-color);
+      color: var(--text-white);
+      padding: 2px 6px;
+      border-radius: var(--radius-sm);
+      font-size: 0.75rem;
+      font-weight: 500;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    
+    .calendar-meal.breakfast {
+      background: var(--warning-color);
+    }
+    
+    .calendar-meal.lunch {
+      background: var(--primary-color);
+    }
+    
+    .calendar-meal.dinner {
+      background: var(--secondary-color);
+    }
+    
+    .calendar-meal-count {
+      background: var(--text-muted);
+      color: var(--text-white);
+      padding: 2px 6px;
+      border-radius: var(--radius-sm);
+      font-size: 0.7rem;
+      text-align: center;
+      margin-top: 2px;
+    }
+    
+    .calendar-legend {
+      display: flex;
+      justify-content: center;
+      gap: var(--spacing-lg);
+      margin-top: var(--spacing-md);
+      flex-wrap: wrap;
+    }
+    
+    .calendar-legend-item {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+    
+    .calendar-legend-color {
+      width: 12px;
+      height: 12px;
+      border-radius: var(--radius-sm);
+    }
+    
+    /* Calendar View Toggle */
+    .calendar-view-toggle {
+      display: flex;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-md);
+      padding: 4px;
+    }
+    
+    .calendar-view-btn {
+      background: none;
+      border: none;
+      padding: var(--spacing-xs) var(--spacing-sm);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      transition: all 0.2s ease;
+    }
+    
+    .calendar-view-btn.active {
+      background: var(--bg-primary);
+      color: var(--primary-color);
+      box-shadow: var(--shadow-sm);
+    }
+
     /* Responsive design */
     @media (max-width: 768px) {
       .mobile-menu-btn {
@@ -548,6 +739,42 @@
       
       .plan-details {
         grid-template-columns: 1fr;
+      }
+      
+      /* Calendar Mobile Styles */
+      .calendar-header {
+        flex-direction: column;
+        gap: var(--spacing-md);
+      }
+      
+      .calendar-nav {
+        order: 2;
+      }
+      
+      .calendar-view-toggle {
+        order: 1;
+      }
+      
+      .calendar-day {
+        min-height: 80px;
+        padding: 4px;
+      }
+      
+      .calendar-day-number {
+        font-size: 0.75rem;
+      }
+      
+      .calendar-meal {
+        font-size: 0.65rem;
+        padding: 1px 4px;
+      }
+      
+      .calendar-legend {
+        gap: var(--spacing-sm);
+      }
+      
+      .calendar-legend-item {
+        font-size: 0.75rem;
       }
     }
   </style>
@@ -625,6 +852,49 @@
       <h1 class="page-title">Meal Plans</h1>
       <p class="page-subtitle">Generate AI-powered meal plans based on your pantry items, dietary preferences, and budget.</p>
     </div>
+
+    <!-- Calendar Section -->
+    <section class="calendar-section">
+      <div class="calendar-header">
+        <h2 class="section-title">Your Week at a Glance</h2>
+        
+        <div class="calendar-view-toggle">
+          <button class="calendar-view-btn active" data-view="month">Month</button>
+          <button class="calendar-view-btn" data-view="week">Week</button>
+        </div>
+        
+        <div class="calendar-nav">
+          <button class="calendar-nav-btn" id="prevMonth">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <div class="calendar-month-year" id="monthYear">
+            <!-- Month and year will be inserted here -->
+          </div>
+          <button class="calendar-nav-btn" id="nextMonth">
+            <i class="fas fa-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+      
+      <div class="calendar-grid" id="calendarGrid">
+        <!-- Calendar will be generated here -->
+      </div>
+      
+      <div class="calendar-legend">
+        <div class="calendar-legend-item">
+          <div class="calendar-legend-color" style="background: var(--warning-color);"></div>
+          <span>Breakfast</span>
+        </div>
+        <div class="calendar-legend-item">
+          <div class="calendar-legend-color" style="background: var(--primary-color);"></div>
+          <span>Lunch</span>
+        </div>
+        <div class="calendar-legend-item">
+          <div class="calendar-legend-color" style="background: var(--secondary-color);"></div>
+          <span>Dinner</span>
+        </div>
+      </div>
+    </section>
 
     <!-- Generate New Plan Section -->
     <section class="generate-section">
@@ -747,31 +1017,301 @@
       });
     }
 
+    // Calendar functionality
+    let currentDate = new Date();
+    let currentView = 'month';
+    let mealPlanData = [];
+    
     // Load existing meal plans on page load
     document.addEventListener('DOMContentLoaded', function() {
       initializeDropdowns();
       handleDropdownResize();
       
       loadMealPlans();
+      initializeCalendar();
       
       // Setup generate button
       document.getElementById('generateBtn').addEventListener('click', generateMealPlan);
     });
     
+    function initializeCalendar() {
+      // Setup calendar navigation
+      document.getElementById('prevMonth').addEventListener('click', () => {
+        currentDate.setMonth(currentDate.getMonth() - 1);
+        renderCalendar();
+      });
+      
+      document.getElementById('nextMonth').addEventListener('click', () => {
+        currentDate.setMonth(currentDate.getMonth() + 1);
+        renderCalendar();
+      });
+      
+      // Setup view toggle
+      document.querySelectorAll('.calendar-view-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          document.querySelectorAll('.calendar-view-btn').forEach(b => b.classList.remove('active'));
+          e.target.classList.add('active');
+          currentView = e.target.dataset.view;
+          renderCalendar();
+        });
+      });
+      
+      renderCalendar();
+    }
+    
+    function renderCalendar() {
+      const monthNames = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+      ];
+      
+      const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      
+      // Update month/year display
+      document.getElementById('monthYear').textContent = 
+        `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+      
+      const calendarGrid = document.getElementById('calendarGrid');
+      calendarGrid.innerHTML = '';
+      
+      // Add day headers
+      dayNames.forEach(day => {
+        const dayHeader = document.createElement('div');
+        dayHeader.className = 'calendar-day-header';
+        dayHeader.textContent = day;
+        calendarGrid.appendChild(dayHeader);
+      });
+      
+      if (currentView === 'month') {
+        renderMonthView(calendarGrid);
+      } else {
+        renderWeekView(calendarGrid);
+      }
+    }
+    
+    function renderMonthView(container) {
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+      
+      // Get first day of month and number of days
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      const startDate = new Date(firstDay);
+      startDate.setDate(startDate.getDate() - firstDay.getDay());
+      
+      // Generate 6 weeks (42 days)
+      for (let i = 0; i < 42; i++) {
+        const cellDate = new Date(startDate);
+        cellDate.setDate(startDate.getDate() + i);
+        
+        const dayCell = createDayCell(cellDate, month);
+        container.appendChild(dayCell);
+      }
+    }
+    
+    function renderWeekView(container) {
+      const today = new Date();
+      const currentWeekStart = new Date(today);
+      currentWeekStart.setDate(today.getDate() - today.getDay());
+      
+      // Generate 7 days for current week
+      for (let i = 0; i < 7; i++) {
+        const cellDate = new Date(currentWeekStart);
+        cellDate.setDate(currentWeekStart.getDate() + i);
+        
+        const dayCell = createDayCell(cellDate, cellDate.getMonth(), true);
+        container.appendChild(dayCell);
+      }
+    }
+    
+    function createDayCell(date, currentMonth, isWeekView = false) {
+      const dayCell = document.createElement('div');
+      dayCell.className = 'calendar-day';
+      
+      const today = new Date();
+      const isToday = date.toDateString() === today.toDateString();
+      const isCurrentMonth = date.getMonth() === currentMonth;
+      
+      if (isToday) {
+        dayCell.classList.add('today');
+      }
+      
+      if (!isCurrentMonth && !isWeekView) {
+        dayCell.classList.add('other-month');
+      }
+      
+      // Day number
+      const dayNumber = document.createElement('div');
+      dayNumber.className = 'calendar-day-number';
+      dayNumber.textContent = date.getDate();
+      dayCell.appendChild(dayNumber);
+      
+      // Meals container
+      const mealsContainer = document.createElement('div');
+      mealsContainer.className = 'calendar-meals';
+      
+      // Find meals for this date
+      const dayMeals = getMealsForDate(date);
+      
+      if (dayMeals.length > 0) {
+        dayCell.classList.add('has-meals');
+        
+        // Show up to 3 meals, then show count
+        const visibleMeals = dayMeals.slice(0, 3);
+        visibleMeals.forEach(meal => {
+          const mealElement = document.createElement('div');
+          mealElement.className = `calendar-meal ${meal.type}`;
+          mealElement.textContent = meal.name;
+          mealElement.title = `${meal.type}: ${meal.name}`;
+          mealsContainer.appendChild(mealElement);
+        });
+        
+        if (dayMeals.length > 3) {
+          const countElement = document.createElement('div');
+          countElement.className = 'calendar-meal-count';
+          countElement.textContent = `+${dayMeals.length - 3} more`;
+          mealsContainer.appendChild(countElement);
+        }
+      }
+      
+      dayCell.appendChild(mealsContainer);
+      
+      // Add click handler
+      dayCell.addEventListener('click', () => {
+        showDayDetails(date, dayMeals);
+      });
+      
+      return dayCell;
+    }
+    
+    function getMealsForDate(date) {
+      const meals = [];
+      const dateStr = date.toISOString().split('T')[0];
+      
+      // Search through meal plan data for meals on this date
+      mealPlanData.forEach(plan => {
+        const startDate = new Date(plan.start_date);
+        const endDate = new Date(plan.end_date);
+        
+        if (date >= startDate && date <= endDate) {
+          // Calculate which day of the plan this is
+          const dayDiff = Math.floor((date - startDate) / (1000 * 60 * 60 * 24)) + 1;
+          
+          // Add meals based on plan name and day
+          if (dayDiff >= 1 && dayDiff <= plan.total_days) {
+            // Generate meal names based on plan and day
+            const planName = plan.plan_name || 'Meal Plan';
+            const dayName = getDayName(dayDiff);
+            
+            meals.push(
+              { 
+                name: `${planName} - ${dayName} Breakfast`, 
+                type: 'breakfast',
+                planId: plan.plan_id,
+                day: dayDiff
+              },
+              { 
+                name: `${planName} - ${dayName} Lunch`, 
+                type: 'lunch',
+                planId: plan.plan_id,
+                day: dayDiff
+              },
+              { 
+                name: `${planName} - ${dayName} Dinner`, 
+                type: 'dinner',
+                planId: plan.plan_id,
+                day: dayDiff
+              }
+            );
+          }
+        }
+      });
+      
+      return meals;
+    }
+    
+    function getDayName(dayNumber) {
+      const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      if (dayNumber <= 7) {
+        return dayNames[dayNumber - 1];
+      }
+      return `Day ${dayNumber}`;
+    }
+    
+    function showDayDetails(date, meals) {
+      if (meals.length === 0) {
+        const dateStr = date.toLocaleDateString('en-US', { 
+          weekday: 'long', 
+          month: 'long', 
+          day: 'numeric' 
+        });
+        alert(`No meals planned for ${dateStr}\\n\\nGenerate a meal plan to see your meals for this day!`);
+        return;
+      }
+      
+      const dateStr = date.toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+      
+      let mealsList = meals.map(meal => {
+        const mealType = meal.type.charAt(0).toUpperCase() + meal.type.slice(1);
+        return `🍴 ${mealType}: ${meal.name}`;
+      }).join('\\n');
+      
+      const planNames = [...new Set(meals.map(m => mealPlanData.find(p => p.plan_id === m.planId)?.plan_name))].filter(Boolean);
+      const plansText = planNames.length > 0 ? `\\n\\nFrom: ${planNames.join(', ')}` : '';
+      
+      if (confirm(`Meals for ${dateStr}:\\n\\n${mealsList}${plansText}\\n\\nWould you like to view detailed recipes?`)) {
+        // If user clicks OK, navigate to the first meal plan details
+        if (meals.length > 0 && meals[0].planId) {
+          viewPlanDetails(meals[0].planId);
+        }
+      }
+    }
+    
     async function loadMealPlans() {
       try {
+        console.log('Loading meal plans...');
         const response = await fetch('/api/meal-plans');
         const data = await response.json();
         
-        if (data.success && data.plans.length > 0) {
+        console.log('Meal plans response:', data);
+        
+        if (data.success && data.plans && data.plans.length > 0) {
+          console.log(`Found ${data.plans.length} meal plans`);
+          
+          // Store meal plan data for calendar
+          mealPlanData = data.plans;
+          
           displayMealPlans(data.plans);
           document.getElementById('emptyState').style.display = 'none';
+          
+          // Update calendar with new data
+          if (typeof renderCalendar === 'function') {
+            renderCalendar();
+          }
         } else {
+          console.log('No meal plans found or error:', data);
+          mealPlanData = [];
           document.getElementById('emptyState').style.display = 'block';
+          
+          // Update calendar to show empty state
+          if (typeof renderCalendar === 'function') {
+            renderCalendar();
+          }
         }
       } catch (error) {
         console.error('Error loading meal plans:', error);
+        mealPlanData = [];
         document.getElementById('emptyState').style.display = 'block';
+        
+        // Update calendar to show empty state
+        if (typeof renderCalendar === 'function') {
+          renderCalendar();
+        }
       }
     }
     
@@ -865,7 +1405,7 @@
         if (result.success) {
           // Show success message and reload plans
           alert('Meal plan generated successfully!');
-          loadMealPlans();
+          loadMealPlans(); // This will also update the calendar
           
           // Optionally navigate to the new plan
           if (result.meal_plan.plan_id) {
