@@ -364,6 +364,52 @@
       grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
       gap: 15px;
     }
+    
+    .category-section {
+      margin-bottom: var(--spacing-2xl);
+    }
+    
+    .category-header {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-lg);
+      padding-bottom: var(--spacing-sm);
+      border-bottom: 2px solid var(--border-light);
+    }
+    
+    .category-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-lg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-white);
+      font-size: 1.2rem;
+    }
+    
+    .category-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 0;
+    }
+    
+    .category-count {
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      padding: var(--spacing-xs) var(--spacing-sm);
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+    
+    .category-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 15px;
+    }
 
     .pantry-item {
       background: var(--bg-primary);
@@ -603,6 +649,19 @@
         grid-template-columns: 1fr;
       }
       
+      .category-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .category-header {
+        flex-wrap: wrap;
+        gap: var(--spacing-sm);
+      }
+      
+      .category-title {
+        font-size: 1.25rem;
+      }
+      
       .form-row {
         grid-template-columns: 1fr;
       }
@@ -769,7 +828,7 @@
                 
                 <div class="form-group">
                     <label>Unit:</label>
-                    <select name="unit">
+                    <select name="unit" id="unitSelect">
                         <option value="pcs">pieces</option>
                         <option value="g">grams</option>
                         <option value="kg">kilograms</option>
@@ -777,7 +836,9 @@
                         <option value="l">liters</option>
                         <option value="oz">ounces</option>
                         <option value="lbs">pounds</option>
+                        <option value="custom">Custom...</option>
                     </select>
+                    <input type="text" name="custom_unit" id="customUnitInput" placeholder="Enter custom unit" style="display: none; margin-top: 8px;">
                 </div>
             </div>
             
@@ -864,7 +925,9 @@
                         <option value="l">liters</option>
                         <option value="oz">ounces</option>
                         <option value="lbs">pounds</option>
+                        <option value="custom">Custom...</option>
                     </select>
+                    <input type="text" name="custom_unit" id="editCustomUnitInput" placeholder="Enter custom unit" style="display: none; margin-top: 8px;">
                 </div>
             </div>
             
@@ -985,12 +1048,59 @@ document.addEventListener('DOMContentLoaded', function() {
     addItemBtn.addEventListener('click', () => addItemModal.style.display = 'flex');
     addFirstItemBtn.addEventListener('click', () => addItemModal.style.display = 'flex');
     
+    // Handle custom unit functionality for Add Item modal
+    const unitSelect = document.getElementById('unitSelect');
+    const customUnitInput = document.getElementById('customUnitInput');
+    
+    unitSelect.addEventListener('change', function() {
+        if (this.value === 'custom') {
+            customUnitInput.style.display = 'block';
+            customUnitInput.required = true;
+        } else {
+            customUnitInput.style.display = 'none';
+            customUnitInput.required = false;
+            customUnitInput.value = '';
+        }
+    });
+    
+    // Handle custom unit functionality for Edit Item modal
+    const editUnitSelect = document.getElementById('editUnit');
+    const editCustomUnitInput = document.getElementById('editCustomUnitInput');
+    
+    editUnitSelect.addEventListener('change', function() {
+        if (this.value === 'custom') {
+            editCustomUnitInput.style.display = 'block';
+            editCustomUnitInput.required = true;
+        } else {
+            editCustomUnitInput.style.display = 'none';
+            editCustomUnitInput.required = false;
+            editCustomUnitInput.value = '';
+        }
+    });
+    
     document.querySelectorAll('.close-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             addItemModal.style.display = 'none';
             editItemModal.style.display = 'none';
+            // Reset custom unit inputs when closing modals
+            resetCustomUnitInputs();
         });
     });
+    
+    // Function to reset custom unit inputs
+    function resetCustomUnitInputs() {
+        // Reset Add Item modal
+        unitSelect.value = 'pcs';
+        customUnitInput.style.display = 'none';
+        customUnitInput.required = false;
+        customUnitInput.value = '';
+        
+        // Reset Edit Item modal
+        editUnitSelect.value = 'pcs';
+        editCustomUnitInput.style.display = 'none';
+        editCustomUnitInput.required = false;
+        editCustomUnitInput.value = '';
+    }
     
     // Load pantry items on page load
     loadPantryItems();
@@ -1005,10 +1115,13 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         
         const formData = new FormData(addItemForm);
+        const unitValue = formData.get('unit');
+        const finalUnit = unitValue === 'custom' ? formData.get('custom_unit') : unitValue;
+        
         const itemData = {
             item_name: formData.get('item_name'),
             quantity: parseFloat(formData.get('quantity')),
-            unit: formData.get('unit'),
+            unit: finalUnit,
             storage_type: formData.get('storage_type'),
             category: formData.get('category'),
             expiration_date: formData.get('expiration_date') || null,
@@ -1030,6 +1143,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (result.success) {
                 addItemModal.style.display = 'none';
                 addItemForm.reset();
+                resetCustomUnitInputs();
                 loadPantryItems();
             } else {
                 alert('Error adding item: ' + result.message);
@@ -1046,10 +1160,13 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const formData = new FormData(editItemForm);
         const itemId = formData.get('item_id');
+        const unitValue = formData.get('unit');
+        const finalUnit = unitValue === 'custom' ? formData.get('custom_unit') : unitValue;
+        
         const itemData = {
             item_name: formData.get('item_name'),
             quantity: parseFloat(formData.get('quantity')),
-            unit: formData.get('unit'),
+            unit: finalUnit,
             storage_type: formData.get('storage_type'),
             category: formData.get('category'),
             expiration_date: formData.get('expiration_date') || null,
@@ -1071,6 +1188,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (result.success) {
                 editItemModal.style.display = 'none';
                 editItemForm.reset();
+                resetCustomUnitInputs();
                 loadPantryItems();
             } else {
                 alert('Error updating item: ' + result.message);
@@ -1113,10 +1231,97 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        pantryItems.style.display = 'grid';
+        pantryItems.style.display = 'block';
         emptyState.style.display = 'none';
         
-        pantryItems.innerHTML = items.map(item => createItemHTML(item)).join('');
+        const storageFilter = document.getElementById('storageFilter').value;
+        const categoryFilter = document.getElementById('categoryFilter').value;
+        
+        // If filtering by specific category or storage, use simple grid layout
+        if (categoryFilter || storageFilter) {
+            pantryItems.innerHTML = `<div class="pantry-grid">${items.map(item => createItemHTML(item)).join('')}</div>`;
+            return;
+        }
+        
+        // Group items by category for "All Locations" view
+        const groupedItems = groupItemsByCategory(items);
+        pantryItems.innerHTML = createCategorizedHTML(groupedItems);
+    }
+    
+    function groupItemsByCategory(items) {
+        const groups = {};
+        
+        items.forEach(item => {
+            const category = item.category || 'Other';
+            if (!groups[category]) {
+                groups[category] = [];
+            }
+            groups[category].push(item);
+        });
+        
+        // Sort categories alphabetically, but put 'Other' at the end
+        const sortedCategories = Object.keys(groups).sort((a, b) => {
+            if (a === 'Other') return 1;
+            if (b === 'Other') return -1;
+            return a.localeCompare(b);
+        });
+        
+        const sortedGroups = {};
+        sortedCategories.forEach(category => {
+            sortedGroups[category] = groups[category];
+        });
+        
+        return sortedGroups;
+    }
+    
+    function createCategorizedHTML(groupedItems) {
+        const categoryIcons = {
+            'Produce': { icon: 'fas fa-apple-alt', color: 'var(--success-gradient)' },
+            'Meat': { icon: 'fas fa-drumstick-bite', color: 'var(--error-gradient)' },
+            'Dairy': { icon: 'fas fa-cheese', color: 'var(--warning-gradient)' },
+            'Grains': { icon: 'fas fa-wheat', color: 'var(--secondary-gradient)' },
+            'Canned Goods': { icon: 'fas fa-can-food', color: 'var(--accent-gradient)' },
+            'Frozen Foods': { icon: 'fas fa-snowflake', color: 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)' },
+            'Beverages': { icon: 'fas fa-glass-water', color: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)' },
+            'Snacks': { icon: 'fas fa-cookie-bite', color: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)' },
+            'Condiments': { icon: 'fas fa-pepper-hot', color: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)' },
+            'Spices': { icon: 'fas fa-mortar-pestle', color: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)' },
+            'Bread': { icon: 'fas fa-bread-slice', color: 'linear-gradient(135deg, #92400e 0%, #78350f 100%)' },
+            'Other': { icon: 'fas fa-box', color: 'var(--text-secondary)' }
+        };
+        
+        let html = '';
+        
+        Object.entries(groupedItems).forEach(([category, items]) => {
+            const categoryInfo = categoryIcons[category] || categoryIcons['Other'];
+            const expiredCount = items.filter(item => {
+                const status = getExpiryStatus(item.expiration_date);
+                return status.status === 'expired';
+            }).length;
+            const expiringSoonCount = items.filter(item => {
+                const status = getExpiryStatus(item.expiration_date);
+                return status.status === 'expiring_soon';
+            }).length;
+            
+            html += `
+                <div class="category-section">
+                    <div class="category-header">
+                        <div class="category-icon" style="background: ${categoryInfo.color};">
+                            <i class="${categoryInfo.icon}"></i>
+                        </div>
+                        <h3 class="category-title">${category}</h3>
+                        <div class="category-count">${items.length} items</div>
+                        ${expiredCount > 0 ? `<div class="category-count" style="background: var(--error-color); color: white;">${expiredCount} expired</div>` : ''}
+                        ${expiringSoonCount > 0 ? `<div class="category-count" style="background: var(--warning-color); color: white;">${expiringSoonCount} expiring soon</div>` : ''}
+                    </div>
+                    <div class="category-grid">
+                        ${items.map(item => createItemHTML(item)).join('')}
+                    </div>
+                </div>
+            `;
+        });
+        
+        return html;
     }
     
     function createItemHTML(item) {
@@ -1201,7 +1406,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('editItemId').value = item.pantry_item_id;
                 document.getElementById('editItemName').value = item.item_name;
                 document.getElementById('editQuantity').value = item.quantity;
-                document.getElementById('editUnit').value = item.unit;
+                
+                // Handle unit selection - check if it's a predefined unit or custom
+                const editUnitSelect = document.getElementById('editUnit');
+                const editCustomUnitInput = document.getElementById('editCustomUnitInput');
+                const predefinedUnits = ['pcs', 'g', 'kg', 'ml', 'l', 'oz', 'lbs'];
+                
+                if (predefinedUnits.includes(item.unit)) {
+                    editUnitSelect.value = item.unit;
+                    editCustomUnitInput.style.display = 'none';
+                    editCustomUnitInput.required = false;
+                    editCustomUnitInput.value = '';
+                } else {
+                    editUnitSelect.value = 'custom';
+                    editCustomUnitInput.style.display = 'block';
+                    editCustomUnitInput.required = true;
+                    editCustomUnitInput.value = item.unit;
+                }
+                
                 document.getElementById('editStorageType').value = item.storage_type;
                 document.getElementById('editCategory').value = item.category;
                 document.getElementById('editExpirationDate').value = item.expiration_date || '';
