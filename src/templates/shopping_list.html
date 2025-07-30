@@ -440,6 +440,8 @@
       transition: all 0.3s ease;
       position: relative;
       cursor: pointer;
+      display: flex;
+      flex-direction: column;
     }
     
     .list-card::before {
@@ -466,6 +468,13 @@
     .list-header {
       padding: var(--spacing-lg);
       background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      border-bottom: none;
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-sm);
+      flex: 1;
+      justify-content: space-between;
+      min-height: 140px;
     }
     
     .list-header.expanded {
@@ -476,7 +485,6 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: var(--spacing-sm);
     }
     
     .list-name {
@@ -543,8 +551,13 @@
     .list-description {
       color: var(--text-secondary);
       font-size: 0.875rem;
-      margin-top: var(--spacing-xs);
       font-style: italic;
+      margin: 0;
+      line-height: 1.4;
+    }
+    
+    .list-description:empty {
+      display: none;
     }
     
     .expand-indicator {
@@ -1253,18 +1266,20 @@
       listsGrid.innerHTML = shoppingLists.map(list => `
         <div class="list-card" data-list-id="${list.id}" onclick="openListModal(${list.id}, event)">
           <div class="list-header">
-            <div class="list-header-top">
-              <h3 class="list-name">${escapeHtml(list.name)}</h3>
-              <div class="list-actions">
-                <button class="btn-icon btn-edit" onclick="editList(${list.id})" title="Rename list">
-                  <i class="fas fa-edit"></i>
-                </button>
-                <button class="btn-icon btn-delete" onclick="deleteList(${list.id})" title="Delete list">
-                  <i class="fas fa-trash"></i>
-                </button>
+            <div>
+              <div class="list-header-top">
+                <h3 class="list-name">${escapeHtml(list.name)}</h3>
+                <div class="list-actions">
+                  <button class="btn-icon btn-edit" onclick="editList(${list.id})" title="Rename list">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button class="btn-icon btn-delete" onclick="deleteList(${list.id})" title="Delete list">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
               </div>
+              ${list.description ? `<div class="list-description">${escapeHtml(list.description)}</div>` : ''}
             </div>
-            ${list.description ? `<div class="list-description">${escapeHtml(list.description)}</div>` : ''}
             <div class="list-meta">
               <div class="list-stats">
                 <i class="fas fa-shopping-basket" style="color: var(--primary-color);"></i>
