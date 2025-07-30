@@ -18,28 +18,58 @@ def add_item():
 
     db = get_db()
     cursor = db.cursor()
-    ins = "INSERT INTO cart_item (cart_ID, user_ID, quantity, item_name, price, upc, item_lifetime, image_url) VALUES(%s, %s, %s, %s, %s, %s, %s, %s)"
-    cursor.execute(
-        ins,
-        (
-            session["cart_ID"],
-            session["user_ID"],
-            data["quantity"],
-            data["itemName"],
-            data["price"],
-            data["upc"],
-            7,
-            data["imageUrl"],
-        ),
-    )
-    db.commit()
+    
+    try:
+        # Insert the cart item
+        ins = "INSERT INTO cart_item (cart_ID, user_ID, quantity, item_name, price, upc, item_lifetime, image_url) VALUES(%s, %s, %s, %s, %s, %s, %s, %s)"
+        cursor.execute(
+            ins,
+            (
+                session["cart_ID"],
+                session["user_ID"],
+                data["quantity"],
+                data["itemName"],
+                data["price"],
+                data["upc"],
+                7,
+                data["imageUrl"],
+            ),
+        )
+        cart_item_id = cursor.lastrowid
+        
+        # Check if this item matches any shopping list item and link if requested
+        list_item_id = data.get("list_item_id")
+        if list_item_id:
+            # Update the shopping list mapping to link this cart item
+            update_mapping_query = """
+                UPDATE shopping_list_cart_mapping 
+                SET cart_item_id = %s, is_found = TRUE, updated_at = CURRENT_TIMESTAMP
+                WHERE cart_id = %s AND list_item_id = %s
+            """
+            cursor.execute(update_mapping_query, (cart_item_id, session["cart_ID"], list_item_id))
+            
+            # Also mark the original shopping list item as completed
+            update_list_item_query = """
+                UPDATE shopping_list_items sli
+                JOIN shopping_list_cart_mapping slcm ON sli.item_id = slcm.list_item_id
+                SET sli.is_completed = TRUE, sli.updated_at = CURRENT_TIMESTAMP
+                WHERE slcm.cart_id = %s AND slcm.list_item_id = %s
+            """
+            cursor.execute(update_list_item_query, (session["cart_ID"], list_item_id))
 
-    query = "SELECT * FROM cart_item WHERE cart_ID = %s"
-    cursor.execute(query, (session["cart_ID"],))
-    items = cursor.fetchall()
-    cursor.close()
+        db.commit()
 
-    return jsonify({"status": "success", "items": items}), 200
+        query = "SELECT * FROM cart_item WHERE cart_ID = %s"
+        cursor.execute(query, (session["cart_ID"],))
+        items = cursor.fetchall()
+        
+        return jsonify({"status": "success", "items": items}), 200
+        
+    except Exception as e:
+        db.rollback()
+        return jsonify({"error": f"Failed to add item: {str(e)}"}), 500
+    finally:
+        cursor.close()
 
 
 @shopping_trip_bp.route("/shopping-trip/remove-last-item", methods=["POST"])
@@ -58,6 +88,14 @@ def remove_last_item():
         last_item = cursor.fetchone()
 
         if last_item:
+            # Update shopping list mapping if this item was linked
+            update_mapping_query = """
+                UPDATE shopping_list_cart_mapping 
+                SET cart_item_id = NULL, is_found = FALSE 
+                WHERE cart_item_id = %s
+            """
+            cursor.execute(update_mapping_query, (last_item["item_ID"],))
+            
             # Delete the item
             delete_query = "DELETE FROM cart_item WHERE item_ID = %s"
             cursor.execute(delete_query, (last_item["item_ID"],))
@@ -171,6 +209,14 @@ def delete_item():
         if not cursor.fetchone():
             return jsonify({"error": "Item not found"}), 404
 
+        # Update shopping list mapping if this item was linked
+        update_mapping_query = """
+            UPDATE shopping_list_cart_mapping 
+            SET cart_item_id = NULL, is_found = FALSE 
+            WHERE cart_item_id = %s
+        """
+        cursor.execute(update_mapping_query, (item_id,))
+        
         # Delete the item
         delete_query = "DELETE FROM cart_item WHERE item_ID = %s"
         cursor.execute(delete_query, (item_id,))
@@ -410,7 +456,6 @@ def create_fallback_item(upc):
 def upc_lookup():
     """Alias for searchitem endpoint for better API naming"""
     return searchitem()
-
 
 
 @shopping_trip_bp.route("/predict")

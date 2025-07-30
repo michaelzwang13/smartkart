@@ -1036,6 +1036,121 @@
       }
     }
     
+    /* Shopping List Section Styles */
+    .shopping-list-section {
+      background: var(--bg-primary);
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-xl);
+      margin-bottom: var(--spacing-xl);
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--border-light);
+    }
+
+    .shopping-list-items {
+      display: grid;
+      gap: var(--spacing-md);
+    }
+
+    .shopping-list-item {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-lg);
+      border: 1px solid var(--border-light);
+      display: grid;
+      grid-template-columns: auto 1fr auto auto;
+      gap: var(--spacing-lg);
+      align-items: center;
+      transition: all 0.3s ease;
+    }
+
+    .shopping-list-item:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .shopping-list-item.found {
+      background: rgba(16, 185, 129, 0.1);
+      border-color: var(--success-color);
+    }
+
+    .list-item-checkbox {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+    }
+
+    .list-item-details {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-xs);
+    }
+
+    .list-item-name {
+      font-weight: 600;
+      color: var(--text-primary);
+      font-size: 1rem;
+    }
+
+    .list-item-quantity {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+
+    .list-item-notes {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      font-style: italic;
+    }
+
+    .list-item-status {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    .list-item-status.found {
+      color: var(--success-color);
+    }
+
+    .list-item-status.not-found {
+      color: var(--text-muted);
+    }
+
+    .list-item-actions {
+      display: flex;
+      gap: var(--spacing-xs);
+    }
+
+    .btn-list-action {
+      padding: var(--spacing-xs) var(--spacing-sm);
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 0.75rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-add-to-cart {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .btn-add-to-cart:hover {
+      background: var(--secondary-color);
+    }
+
+    .btn-mark-found {
+      background: var(--success-color);
+      color: white;
+    }
+
+    .btn-mark-found:hover {
+      background: #059669;
+    }
+
     /* Accessibility */
     @media (prefers-reduced-motion: reduce) {
       * {
@@ -1146,7 +1261,7 @@
           Start a new shopping trip and get personalized recommendations to help you make healthier choices and stay within budget.
         </p>
         
-        <form action="{{ url_for('shopping.start_shopping') }}" method="POST" class="start-form">
+        <form action="{{ url_for('shopping.start_shopping') }}" method="POST" class="start-form" id="startShoppingForm">
           <div class="form-group">
             <label for="storeName" class="form-label">Store Name</label>
             <input
@@ -1163,6 +1278,30 @@
             Start Shopping
           </button>
         </form>
+
+        <!-- Import Shopping List Section -->
+        <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-light);">
+          <h3 style="font-size: 1.25rem; font-weight: 600; color: var(--text-primary); margin-bottom: 1rem;">
+            <i class="fas fa-list-ul" style="margin-right: 0.5rem; color: var(--primary-color);"></i>
+            Import Existing Shopping List
+          </h3>
+          <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+            Choose a shopping list to use as your guide during this trip
+          </p>
+          <div id="availableListsContainer" style="display: none;">
+            <select id="availableListsSelect" class="form-input" style="margin-bottom: 1rem;">
+              <option value="">Select a shopping list...</option>
+            </select>
+            <button type="button" id="importListBtn" class="btn-primary" disabled>
+              <i class="fas fa-play" aria-hidden="true"></i>
+              Start Shopping with List
+            </button>
+          </div>
+          <button type="button" id="loadListsBtn" class="btn-secondary">
+            <i class="fas fa-search" aria-hidden="true"></i>
+            Browse My Lists
+          </button>
+        </div>
       </section>
 
       {% else %}
@@ -1209,6 +1348,19 @@
               <div class="budget-stat-value">${{ remaining }}</div>
               <div class="budget-stat-label">Remaining</div>
             </div>
+          </div>
+        </div>
+
+        <!-- Shopping List Section -->
+        <div class="shopping-list-section" id="shoppingListSection" style="display: none;">
+          <div class="section-header">
+            <div class="section-icon">
+              <i class="fas fa-list-check" aria-hidden="true"></i>
+            </div>
+            <h3 class="section-title">Shopping List Progress</h3>
+          </div>
+          <div id="shoppingListContent">
+            <!-- Shopping list items will be loaded here -->
           </div>
         </div>
 
@@ -1362,6 +1514,10 @@
     document.addEventListener("DOMContentLoaded", function () {
       if (CART_SESSION_EXISTS) {
         loadCartItems();
+        // Add a small delay to ensure cart ID is properly initialized
+        setTimeout(() => {
+          loadShoppingListStatus();
+        }, 100);
       }
       
       const form = document.getElementById("addItemForm");
@@ -1371,6 +1527,9 @@
       
       // Setup cart controls event listeners
       setupCartEventListeners();
+      
+      // Setup shopping list functionality
+      setupShoppingListEventListeners();
     });
 
     // Load cart items from API
@@ -1557,16 +1716,24 @@
             const combinedName = `${brandName} - ${foodName}`;
 
             // 3) Add item to cart
+            const requestBody = {
+                upc: itemName,
+                price: itemPrice,
+                quantity: itemQty,
+                itemName: combinedName,
+                imageUrl: imageUrl
+            };
+
+            // Check if this is linked to a shopping list item
+            const nameInput = document.getElementById("itemName");
+            if (nameInput && nameInput.dataset.listItemId) {
+                requestBody.list_item_id = parseInt(nameInput.dataset.listItemId);
+            }
+
             const addItemResponse = await fetch("{{ url_for('shopping_trip.add_item') }}", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    upc: itemName,
-                    price: itemPrice,
-                    quantity: itemQty,
-                    itemName: combinedName,
-                    imageUrl: imageUrl
-                })
+                body: JSON.stringify(requestBody)
             });
 
             const resultData = await addItemResponse.json();
@@ -1599,8 +1766,17 @@
                 }
             }
 
-            // Clear form
+            // Clear form and list item linking
             form.reset();
+            nameInput = document.getElementById("itemName");
+            if (nameInput && nameInput.dataset.listItemId) {
+                delete nameInput.dataset.listItemId;
+            }
+            
+            // Refresh shopping list status to show updated progress
+            if (currentCartId) {
+                loadShoppingListStatus();
+            }
             
         } catch (err) {
             console.error("Error adding item:", err);
@@ -1889,6 +2065,311 @@
       initializeDropdowns();
       handleDropdownResize();
     });
+
+    // Shopping List Integration Functions
+    let currentCartId = null;
+
+
+    // Setup shopping list event listeners
+    function setupShoppingListEventListeners() {
+      // Load lists button
+      const loadListsBtn = document.getElementById('loadListsBtn');
+      if (loadListsBtn) {
+        loadListsBtn.addEventListener('click', loadAvailableLists);
+      }
+
+      // Import list button
+      const importListBtn = document.getElementById('importListBtn');
+      if (importListBtn) {
+        importListBtn.addEventListener('click', importSelectedList);
+      }
+
+      // List selection change
+      const listSelect = document.getElementById('availableListsSelect');
+      if (listSelect) {
+        listSelect.addEventListener('change', function() {
+          const importBtn = document.getElementById('importListBtn');
+          const regularForm = document.getElementById('startShoppingForm');
+          
+          importBtn.disabled = !this.value;
+          
+          // Show/hide the regular start shopping form based on list selection
+          if (this.value) {
+            regularForm.style.opacity = '0.5';
+            regularForm.style.pointerEvents = 'none';
+            showNotification('💡 Using list mode - fill in store name above, then click "Start Shopping with List"', 'info');
+          } else {
+            regularForm.style.opacity = '1';
+            regularForm.style.pointerEvents = 'auto';
+          }
+        });
+      }
+
+      // Get cart ID from session
+      if (CART_SESSION_EXISTS && "{{ cart_session.cart_ID if cart_session else '' }}") {
+        currentCartId = "{{ cart_session.cart_ID if cart_session else '' }}";
+      }
+      
+      // Debug log to help troubleshoot
+      console.log('Current cart ID initialized:', currentCartId);
+      console.log('Cart session exists:', CART_SESSION_EXISTS);
+    }
+
+    // Load available shopping lists
+    async function loadAvailableLists() {
+      try {
+        showNotification('Loading your shopping lists...', 'info');
+        
+        const response = await fetch('/api/shopping-trip/available-lists');
+        const data = await response.json();
+
+        if (response.ok && data.lists) {
+          displayAvailableLists(data.lists);
+        } else {
+          showNotification('❌ Failed to load shopping lists', 'error');
+        }
+      } catch (error) {
+        console.error('Error loading lists:', error);
+        showNotification('❌ Error loading shopping lists', 'error');
+      }
+    }
+
+    // Display available shopping lists
+    function displayAvailableLists(lists) {
+      const container = document.getElementById('availableListsContainer');
+      const select = document.getElementById('availableListsSelect');
+      const loadBtn = document.getElementById('loadListsBtn');
+
+      // Clear existing options
+      select.innerHTML = '<option value="">Select a shopping list...</option>';
+
+      if (lists.length === 0) {
+        showNotification('📝 No shopping lists found. Create one first!', 'warning');
+        return;
+      }
+
+      // Populate select with lists
+      lists.forEach(list => {
+        const option = document.createElement('option');
+        option.value = list.id;
+        option.textContent = `${list.name} (${list.completed_count}/${list.item_count} items)`;
+        select.appendChild(option);
+      });
+
+      // Show the container and hide load button
+      container.style.display = 'block';
+      loadBtn.style.display = 'none';
+
+      showNotification(`✅ Found ${lists.length} shopping lists`, 'success');
+    }
+
+    // Import selected shopping list
+    async function importSelectedList() {
+      const select = document.getElementById('availableListsSelect');
+      const listId = select.value;
+      const storeNameInput = document.getElementById('storeName');
+
+      console.log("LEBRON JAMES")
+
+      if (!listId) {
+        showNotification('❌ Please select a list', 'error');
+        return;
+      }
+
+      if (!storeNameInput || !storeNameInput.value.trim()) {
+        showNotification('❌ Please enter a store name first', 'error');
+        storeNameInput.focus();
+        return;
+      }
+
+      try {
+        showNotification('Creating shopping trip with imported list...', 'info');
+
+        // First, create a new shopping cart
+        const cartResponse = await fetch('/api/shopping-trip/create-cart', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            store_name: storeNameInput.value.trim(),
+            import_list_id: parseInt(listId)
+          })
+        });
+
+        const cartData = await cartResponse.json();
+
+        if (cartResponse.ok) {
+          showNotification(`✅ Shopping trip created with imported list!`, 'success');
+          // Update currentCartId with the new cart ID  
+          currentCartId = cartData.cart_id;
+          console.log('Updated currentCartId after cart creation:', currentCartId);
+          
+          // Wait a moment for session to be updated, then redirect
+          setTimeout(() => {
+            window.location.href = '/shopping-trip';
+          }, 500);
+        } else {
+          showNotification(`❌ Failed to create trip: ${cartData.error}`, 'error');
+        }
+      } catch (error) {
+        console.error('Error creating trip with list:', error);
+        showNotification('❌ Error creating shopping trip', 'error');
+      }
+    }
+
+    // Load shopping list status for active trip
+    async function loadShoppingListStatus(retryCount = 0) {
+      if (!currentCartId) {
+        console.log('No currentCartId found, shopping list status not available');
+        
+        // Retry up to 3 times with increasing delays if cart ID might still be initializing
+        if (retryCount < 3 && CART_SESSION_EXISTS) {
+          console.log(`Retrying loadShoppingListStatus in ${(retryCount + 1) * 500}ms...`);
+          setTimeout(() => {
+            loadShoppingListStatus(retryCount + 1);
+          }, (retryCount + 1) * 500);
+        }
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/shopping-trip/list-status?cart_id=${currentCartId}`);
+        const data = await response.json();
+
+        if (response.ok) {
+          if (data.has_list) {
+            displayShoppingListProgress(data);
+          } else {
+            // Hide shopping list section if no list is imported
+            const section = document.getElementById('shoppingListSection');
+            if (section) section.style.display = 'none';
+          }
+        }
+      } catch (error) {
+        console.error('Error loading shopping list status:', error);
+      }
+    }
+
+    // Display shopping list progress
+    function displayShoppingListProgress(data) {
+      const section = document.getElementById('shoppingListSection');
+      const content = document.getElementById('shoppingListContent');
+
+      if (!section || !content) return;
+
+      section.style.display = 'block';
+
+      // Update section title
+      const title = section.querySelector('.section-title');
+      if (title) {
+        title.innerHTML = `<i class="fas fa-list-check" style="margin-right: 0.5rem;"></i>${data.list_name} Progress`;
+      }
+
+      // Create items HTML
+      const itemsHtml = data.items.map(item => {
+        const isFound = item.is_found;
+        const inCart = item.in_cart;
+        
+        return `
+          <div class="shopping-list-item ${isFound ? 'found' : ''}" data-list-item-id="${item.list_item_id}">
+            <input type="checkbox" class="list-item-checkbox" 
+                   ${isFound ? 'checked' : ''} 
+                   onchange="toggleItemFound(${item.list_item_id}, this.checked)">
+            
+            <div class="list-item-details">
+              <div class="list-item-name">${escapeHtml(item.name)}</div>
+              <div class="list-item-quantity">Qty: ${item.quantity}</div>
+              ${item.notes ? `<div class="list-item-notes">${escapeHtml(item.notes)}</div>` : ''}
+            </div>
+            
+            <div class="list-item-status ${isFound ? 'found' : 'not-found'}">
+              ${inCart ? 
+                `<i class="fas fa-shopping-cart"></i> In Cart` : 
+                isFound ? 
+                  `<i class="fas fa-check-circle"></i> Found` : 
+                  `<i class="fas fa-circle"></i> Not Found`
+              }
+            </div>
+            
+            <div class="list-item-actions">
+              ${!inCart ? `
+                <button class="btn-list-action btn-add-to-cart" 
+                        onclick="quickAddToCart('${escapeHtml(item.name)}', ${item.quantity}, ${item.list_item_id})">
+                  <i class="fas fa-plus"></i> Add
+                </button>
+              ` : ''}
+              ${!isFound ? `
+                <button class="btn-list-action btn-mark-found" 
+                        onclick="toggleItemFound(${item.list_item_id}, true)">
+                  <i class="fas fa-check"></i> Found
+                </button>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      content.innerHTML = `
+        <div class="shopping-list-items">
+          ${itemsHtml}
+        </div>
+      `;
+    }
+
+    // Toggle item found status
+    async function toggleItemFound(listItemId, isFound) {
+      if (!currentCartId) return;
+
+      try {
+        const response = await fetch('/api/shopping-trip/mark-found', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            list_item_id: listItemId,
+            cart_id: parseInt(currentCartId),
+            is_found: isFound
+          })
+        });
+
+        if (response.ok) {
+          loadShoppingListStatus(); // Refresh the display
+          showNotification(isFound ? '✅ Item marked as found' : '⚪ Item marked as not found', 'success');
+        } else {
+          const data = await response.json();
+          showNotification(`❌ Failed to update item: ${data.error}`, 'error');
+        }
+      } catch (error) {
+        console.error('Error updating item status:', error);
+        showNotification('❌ Error updating item status', 'error');
+      }
+    }
+
+    // Quick add item from shopping list to cart
+    async function quickAddToCart(itemName, quantity, listItemId) {
+      // Pre-fill the add item form
+      const nameInput = document.getElementById('itemName');
+      const qtyInput = document.getElementById('itemQty');
+      
+      if (nameInput && qtyInput) {
+        // Clear the UPC field and suggest manual entry
+        nameInput.value = '';
+        qtyInput.value = quantity;
+        
+        // Scroll to add item form
+        const addItemSection = document.querySelector('.add-item-section');
+        if (addItemSection) {
+          addItemSection.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // Store the list item ID for linking when item is added
+        nameInput.dataset.listItemId = listItemId;
+        
+        showNotification(`📝 Fill in UPC and price for "${itemName}"`, 'info');
+      }
+    }
   </script>
 </body>
 </html>

@@ -194,12 +194,21 @@ def cancel_shopping():
     if cart_ID:
         db = get_db()
         cursor = db.cursor()
-        # Also delete items associated with the cart
-        cursor.execute("DELETE FROM cart_item WHERE cart_ID = %s", (cart_ID,))
-        cursor.execute("DELETE FROM shopping_cart WHERE cart_ID = %s", (cart_ID,))
-        db.commit()
-        cursor.close()
-        flash("Your shopping trip has been canceled.", "info")
+        try:
+            # Delete in proper order to avoid foreign key constraint violations
+            # 1. Delete shopping list cart mappings first
+            cursor.execute("DELETE FROM shopping_list_cart_mapping WHERE cart_id = %s", (cart_ID,))
+            # 2. Delete cart items
+            cursor.execute("DELETE FROM cart_item WHERE cart_ID = %s", (cart_ID,))
+            # 3. Finally delete the cart
+            cursor.execute("DELETE FROM shopping_cart WHERE cart_ID = %s", (cart_ID,))
+            db.commit()
+            flash("Your shopping trip has been canceled.", "info")
+        except Exception as e:
+            db.rollback()
+            flash(f"Error canceling shopping trip: {str(e)}", "error")
+        finally:
+            cursor.close()
     return redirect(url_for("shopping.home"))
 
 
