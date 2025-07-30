@@ -1284,26 +1284,9 @@
         return;
       }
       
-      const dateStr = date.toLocaleDateString('en-US', { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      });
-      
-      let mealsList = meals.map(meal => {
-        const mealType = meal.type.charAt(0).toUpperCase() + meal.type.slice(1);
-        return `🍴 ${mealType}: ${meal.name}`;
-      }).join('\\n');
-      
-      const planNames = [...new Set(meals.map(m => mealPlanData.find(p => p.plan_id === m.planId)?.plan_name))].filter(Boolean);
-      const plansText = planNames.length > 0 ? `\\n\\nFrom: ${planNames.join(', ')}` : '';
-      
-      if (confirm(`Meals for ${dateStr}:\\n\\n${mealsList}${plansText}\\n\\nWould you like to view detailed recipes?`)) {
-        // If user clicks OK, navigate to the first meal plan details
-        if (meals.length > 0 && meals[0].planId) {
-          viewPlanDetails(meals[0].planId);
-        }
+      // Directly navigate to the first meal plan details
+      if (meals.length > 0 && meals[0].planId) {
+        viewPlanDetails(meals[0].planId);
       }
     }
     
