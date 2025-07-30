@@ -1046,6 +1046,85 @@
       border: 1px solid var(--border-light);
     }
 
+    .shopping-list-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+      margin-bottom: var(--spacing-lg);
+      padding: var(--spacing-sm);
+      border-radius: var(--radius-md);
+      transition: background-color 0.2s ease;
+    }
+
+    .shopping-list-header:hover {
+      background: var(--bg-secondary);
+    }
+
+    .shopping-list-header-left {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+    }
+
+    .shopping-list-toggle {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 1rem;
+      cursor: pointer;
+      transition: transform 0.3s ease, color 0.2s ease;
+      padding: var(--spacing-xs);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .shopping-list-toggle:hover {
+      color: var(--primary-color);
+      background: rgba(16, 185, 129, 0.1);
+    }
+
+    .shopping-list-toggle.collapsed {
+      transform: rotate(-90deg);
+    }
+
+    .shopping-list-content {
+      transition: all 0.3s ease;
+      overflow: hidden;
+    }
+
+    .shopping-list-content.collapsed {
+      max-height: 0;
+      padding: 0;
+      margin: 0;
+      opacity: 0;
+    }
+
+    .shopping-list-progress {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    .progress-bar {
+      width: 100px;
+      height: 6px;
+      background: var(--bg-tertiary);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--success-gradient);
+      transition: width 0.3s ease;
+    }
+
     .shopping-list-items {
       display: grid;
       gap: var(--spacing-md);
@@ -1353,13 +1432,21 @@
 
         <!-- Shopping List Section -->
         <div class="shopping-list-section" id="shoppingListSection" style="display: none;">
-          <div class="section-header">
-            <div class="section-icon">
-              <i class="fas fa-list-check" aria-hidden="true"></i>
+          <div class="shopping-list-header" onclick="toggleShoppingListSection()">
+            <div class="shopping-list-header-left">
+              <div class="section-icon">
+                <i class="fas fa-list-check" aria-hidden="true"></i>
+              </div>
+              <h3 class="section-title">Shopping List Progress</h3>
+              <div class="shopping-list-progress" id="shoppingListProgressBar">
+                <!-- Progress will be shown here -->
+              </div>
             </div>
-            <h3 class="section-title">Shopping List Progress</h3>
+            <button class="shopping-list-toggle" type="button" aria-label="Toggle shopping list">
+              <i class="fas fa-chevron-down"></i>
+            </button>
           </div>
-          <div id="shoppingListContent">
+          <div class="shopping-list-content" id="shoppingListContent">
             <!-- Shopping list items will be loaded here -->
           </div>
         </div>
@@ -2263,7 +2350,23 @@
       // Update section title
       const title = section.querySelector('.section-title');
       if (title) {
-        title.innerHTML = `<i class="fas fa-list-check" style="margin-right: 0.5rem;"></i>${data.list_name} Progress`;
+        title.textContent = `${data.list_name}`;
+      }
+
+      // Update progress bar
+      const progressBar = document.getElementById('shoppingListProgressBar');
+      if (progressBar && data.items) {
+        const totalItems = data.items.length;
+        const completedItems = data.items.filter(item => item.is_found || item.in_cart).length;
+        const progressPercent = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+        
+        progressBar.innerHTML = `
+          <span>${completedItems}/${totalItems} found</span>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: ${progressPercent}%"></div>
+          </div>
+          <span>${progressPercent}%</span>
+        `;
       }
 
       // Create items HTML
@@ -2315,6 +2418,37 @@
           ${itemsHtml}
         </div>
       `;
+
+      // Initialize collapse state (expanded by default)
+      const toggle = section.querySelector('.shopping-list-toggle');
+      const contentEl = section.querySelector('.shopping-list-content');
+      if (toggle && contentEl) {
+        toggle.classList.remove('collapsed');
+        contentEl.classList.remove('collapsed');
+      }
+    }
+
+    // Toggle shopping list section collapse/expand
+    function toggleShoppingListSection() {
+      const section = document.getElementById('shoppingListSection');
+      if (!section) return;
+
+      const toggle = section.querySelector('.shopping-list-toggle');
+      const content = section.querySelector('.shopping-list-content');
+      
+      if (toggle && content) {
+        const isCollapsed = toggle.classList.contains('collapsed');
+        
+        if (isCollapsed) {
+          // Expand
+          toggle.classList.remove('collapsed');
+          content.classList.remove('collapsed');
+        } else {
+          // Collapse
+          toggle.classList.add('collapsed');
+          content.classList.add('collapsed');
+        }
+      }
     }
 
     // Toggle item found status

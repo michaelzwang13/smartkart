@@ -5,7 +5,6 @@ shopping_list_integration_bp = Blueprint("shopping_list_integration", __name__, 
 
 @shopping_list_integration_bp.route("/shopping-trip/create-cart", methods=["POST"])
 def create_cart_with_list():
-    print("JSEGJESIGJEOGHOEHGOESHGIOHESGHESOIGHEOSHGOIESHGHEOI")
     """Create a new shopping cart and optionally import a shopping list"""
     if "user_ID" not in session:
         return jsonify({"error": "Not authenticated"}), 401
@@ -38,7 +37,6 @@ def create_cart_with_list():
             cursor.execute(update_query, (store_name, cart_id))
         else:
             # Create new cart
-            print("SEGJIOESGIOEHGIOSEHGIOHESIOGHSEGHESOGIH")
             create_query = "INSERT INTO shopping_cart (user_ID, store_name, status) VALUES(%s, %s, %s)"
             cursor.execute(create_query, (user_ID, store_name, "active"))
             cart_id = cursor.lastrowid
@@ -121,99 +119,6 @@ def create_cart_with_list():
     finally:
         cursor.close()
 
-@shopping_list_integration_bp.route("/shopping-trip/import-list", methods=["POST"])
-def import_shopping_list():
-    """Import a shopping list when starting a shopping trip"""
-    if "user_ID" not in session:
-        return jsonify({"error": "Not authenticated"}), 401
-
-    data = request.get_json()
-    list_id = data.get("list_id")
-    cart_id = data.get("cart_id")
-    
-    print("afjeiojgaioejgieajgiojeaiogjaoe")
-
-    if not list_id or not cart_id:
-        return jsonify({"error": "list_id and cart_id are required"}), 400
-
-    user_ID = session["user_ID"]
-    db = get_db()
-    cursor = db.cursor()
-
-    try:
-        # Verify the shopping list belongs to the user
-        verify_list_query = """
-            SELECT list_id, list_name FROM shopping_lists 
-            WHERE list_id = %s AND user_id = %s AND is_active = TRUE
-        """
-        cursor.execute(verify_list_query, (list_id, user_ID))
-        shopping_list = cursor.fetchone()
-
-        if not shopping_list:
-            return jsonify({"error": "Shopping list not found"}), 404
-
-        # Verify the cart belongs to the user and is active
-        verify_cart_query = """
-            SELECT cart_ID FROM shopping_cart 
-            WHERE cart_ID = %s AND user_ID = %s AND status = 'active'
-        """
-        cursor.execute(verify_cart_query, (cart_id, user_ID))
-        cart = cursor.fetchone()
-
-        if not cart:
-            return jsonify({"error": "Active shopping cart not found"}), 404
-
-        # Link the shopping list to the cart
-        update_cart_query = """
-            UPDATE shopping_cart SET shopping_list_id = %s WHERE cart_ID = %s
-        """
-        cursor.execute(update_cart_query, (list_id, cart_id))
-
-        # Get all items from the shopping list
-        get_items_query = """
-            SELECT item_id, item_name, quantity, notes, is_completed
-            FROM shopping_list_items 
-            WHERE list_id = %s
-            ORDER BY created_at ASC
-        """
-        cursor.execute(get_items_query, (list_id,))
-        list_items = cursor.fetchall()
-
-        # Create mappings for each list item
-        for item in list_items:
-            mapping_query = """
-                INSERT INTO shopping_list_cart_mapping (cart_id, list_item_id, is_found)
-                VALUES (%s, %s, %s)
-                ON DUPLICATE KEY UPDATE updated_at = CURRENT_TIMESTAMP
-            """
-            cursor.execute(mapping_query, (cart_id, item["item_id"], item["is_completed"]))
-
-        db.commit()
-
-        # Return the imported list items
-        imported_items = []
-        for item in list_items:
-            imported_items.append({
-                "list_item_id": item["item_id"],
-                "name": item["item_name"],
-                "quantity": item["quantity"],
-                "notes": item["notes"],
-                "is_completed": bool(item["is_completed"]),
-                "is_found": bool(item["is_completed"]),
-                "in_cart": False
-            })
-
-        return jsonify({
-            "success": True,
-            "list_name": shopping_list["list_name"],
-            "items": imported_items
-        }), 200
-
-    except Exception as e:
-        db.rollback()
-        return jsonify({"error": f"Failed to import shopping list: {str(e)}"}), 500
-    finally:
-        cursor.close()
 
 @shopping_list_integration_bp.route("/shopping-trip/list-status", methods=["GET"])
 def get_shopping_list_status():
