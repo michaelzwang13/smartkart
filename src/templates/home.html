@@ -1428,13 +1428,12 @@
     // Interactive Card Stack Functionality
     let currentSlide = 3; // Start with center card (index 3) - now "Start Shopping" with 7 cards
     const totalSlides = 7;
-    let autoRotateInterval;
-    let isUserInteracting = false;
     let lastNavigationTime = 0;
     const NAVIGATION_COOLDOWN = 800; // Minimum time between navigations in milliseconds
     
     function initializeCarousel() {
       const container = document.querySelector('.carousel-container');
+      const carouselSection = document.querySelector('.carousel-section');
       
       // Set initial positions
       updateCarousel();
@@ -1465,32 +1464,34 @@
             isOverCard = true;
             hoveredCardIndex = index;
             
-            // Check if this is the center card (active card)
+            // Check if this is the center card (active card) - this should stop movement
             if (index === currentSlide) {
               cardDirection = 'center';
+              console.log('Hovering over center card - should stop movement');
             } else {
               // Determine if this card is to the left or right of center based on card position
               const cardCenterX = cardRect.left + cardRect.width / 2;
               if (cardCenterX < centerX) {
                 cardDirection = 'left';
+                console.log('Hovering over left card - should move left');
               } else if (cardCenterX > centerX) {
                 cardDirection = 'right';
+                console.log('Hovering over right card - should move right');
               }
             }
           }
         });
         
         if (isOverCard && cardDirection && cardDirection !== 'center') {
-          pauseAutoRotate();
-          
           // Start continuous navigation if not already running
           if (!container.continuousNavigation) {
             container.continuousNavigation = true;
             startContinuousNavigation(cardDirection);
           }
           
-          // Update direction for continuous navigation
+          // Update direction and hovered card index for continuous navigation
           container.currentDirection = cardDirection;
+          container.hoveredCardIndex = hoveredCardIndex;
           
           // Visual feedback when over a navigable card
           container.style.filter = 'brightness(1.05)';
@@ -1507,7 +1508,6 @@
           }
           
           container.style.filter = 'brightness(1)';
-          resumeAutoRotate();
         }
       });
       
@@ -1526,7 +1526,31 @@
           }
         }
         
-        resumeAutoRotate();
+        // Reset navigation state to prevent speed cap issues
+        lastNavigationTime = 0;
+        container.hoveredCardIndex = null;
+      });
+      
+      // Additional mouseleave on carousel section to ensure complete cleanup
+      carouselSection.addEventListener('mouseleave', () => {
+        // Force stop all navigation
+        if (container.continuousNavigation) {
+          container.continuousNavigation = false;
+          container.currentDirection = null;
+          
+          if (container.navigationInterval) {
+            clearInterval(container.navigationInterval);
+            container.navigationInterval = null;
+          }
+        }
+        
+        // Reset all navigation state
+        lastNavigationTime = 0;
+        container.hoveredCardIndex = null;
+        
+        // Reset visual state
+        container.style.transform = 'perspective(1000px) rotateY(0deg)';
+        container.style.filter = 'brightness(1)';
       });
       
       // Click detection for navigation
@@ -1535,8 +1559,6 @@
         const centerX = rect.left + rect.width / 2;
         const clickX = e.clientX;
         const offsetX = (clickX - centerX) / rect.width;
-        
-        pauseAutoRotate();
         
         if (offsetX > 0.2) {
           // Clicked on right side - next slide
@@ -1547,7 +1569,6 @@
         }
         
         updateCarousel();
-        resumeAutoRotate();
       });
       
       
@@ -1559,7 +1580,6 @@
       container.addEventListener('touchstart', (e) => {
         startX = e.touches[0].clientX;
         isDragging = true;
-        pauseAutoRotate();
       });
       
       container.addEventListener('touchmove', (e) => {
@@ -1583,11 +1603,8 @@
         }
         
         isDragging = false;
-        resumeAutoRotate();
       });
       
-      // Start auto-rotation
-      startAutoRotate();
     }
     
     function updateCarousel() {
@@ -1652,34 +1669,30 @@
           currentSlide = (currentSlide + 1) % totalSlides;
           updateCarousel();
           lastNavigationTime = currentTime;
+          
+          // Stop immediately if the hovered card is now the center card
+          if (container.hoveredCardIndex === currentSlide) {
+            container.continuousNavigation = false;
+            container.currentDirection = null;
+            clearInterval(container.navigationInterval);
+            container.navigationInterval = null;
+          }
         } else if (container.currentDirection === 'left') {
           currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
           updateCarousel();
           lastNavigationTime = currentTime;
+          
+          // Stop immediately if the hovered card is now the center card
+          if (container.hoveredCardIndex === currentSlide) {
+            container.continuousNavigation = false;
+            container.currentDirection = null;
+            clearInterval(container.navigationInterval);
+            container.navigationInterval = null;
+          }
         }
       }, 100); // Check every 100ms, but actual navigation is rate-limited by cooldown
     }
     
-    function startAutoRotate() {
-      autoRotateInterval = setInterval(() => {
-        if (!isUserInteracting) {
-          currentSlide = (currentSlide + 1) % totalSlides;
-          updateCarousel();
-        }
-      }, 5000); // Rotate every 5 seconds
-    }
-    
-    function pauseAutoRotate() {
-      isUserInteracting = true;
-      clearInterval(autoRotateInterval);
-    }
-    
-    function resumeAutoRotate() {
-      setTimeout(() => {
-        isUserInteracting = false;
-        startAutoRotate();
-      }, 3000); // Resume after 3 seconds of no interaction
-    }
     
     // Enhanced hover effects for carousel items
     function initializeHoverEffects() {
