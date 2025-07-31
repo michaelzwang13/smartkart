@@ -1096,6 +1096,31 @@
       transform: none;
     }
 
+    .btn-compact {
+      background: var(--bg-primary);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-light);
+      box-shadow: var(--shadow-sm);
+      padding: var(--spacing-sm) var(--spacing-md);
+      font-size: 0.875rem;
+      border-radius: var(--radius-md);
+      transition: all 0.2s ease;
+    }
+
+    .btn-compact:hover {
+      background: var(--bg-secondary);
+      color: var(--primary-color);
+      border-color: var(--primary-color);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .btn-compact:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
     @media (max-width: 768px) {
       .modal-content {
         margin: var(--spacing-md);
@@ -1361,19 +1386,6 @@
               {% endfor %}
             </tbody>
           </table>
-          
-          {% if total_trips > 15 %}
-          <div style="text-align: center; margin-top: var(--spacing-lg);">
-            <button id="showMoreBtn" class="btn btn-secondary" onclick="loadMoreHistory()">
-              <i class="fas fa-chevron-down" aria-hidden="true"></i>
-              Show More ({{ total_trips - 15 }} remaining)
-            </button>
-            <button id="showLessBtn" class="btn btn-secondary" onclick="showLessHistory()" style="display: none; margin-left: var(--spacing-md);">
-              <i class="fas fa-chevron-up" aria-hidden="true"></i>
-              Show Less
-            </button>
-          </div>
-          {% endif %}
           {% else %}
           <div class="no-data">
             <div class="no-data-icon">
@@ -1384,6 +1396,19 @@
           </div>
           {% endif %}
         </div>
+        
+        {% if total_trips > 15 %}
+        <div style="text-align: center; margin-top: var(--spacing-lg);">
+          <button id="showMoreBtn" class="btn btn-compact" onclick="loadMoreHistory()">
+            <i class="fas fa-chevron-down" aria-hidden="true"></i>
+            Show More
+          </button>
+          <button id="showLessBtn" class="btn btn-compact" onclick="showLessHistory()" style="display: none; margin-left: var(--spacing-sm);">
+            <i class="fas fa-chevron-up" aria-hidden="true"></i>
+            Show Less
+          </button>
+        </div>
+        {% endif %}
       </section>
     </div>
 
@@ -2045,11 +2070,10 @@
           if (currentOffset >= maxTrips) {
             showMoreBtn.style.display = 'none';
           } else {
-            const remaining = maxTrips - currentOffset;
             showMoreBtn.disabled = false;
             showMoreBtn.innerHTML = `
               <i class="fas fa-chevron-down" aria-hidden="true"></i>
-              Show More (${remaining} remaining)
+              Show More
             `;
           }
         } else {
@@ -2080,12 +2104,11 @@
       showLessBtn.style.display = 'none';
       
       // Show and reset the "Show More" button
-      const remaining = maxTrips - currentOffset;
       showMoreBtn.style.display = 'inline-flex';
       showMoreBtn.disabled = false;
       showMoreBtn.innerHTML = `
         <i class="fas fa-chevron-down" aria-hidden="true"></i>
-        Show More (${remaining} remaining)
+        Show More
       `;
     }
 
