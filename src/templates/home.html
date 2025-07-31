@@ -1428,8 +1428,11 @@
     // Interactive Card Stack Functionality
     let currentSlide = 3; // Start with center card (index 3) - now "Start Shopping" with 7 cards
     const totalSlides = 7;
+    let autoRotateInterval;
+    let isUserInteracting = false;
     let lastNavigationTime = 0;
     const NAVIGATION_COOLDOWN = 800; // Minimum time between navigations in milliseconds
+    const AUTO_ROTATE_INTERVAL = 2400; // 3x slower than manual (800ms * 3)
     
     function initializeCarousel() {
       const container = document.querySelector('.carousel-container');
@@ -1483,6 +1486,8 @@
         });
         
         if (isOverCard && cardDirection && cardDirection !== 'center') {
+          pauseAutoRotate();
+          
           // Start continuous navigation if not already running
           if (!container.continuousNavigation) {
             container.continuousNavigation = true;
@@ -1508,6 +1513,7 @@
           }
           
           container.style.filter = 'brightness(1)';
+          resumeAutoRotate();
         }
       });
       
@@ -1529,6 +1535,8 @@
         // Reset navigation state to prevent speed cap issues
         lastNavigationTime = 0;
         container.hoveredCardIndex = null;
+        
+        resumeAutoRotate();
       });
       
       // Additional mouseleave on carousel section to ensure complete cleanup
@@ -1551,6 +1559,8 @@
         // Reset visual state
         container.style.transform = 'perspective(1000px) rotateY(0deg)';
         container.style.filter = 'brightness(1)';
+        
+        resumeAutoRotate();
       });
       
       // Click detection for navigation
@@ -1559,6 +1569,8 @@
         const centerX = rect.left + rect.width / 2;
         const clickX = e.clientX;
         const offsetX = (clickX - centerX) / rect.width;
+        
+        pauseAutoRotate();
         
         if (offsetX > 0.2) {
           // Clicked on right side - next slide
@@ -1569,6 +1581,7 @@
         }
         
         updateCarousel();
+        resumeAutoRotate();
       });
       
       
@@ -1580,6 +1593,7 @@
       container.addEventListener('touchstart', (e) => {
         startX = e.touches[0].clientX;
         isDragging = true;
+        pauseAutoRotate();
       });
       
       container.addEventListener('touchmove', (e) => {
@@ -1603,8 +1617,11 @@
         }
         
         isDragging = false;
+        resumeAutoRotate();
       });
       
+      // Start auto-rotation
+      startAutoRotate();
     }
     
     function updateCarousel() {
@@ -1693,6 +1710,34 @@
       }, 100); // Check every 100ms, but actual navigation is rate-limited by cooldown
     }
     
+    function startAutoRotate() {
+      // Clear any existing interval
+      if (autoRotateInterval) {
+        clearInterval(autoRotateInterval);
+      }
+      
+      autoRotateInterval = setInterval(() => {
+        if (!isUserInteracting) {
+          currentSlide = (currentSlide + 1) % totalSlides;
+          updateCarousel();
+        }
+      }, AUTO_ROTATE_INTERVAL); // Use the 3x slower interval
+    }
+    
+    function pauseAutoRotate() {
+      isUserInteracting = true;
+      if (autoRotateInterval) {
+        clearInterval(autoRotateInterval);
+        autoRotateInterval = null;
+      }
+    }
+    
+    function resumeAutoRotate() {
+      setTimeout(() => {
+        isUserInteracting = false;
+        startAutoRotate();
+      }, 3000); // Resume after 3 seconds of no interaction
+    }
     
     // Enhanced hover effects for carousel items
     function initializeHoverEffects() {
