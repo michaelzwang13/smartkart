@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings - Preppr</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Tailwind CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
+  
+  <style>
+    /* CSS Variables matching theme */
+    :root {
+      --primary-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      --secondary-gradient: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+      --accent-gradient: linear-gradient(135deg, #6ee7b7 0%, #34d399 100%);
+      
+      --primary-color: #10b981;
+      --secondary-color: #059669;
+      --accent-color: #34d399;
+      --success-color: #10b981;
+      --warning-color: #f59e0b;
+      --error-color: #ef4444;
+      
+      --text-primary: #1f2937;
+      --text-secondary: #6b7280;
+      --text-muted: #9ca3af;
+      --text-white: #ffffff;
+      
+      --bg-primary: #ffffff;
+      --bg-secondary: #f9fafb;
+      --bg-tertiary: #f3f4f6;
+      
+      --border-light: #e5e7eb;
+      --border-medium: #d1d5db;
+      
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      
+      --radius-sm: 0.375rem;
+      --radius-md: 0.5rem;
+      --radius-lg: 0.75rem;
+      --radius-xl: 1rem;
+      
+      --spacing-xs: 0.5rem;
+      --spacing-sm: 0.75rem;
+      --spacing-md: 1rem;
+      --spacing-lg: 1.5rem;
+      --spacing-xl: 2rem;
+      --spacing-2xl: 3rem;
+      
+      --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    
+    /* Reset and base styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    html {
+      scroll-behavior: smooth;
+    }
+    
+    body {
+      font-family: var(--font-family);
+      color: var(--text-primary);
+      line-height: 1.6;
+      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    
+    /* Header and Navigation */
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border-light);
+      transition: all 0.3s ease;
+    }
+    
+    .nav-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 var(--spacing-lg);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 80px;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary-color);
+      text-decoration: none;
+      transition: transform 0.3s ease;
+    }
+    
+    .logo:hover {
+      transform: scale(1.05);
+    }
+    
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xl);
+      list-style: none;
+    }
+    
+    .nav-link {
+      color: var(--text-primary);
+      text-decoration: none;
+      font-weight: 500;
+      position: relative;
+      transition: color 0.3s ease;
+    }
+    
+    .nav-link:hover {
+      color: var(--primary-color);
+    }
+    
+    /* Main Content */
+    .main-content {
+      min-height: 100vh;
+      padding: 120px var(--spacing-lg) var(--spacing-xl);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .main-content::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -50%;
+      width: 100%;
+      height: 200%;
+      background: var(--accent-gradient);
+      opacity: 0.05;
+      transform: rotate(15deg);
+      z-index: 0;
+    }
+    
+    .settings-container {
+      position: relative;
+      z-index: 1;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    .settings-header {
+      text-align: center;
+      margin-bottom: var(--spacing-2xl);
+    }
+    
+    .settings-icon {
+      width: 80px;
+      height: 80px;
+      background: var(--primary-gradient);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto var(--spacing-lg);
+      color: var(--text-white);
+      font-size: 2rem;
+    }
+    
+    .settings-title {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: var(--spacing-sm);
+    }
+    
+    .settings-subtitle {
+      color: var(--text-secondary);
+      font-size: 1.125rem;
+    }
+    
+    /* Settings Cards */
+    .settings-card {
+      background: var(--bg-primary);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-xl);
+      border: 1px solid var(--border-light);
+      margin-bottom: var(--spacing-xl);
+      overflow: hidden;
+      animation: fadeInUp 0.8s ease;
+    }
+    
+    .settings-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--primary-gradient);
+    }
+    
+    .card-header {
+      padding: var(--spacing-xl);
+      border-bottom: 1px solid var(--border-light);
+      background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+    }
+    
+    .card-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--spacing-xs);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+    
+    .card-description {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+    }
+    
+    .card-body {
+      padding: var(--spacing-xl);
+    }
+    
+    /* Form Styles */
+    .form-group {
+      margin-bottom: var(--spacing-lg);
+    }
+    
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--spacing-lg);
+    }
+    
+    .form-label {
+      display: block;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--spacing-sm);
+      font-size: 0.875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .form-input-container {
+      position: relative;
+    }
+    
+    .form-input {
+      width: 100%;
+      padding: var(--spacing-md) var(--spacing-md) var(--spacing-md) 3rem;
+      border: 2px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      font-size: 1rem;
+      font-family: var(--font-family);
+      transition: all 0.3s ease;
+      background: var(--bg-primary);
+    }
+    
+    .form-input:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    }
+    
+    .form-input-icon {
+      position: absolute;
+      left: var(--spacing-md);
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 1.125rem;
+      transition: color 0.3s ease;
+    }
+    
+    .form-input:focus + .form-input-icon {
+      color: var(--primary-color);
+    }
+    
+    /* Success/Error Messages */
+    .message {
+      padding: var(--spacing-md);
+      border-radius: var(--radius-lg);
+      margin-bottom: var(--spacing-lg);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+    
+    .message.success {
+      background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+      border: 1px solid #6ee7b7;
+      color: var(--success-color);
+    }
+    
+    .message.error {
+      background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+      border: 1px solid #fca5a5;
+      color: var(--error-color);
+    }
+    
+    /* Buttons */
+    .btn {
+      padding: var(--spacing-md) var(--spacing-xl);
+      border: none;
+      border-radius: var(--radius-lg);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--spacing-sm);
+      font-size: 1rem;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .btn-primary {
+      background: var(--primary-gradient);
+      color: var(--text-white);
+      box-shadow: var(--shadow-md);
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+    
+    .btn-secondary {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      border: 2px solid var(--border-medium);
+    }
+    
+    .btn-secondary:hover {
+      background: var(--bg-secondary);
+      border-color: var(--primary-color);
+    }
+    
+    .btn-actions {
+      display: flex;
+      gap: var(--spacing-md);
+      justify-content: flex-end;
+      margin-top: var(--spacing-xl);
+    }
+    
+    /* Animations */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .nav-links {
+        display: none;
+      }
+      
+      .main-content {
+        padding: 120px var(--spacing-md) var(--spacing-lg);
+      }
+      
+      .settings-card {
+        margin-bottom: var(--spacing-lg);
+      }
+      
+      .card-header,
+      .card-body {
+        padding: var(--spacing-lg);
+      }
+      
+      .settings-title {
+        font-size: 2rem;
+      }
+      
+      .form-row {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-md);
+      }
+      
+      .btn-actions {
+        flex-direction: column;
+      }
+    }
+    
+    /* Focus styles for accessibility */
+    .btn:focus,
+    .nav-link:focus,
+    .form-input:focus {
+      outline: 2px solid var(--primary-color);
+      outline-offset: 2px;
+    }
+  </style>
+</head>
+<body class="font-sans text-slate-800 leading-relaxed bg-slate-50">
+  <!-- Header -->
+  <header class="header">
+    <div class="nav-container">
+      <a href="{{ url_for('shopping.home') }}" class="logo">
+        <img src="{{ url_for('static', filename='images/preppr-logo.png') }}" alt="Preppr Logo" style="width: 40px; height: 40px; border-radius: var(--radius-lg);">
+        Preppr
+      </a>
+      
+      <nav>
+        <ul class="nav-links">
+          <li><a href="{{ url_for('shopping.home') }}" class="nav-link">Home</a></li>
+          <li><a href="{{ url_for('auth.logout') }}" class="nav-link">Logout</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="settings-container">
+      <div class="settings-header">
+        <div class="settings-icon">
+          <i class="fas fa-cog" aria-hidden="true"></i>
+        </div>
+        <h1 class="settings-title">Account Settings</h1>
+        <p class="settings-subtitle">Manage your account information and preferences</p>
+      </div>
+
+      {% if success %}
+      <div class="message success">
+        <i class="fas fa-check-circle" aria-hidden="true"></i>
+        {{ success }}
+      </div>
+      {% endif %}
+
+      {% if error %}
+      <div class="message error">
+        <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+        {{ error }}
+      </div>
+      {% endif %}
+
+      <!-- Personal Information -->
+      <div class="settings-card">
+        <div class="card-header">
+          <h2 class="card-title">
+            <i class="fas fa-user" aria-hidden="true"></i>
+            Personal Information
+          </h2>
+          <p class="card-description">Update your name and contact information</p>
+        </div>
+        <div class="card-body">
+          <form action="{{ url_for('auth.settings') }}" method="POST" id="personalInfoForm">
+            <input type="hidden" name="form_type" value="personal_info">
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label for="first_name" class="form-label">First Name</label>
+                <div class="form-input-container">
+                  <input 
+                    type="text" 
+                    id="first_name" 
+                    name="first_name" 
+                    class="form-input"
+                    value="{{ user.first_name or '' }}"
+                    placeholder="Enter your first name"
+                    required
+                    autocomplete="given-name"
+                  />
+                  <i class="fas fa-user form-input-icon" aria-hidden="true"></i>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="last_name" class="form-label">Last Name</label>
+                <div class="form-input-container">
+                  <input 
+                    type="text" 
+                    id="last_name" 
+                    name="last_name" 
+                    class="form-input"
+                    value="{{ user.last_name or '' }}"
+                    placeholder="Enter your last name"
+                    required
+                    autocomplete="family-name"
+                  />
+                  <i class="fas fa-user form-input-icon" aria-hidden="true"></i>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="email" class="form-label">Email Address</label>
+              <div class="form-input-container">
+                <input 
+                  type="email" 
+                  id="email" 
+                  name="email" 
+                  class="form-input"
+                  value="{{ user.email }}"
+                  placeholder="Enter your email address"
+                  required
+                  autocomplete="email"
+                />
+                <i class="fas fa-envelope form-input-icon" aria-hidden="true"></i>
+              </div>
+            </div>
+
+            <div class="btn-actions">
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save" aria-hidden="true"></i>
+                Save Changes
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Account Settings -->
+      <div class="settings-card">
+        <div class="card-header">
+          <h2 class="card-title">
+            <i class="fas fa-user-cog" aria-hidden="true"></i>
+            Account Settings
+          </h2>
+          <p class="card-description">Change your username and password</p>
+        </div>
+        <div class="card-body">
+          <form action="{{ url_for('auth.settings') }}" method="POST" id="accountForm">
+            <input type="hidden" name="form_type" value="account_settings">
+            
+            <div class="form-group">
+              <label for="username" class="form-label">Username</label>
+              <div class="form-input-container">
+                <input 
+                  type="text" 
+                  id="username" 
+                  name="username" 
+                  class="form-input"
+                  value="{{ user.user_ID }}"
+                  placeholder="Choose a username"
+                  required
+                  autocomplete="username"
+                  minlength="3"
+                />
+                <i class="fas fa-user form-input-icon" aria-hidden="true"></i>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="current_password" class="form-label">Current Password</label>
+                <div class="form-input-container">
+                  <input 
+                    type="password" 
+                    id="current_password" 
+                    name="current_password" 
+                    class="form-input"
+                    placeholder="Enter current password"
+                    autocomplete="current-password"
+                  />
+                  <i class="fas fa-lock form-input-icon" aria-hidden="true"></i>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="new_password" class="form-label">New Password</label>
+                <div class="form-input-container">
+                  <input 
+                    type="password" 
+                    id="new_password" 
+                    name="new_password" 
+                    class="form-input"
+                    placeholder="Enter new password"
+                    autocomplete="new-password"
+                    minlength="6"
+                  />
+                  <i class="fas fa-lock form-input-icon" aria-hidden="true"></i>
+                </div>
+              </div>
+            </div>
+
+            <div class="btn-actions">
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save" aria-hidden="true"></i>
+                Update Account
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Form validation and interactions
+    document.addEventListener('DOMContentLoaded', function() {
+      const forms = document.querySelectorAll('form');
+      
+      forms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+          const submitBtn = this.querySelector('button[type="submit"]');
+          
+          // Add loading state
+          if (submitBtn) {
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+            submitBtn.disabled = true;
+            
+            // Re-enable after 3 seconds in case of issues
+            setTimeout(() => {
+              submitBtn.innerHTML = originalText;
+              submitBtn.disabled = false;
+            }, 3000);
+          }
+        });
+      });
+
+      // Enhanced input focus effects
+      const inputs = document.querySelectorAll('.form-input');
+      inputs.forEach(input => {
+        input.addEventListener('focus', function() {
+          this.parentElement.style.transform = 'scale(1.02)';
+        });
+        
+        input.addEventListener('blur', function() {
+          this.parentElement.style.transform = 'scale(1)';
+        });
+      });
+    });
+  </script>
+</body>
+</html>

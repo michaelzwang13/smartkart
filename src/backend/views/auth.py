@@ -137,13 +137,15 @@ def login():
 @auth_bp.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
+        first_name = request.form["first_name"].strip()
+        last_name = request.form["last_name"].strip()
         user_ID = request.form["user_ID"].strip()
         password = request.form["password"]
         email_address = request.form["email_address"].strip()
         confirm_password = request.form.get("confirmPassword", "")
 
         # Validation
-        if not user_ID or not password or not email_address:
+        if not first_name or not last_name or not user_ID or not password or not email_address:
             error = "All fields are required"
             return render_template("register.html", error=error)
 
@@ -188,9 +190,9 @@ def register():
         try:
             # Insert new user
             ins = (
-                "INSERT INTO user_account (user_ID, email, password) VALUES(%s, %s, %s)"
+                "INSERT INTO user_account (user_ID, email, password, first_name, last_name) VALUES(%s, %s, %s, %s, %s)"
             )
-            cursor.execute(ins, (user_ID, email_address, hashed_password))
+            cursor.execute(ins, (user_ID, email_address, hashed_password, first_name, last_name))
             db.commit()
             cursor.close()
             session["user_ID"] = user_ID
@@ -203,6 +205,157 @@ def register():
             return render_template("register.html", error=error)
 
     return render_template("register.html")
+
+
+@auth_bp.route("/settings", methods=["GET", "POST"])
+def settings():
+    if "user_ID" not in session:
+        return redirect(url_for("auth.login"))
+    
+    user_ID = session["user_ID"]
+    
+    if request.method == "POST":
+        form_type = request.form.get("form_type")
+        
+        try:
+            db = get_db()
+            cursor = db.cursor()
+            
+            if form_type == "personal_info":
+                # Update personal information
+                first_name = request.form["first_name"].strip()
+                last_name = request.form["last_name"].strip()
+                email = request.form["email"].strip()
+                
+                # Validation
+                if not first_name or not last_name or not email:
+                    error = "All fields are required"
+                    return render_settings_with_user_data(user_ID, error=error)
+                
+                # Check if email is already used by another user
+                query = "SELECT user_ID FROM user_account WHERE email = %s AND user_ID != %s"
+                cursor.execute(query, (email, user_ID))
+                existing_user = cursor.fetchone()
+                
+                if existing_user:
+                    error = "This email address is already in use by another account"
+                    return render_settings_with_user_data(user_ID, error=error)
+                
+                # Update user information
+                update_query = "UPDATE user_account SET first_name = %s, last_name = %s, email = %s WHERE user_ID = %s"
+                cursor.execute(update_query, (first_name, last_name, email, user_ID))
+                db.commit()
+                
+                success = "Personal information updated successfully"
+                return render_settings_with_user_data(user_ID, success=success)
+                
+            elif form_type == "account_settings":
+                # Update account settings
+                username = request.form["username"].strip()
+                current_password = request.form.get("current_password", "")
+                new_password = request.form.get("new_password", "")
+                
+                # Validation
+                if not username:
+                    error = "Username is required"
+                    return render_settings_with_user_data(user_ID, error=error)
+                
+                if len(username) < 3:
+                    error = "Username must be at least 3 characters long"
+                    return render_settings_with_user_data(user_ID, error=error)
+                
+                # Get current user data
+                query = "SELECT password FROM user_account WHERE user_ID = %s"
+                cursor.execute(query, (user_ID,))
+                user_data = cursor.fetchone()
+                
+                # Check if username is already taken by another user
+                if username != user_ID:
+                    query = "SELECT user_ID FROM user_account WHERE user_ID = %s"
+                    cursor.execute(query, (username,))
+                    existing_user = cursor.fetchone()
+                    
+                    if existing_user:
+                        error = "This username is already taken"
+                        return render_settings_with_user_data(user_ID, error=error)
+                
+                # Handle password change
+                if new_password:
+                    if not current_password:
+                        error = "Current password is required to set a new password"
+                        return render_settings_with_user_data(user_ID, error=error)
+                    
+                    if not verify_password_bcrypt(current_password, user_data["password"]):
+                        error = "Current password is incorrect"
+                        return render_settings_with_user_data(user_ID, error=error)
+                    
+                    if len(new_password) < 6:
+                        error = "New password must be at least 6 characters long"
+                        return render_settings_with_user_data(user_ID, error=error)
+                    
+                    # Update username and password
+                    hashed_password = hash_password_bcrypt(new_password)
+                    update_query = "UPDATE user_account SET user_ID = %s, password = %s WHERE user_ID = %s"
+                    cursor.execute(update_query, (username, hashed_password, user_ID))
+                else:
+                    # Update only username
+                    update_query = "UPDATE user_account SET user_ID = %s WHERE user_ID = %s"
+                    cursor.execute(update_query, (username, user_ID))
+                
+                db.commit()
+                
+                # Update session if username changed
+                if username != user_ID:
+                    session["user_ID"] = username
+                
+                success = "Account settings updated successfully"
+                return render_settings_with_user_data(username, success=success)
+            
+            cursor.close()
+                
+        except Exception as e:
+            logger.error(
+                "Settings update failed",
+                extra={
+                    "user_id": user_ID,
+                    "form_type": form_type,
+                    "error": str(e),
+                    "request_id": getattr(g, "request_id", None),
+                },
+                exc_info=True,
+            )
+            error = "Failed to update settings. Please try again."
+            return render_settings_with_user_data(user_ID, error=error)
+    
+    # GET request - show settings page
+    return render_settings_with_user_data(user_ID)
+
+
+def render_settings_with_user_data(user_ID, success=None, error=None):
+    """Helper function to render settings page with user data"""
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        query = "SELECT user_ID, email, first_name, last_name FROM user_account WHERE user_ID = %s"
+        cursor.execute(query, (user_ID,))
+        user = cursor.fetchone()
+        cursor.close()
+        
+        if not user:
+            return redirect(url_for("auth.login"))
+        
+        return render_template("settings.html", user=user, success=success, error=error)
+    except Exception as e:
+        logger.error(
+            "Failed to load user data for settings",
+            extra={
+                "user_id": user_ID,
+                "error": str(e),
+                "request_id": getattr(g, "request_id", None),
+            },
+            exc_info=True,
+        )
+        return redirect(url_for("shopping.home"))
 
 
 @auth_bp.route("/logout")
