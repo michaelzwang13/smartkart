@@ -509,46 +509,6 @@
       color: var(--text-primary);
     }
     
-    /* Carousel Controls */
-    .carousel-controls {
-      position: absolute;
-      top: 50%;
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      padding: 0 2rem;
-      pointer-events: none;
-      z-index: 10;
-    }
-    
-    .carousel-btn {
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      border: none;
-      background: rgba(255, 255, 255, 0.9);
-      backdrop-filter: blur(10px);
-      color: var(--primary-color);
-      font-size: 1.5rem;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      pointer-events: all;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    
-    .carousel-btn:hover {
-      background: var(--primary-color);
-      color: white;
-      transform: scale(1.1);
-      box-shadow: 0 12px 25px rgba(16, 185, 129, 0.3);
-    }
-    
-    .carousel-btn:active {
-      transform: scale(0.95);
-    }
     
     /* Carousel Indicators */
     .carousel-indicators {
@@ -1300,17 +1260,18 @@
                 <p class="action-description">Check your points and unlock achievements</p>
               </a>
             </div>
+            
+            <div class="carousel-item">
+              <div class="action-card">
+                <div class="action-icon">
+                  <i class="fas fa-plus" aria-hidden="true"></i>
+                </div>
+                <h3 class="action-title">Coming Soon</h3>
+                <p class="action-description">More features in development</p>
+              </div>
+            </div>
           </div>
           
-          <!-- Carousel Controls -->
-          <div class="carousel-controls">
-            <button class="carousel-btn carousel-prev" id="prevBtn">
-              <i class="fas fa-chevron-left"></i>
-            </button>
-            <button class="carousel-btn carousel-next" id="nextBtn">
-              <i class="fas fa-chevron-right"></i>
-            </button>
-          </div>
           
           <!-- Carousel Indicators -->
           <div class="carousel-indicators" id="carouselIndicators">
@@ -1320,6 +1281,7 @@
             <button class="indicator" data-slide="3"></button>
             <button class="indicator" data-slide="4"></button>
             <button class="indicator" data-slide="5"></button>
+            <button class="indicator" data-slide="6"></button>
           </div>
         </div>
       </section>
@@ -1505,8 +1467,8 @@
     }
 
     // Interactive Card Stack Functionality
-    let currentSlide = 2; // Start with center card (index 2)
-    const totalSlides = 6;
+    let currentSlide = 3; // Start with center card (index 3) - now "Start Shopping" with 7 cards
+    const totalSlides = 7;
     let autoRotateInterval;
     let isUserInteracting = false;
     
@@ -1519,7 +1481,7 @@
       // Set initial positions
       updateCarousel();
       
-      // Mouse movement for subtle rotation effect
+      // Mouse movement for dynamic navigation and rotation effect
       container.addEventListener('mousemove', (e) => {
         const rect = container.getBoundingClientRect();
         const centerX = rect.left + rect.width / 2;
@@ -1527,26 +1489,72 @@
         const offsetX = (mouseX - centerX) / rect.width; // -0.5 to 0.5
         
         // Apply subtle rotation based on mouse position
-        const rotation = offsetX * 10; // Max 5 degrees rotation
+        const rotation = offsetX * 8; // Max 4 degrees rotation
         container.style.transform = `perspective(1000px) rotateY(${rotation}deg)`;
         
-        // Check for edge zones to trigger navigation
-        if (Math.abs(offsetX) > 0.3) {
-          if (offsetX > 0.3) {
-            // Mouse on right side - hint at next slide
-            container.style.filter = 'brightness(1.05)';
-          } else if (offsetX < -0.3) {
-            // Mouse on left side - hint at previous slide
-            container.style.filter = 'brightness(1.05)';
+        // Continuous navigation based on mouse position
+        const threshold = 0.15; // Sensitivity threshold
+        const navigationZone = 0.25; // Zone where navigation becomes more aggressive
+        
+        if (Math.abs(offsetX) > threshold) {
+          pauseAutoRotate();
+          
+          // Calculate navigation speed based on distance from center
+          const intensity = Math.min(Math.abs(offsetX) / navigationZone, 1);
+          const navigationSpeed = 50 + (intensity * 150); // 50ms to 200ms delay
+          
+          // Clear any existing navigation timeout
+          if (container.navigationTimeout) {
+            clearTimeout(container.navigationTimeout);
           }
+          
+          // Set up continuous navigation
+          container.navigationTimeout = setTimeout(() => {
+            if (offsetX > threshold) {
+              // Mouse on right side - move to next slide
+              currentSlide = (currentSlide + 1) % totalSlides;
+              updateCarousel();
+              
+              // Continue navigation if mouse is still in zone
+              if (Math.abs(offsetX) > threshold) {
+                container.dispatchEvent(new MouseEvent('mousemove', { clientX: mouseX }));
+              }
+            } else if (offsetX < -threshold) {
+              // Mouse on left side - move to previous slide
+              currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+              updateCarousel();
+              
+              // Continue navigation if mouse is still in zone
+              if (Math.abs(offsetX) > threshold) {
+                container.dispatchEvent(new MouseEvent('mousemove', { clientX: mouseX }));
+              }
+            }
+          }, navigationSpeed);
+          
+          // Visual feedback
+          container.style.filter = `brightness(${1 + intensity * 0.1})`;
         } else {
+          // Clear navigation timeout when in center zone
+          if (container.navigationTimeout) {
+            clearTimeout(container.navigationTimeout);
+            container.navigationTimeout = null;
+          }
           container.style.filter = 'brightness(1)';
+          resumeAutoRotate();
         }
       });
       
       container.addEventListener('mouseleave', () => {
         container.style.transform = 'perspective(1000px) rotateY(0deg)';
         container.style.filter = 'brightness(1)';
+        
+        // Clear any pending navigation
+        if (container.navigationTimeout) {
+          clearTimeout(container.navigationTimeout);
+          container.navigationTimeout = null;
+        }
+        
+        resumeAutoRotate();
       });
       
       // Click detection for navigation
@@ -1570,23 +1578,6 @@
         resumeAutoRotate();
       });
       
-      // Previous button
-      prevBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        pauseAutoRotate();
-        currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
-        updateCarousel();
-        resumeAutoRotate();
-      });
-      
-      // Next button
-      nextBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        pauseAutoRotate();
-        currentSlide = (currentSlide + 1) % totalSlides;
-        updateCarousel();
-        resumeAutoRotate();
-      });
       
       // Indicator clicks
       indicators.forEach((indicator, index) => {
@@ -1641,20 +1632,21 @@
       const items = document.querySelectorAll('.carousel-item');
       const indicators = document.querySelectorAll('.indicator');
       
-      // Define position configurations for each slot
+      // Define position configurations for each slot (7 cards for symmetry)
       const positions = [
-        { x: -460, rotation: -15, scale: 0.8, opacity: 0.7, zIndex: 0 },
-        { x: -320, rotation: -10, scale: 0.85, opacity: 0.8, zIndex: 1 },
-        { x: -160, rotation: -5, scale: 0.92, opacity: 0.9, zIndex: 2 },
+        { x: -540, rotation: -18, scale: 0.75, opacity: 0.5, zIndex: 0 },
+        { x: -360, rotation: -12, scale: 0.8, opacity: 0.7, zIndex: 1 },
+        { x: -180, rotation: -6, scale: 0.9, opacity: 0.85, zIndex: 2 },
         { x: 0, rotation: 0, scale: 1, opacity: 1, zIndex: 5 },
-        { x: 160, rotation: 5, scale: 0.92, opacity: 0.9, zIndex: 2 },
-        { x: 320, rotation: 10, scale: 0.85, opacity: 0.8, zIndex: 1 },
+        { x: 180, rotation: 6, scale: 0.9, opacity: 0.85, zIndex: 2 },
+        { x: 360, rotation: 12, scale: 0.8, opacity: 0.7, zIndex: 1 },
+        { x: 540, rotation: 18, scale: 0.75, opacity: 0.5, zIndex: 0 },
       ];
       
       items.forEach((item, index) => {
         // Calculate the position index for this item based on current slide
         const positionIndex = (index - currentSlide + totalSlides) % totalSlides;
-        const position = positions[positionIndex] || positions[5]; // Default to last position if out of range
+        const position = positions[positionIndex] || positions[6]; // Default to last position if out of range
         
         item.style.transform = `translateX(${position.x}px) rotateY(${position.rotation}deg) scale(${position.scale})`;
         item.style.opacity = position.opacity;
