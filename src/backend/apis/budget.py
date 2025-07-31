@@ -125,7 +125,7 @@ def get_spending_trends():
 
     user_ID = session["user_ID"]
     period = request.args.get("period", "7d")  # 7d, 1m, 3m, 1y
-
+    
     db = get_db()
     cursor = db.cursor()
 
@@ -146,45 +146,48 @@ def get_spending_trends():
         elif period == "1m":
             # Last 30-31 days - weekly buckets (4-5 bars)
             query = """
-                SELECT DATE(DATE_SUB(c.created_at, INTERVAL DAYOFWEEK(c.created_at)-2 DAY)) as date,
-                       COALESCE(SUM(i.price * i.quantity), 0) as amount
+                SELECT 
+                    DATE(DATE_SUB(c.created_at, INTERVAL WEEKDAY(c.created_at) DAY)) AS date,
+                    COALESCE(SUM(i.price * i.quantity), 0) AS amount
                 FROM shopping_cart c
                 LEFT JOIN cart_item i ON c.cart_ID = i.cart_ID
-                WHERE c.user_ID = %s 
-                  AND c.status = 'purchased'
-                  AND c.created_at >= DATE_SUB(CURRENT_DATE(), INTERVAL 31 DAY)
-                GROUP BY YEARWEEK(c.created_at, 1)
-                ORDER BY date
+                WHERE c.user_ID = %s
+                    AND c.status = 'purchased'
+                    AND c.created_at >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
+                GROUP BY date
+                ORDER BY date;
             """
         elif period == "3m":
             # Last 90 days - weekly buckets (6-12 bars)
             query = """
-                SELECT DATE(DATE_SUB(c.created_at, INTERVAL DAYOFWEEK(c.created_at)-2 DAY)) as date,
-                       COALESCE(SUM(i.price * i.quantity), 0) as amount
+                SELECT 
+                    DATE(DATE_SUB(c.created_at, INTERVAL WEEKDAY(c.created_at) DAY)) AS date,
+                    COALESCE(SUM(i.price * i.quantity), 0) AS amount
                 FROM shopping_cart c
                 LEFT JOIN cart_item i ON c.cart_ID = i.cart_ID
-                WHERE c.user_ID = %s 
-                  AND c.status = 'purchased'
-                  AND c.created_at >= DATE_SUB(CURRENT_DATE(), INTERVAL 90 DAY)
-                GROUP BY YEARWEEK(c.created_at, 1)
-                ORDER BY date
+                WHERE c.user_ID = %s
+                    AND c.status = 'purchased'
+                    AND c.created_at >= DATE_SUB(CURRENT_DATE(), INTERVAL 90 DAY)
+                GROUP BY date
+                ORDER BY date;
             """
         else:  # 1y - Last 12 months - monthly buckets
             query = """
-                SELECT DATE(CONCAT(YEAR(c.created_at), '-', LPAD(MONTH(c.created_at), 2, '0'), '-01')) as date,
-                       COALESCE(SUM(i.price * i.quantity), 0) as amount
+                SELECT 
+                    DATE(DATE_FORMAT(c.created_at, '%Y-%m-01')) AS date,
+                    COALESCE(SUM(i.price * i.quantity), 0) AS amount
                 FROM shopping_cart c
                 LEFT JOIN cart_item i ON c.cart_ID = i.cart_ID
                 WHERE c.user_ID = %s 
-                  AND c.status = 'purchased'
-                  AND c.created_at >= DATE_SUB(CURRENT_DATE(), INTERVAL 12 MONTH)
-                GROUP BY YEAR(c.created_at), MONTH(c.created_at)
-                ORDER BY date
+                    AND c.status = 'purchased'
+                    AND c.created_at >= DATE_SUB(CURRENT_DATE(), INTERVAL 12 MONTH)
+                GROUP BY DATE(DATE_FORMAT(c.created_at, '%Y-%m-01'))
+                ORDER BY date;
             """
 
         cursor.execute(query, (user_ID,))
         trends = cursor.fetchall()
-
+        
         # Create a complete date range for the period
         from datetime import datetime, timedelta
         import calendar
@@ -200,6 +203,8 @@ def get_spending_trends():
             date_key = trend["date"].strftime("%Y-%m-%d")
             trend_data[date_key] = float(trend["amount"])
             print(f"DEBUG: Added to trend_data: {date_key} = {trend_data[date_key]}")
+        
+        print(trend_data)
 
         # Generate complete date range and labels based on period
         formatted_trends = []
@@ -216,80 +221,20 @@ def get_spending_trends():
                         "amount": trend_data.get(date_str, 0.0),
                     }
                 )
-        elif period == "1m":
-            # Last 31 days - weekly buckets (4-5 bars)
-            # Simplify: just sum all data from trend_data and create 5 weeks
-            weeks_back = 5
-            for i in range(weeks_back):
-                # Calculate week start (Monday of each week)
-                days_back = (weeks_back - 1 - i) * 7 + datetime.now().weekday()
-                week_start = (datetime.now() - timedelta(days=days_back)).date()
+        else: # 1m, 3m, 1y
+            for date_str, amount in trend_data.items():
+                # Convert string to datetime object
+                date_obj = datetime.strptime(date_str, "%Y-%m-%d")
 
-                # Sum all data for this week
-                week_amount = 0.0
-                for j in range(7):  # Sum 7 days of the week
-                    day = week_start + timedelta(days=j)
-                    day_str = day.strftime("%Y-%m-%d")
-                    week_amount += trend_data.get(day_str, 0.0)
+                # Format the label
+                label = "Week of " if period == "1m" else ""
+                label += date_obj.strftime('%b %d')
 
-                week_start_str = week_start.strftime("%Y-%m-%d")
-                label = f"Week of {week_start.strftime('%b %d')}"
-                formatted_trends.append(
-                    {"date": week_start_str, "label": label, "amount": week_amount}
-                )
-        elif period == "3m":
-            # Last 90 days - weekly buckets (12 bars)
-            weeks_back = 12
-            for i in range(weeks_back):
-                # Calculate week start (Monday of each week)
-                days_back = (weeks_back - 1 - i) * 7 + datetime.now().weekday()
-                week_start = (datetime.now() - timedelta(days=days_back)).date()
-
-                # Sum all data for this week
-                week_amount = 0.0
-                for j in range(7):  # Sum 7 days of the week
-                    day = week_start + timedelta(days=j)
-                    day_str = day.strftime("%Y-%m-%d")
-                    week_amount += trend_data.get(day_str, 0.0)
-
-                week_start_str = week_start.strftime("%Y-%m-%d")
-                label = f"Week of {week_start.strftime('%b %d')}"
-                formatted_trends.append(
-                    {"date": week_start_str, "label": label, "amount": week_amount}
-                )
-        else:  # 1y - Last 12 months - monthly buckets (12 bars)
-            for i in range(12):
-                # Calculate month (11 months ago to current month)
-                current_month = datetime.now().replace(day=1)
-                months_back = 11 - i
-
-                target_month = current_month
-                for _ in range(months_back):
-                    if target_month.month == 1:
-                        target_month = target_month.replace(
-                            year=target_month.year - 1, month=12
-                        )
-                    else:
-                        target_month = target_month.replace(
-                            month=target_month.month - 1
-                        )
-
-                # Sum all data for this month
-                month_amount = 0.0
-                # Check all possible days in the month
-                days_in_month = calendar.monthrange(
-                    target_month.year, target_month.month
-                )[1]
-                for day in range(1, days_in_month + 1):
-                    day_date = target_month.replace(day=day)
-                    day_str = day_date.strftime("%Y-%m-%d")
-                    month_amount += trend_data.get(day_str, 0.0)
-
-                date_str = target_month.strftime("%Y-%m-%d")
-                label = target_month.strftime("%b")
-                formatted_trends.append(
-                    {"date": date_str, "label": label, "amount": month_amount}
-                )
+                formatted_trends.append({
+                    "date": date_str,
+                    "label": label,
+                    "amount": amount,
+                })
 
         cursor.close()
 
