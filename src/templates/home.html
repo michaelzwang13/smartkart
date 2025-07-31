@@ -224,18 +224,7 @@
     }
 
     .dropdown-menu::before {
-      content: '';
-      position: absolute;
-      top: -4px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 8px;
-      height: 8px;
-      background: var(--bg-primary);
-      border: 1px solid var(--border-light);
-      border-bottom: none;
-      border-right: none;
-      transform: translateX(-50%) rotate(45deg);
+      display: none;
     }
 
     .nav-dropdown:hover .dropdown-menu {
@@ -1068,6 +1057,45 @@
       background: var(--bg-tertiary) !important;
     }
 
+    /* Button Styles */
+    .btn {
+      padding: var(--spacing-md) var(--spacing-xl);
+      border: none;
+      border-radius: var(--radius-lg);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--spacing-sm);
+      font-size: 1rem;
+      position: relative;
+      overflow: hidden;
+      font-family: var(--font-family);
+    }
+
+    .btn-secondary {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      border: 2px solid var(--border-medium);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg-secondary);
+      border-color: var(--primary-color);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .btn-secondary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
     @media (max-width: 768px) {
       .modal-content {
         margin: var(--spacing-md);
@@ -1305,7 +1333,7 @@
                 <th>Status</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody id="historyTableBody">
               {% for cart in cart_history %}
               <tr class="clickable-row" data-cart-id="{{ cart['cart_ID'] }}"">
                 <td>
@@ -1333,6 +1361,15 @@
               {% endfor %}
             </tbody>
           </table>
+          
+          {% if total_trips > 15 %}
+          <div style="text-align: center; margin-top: var(--spacing-lg);">
+            <button id="showMoreBtn" class="btn btn-secondary" onclick="loadMoreHistory()">
+              <i class="fas fa-chevron-down" aria-hidden="true"></i>
+              Show More ({{ total_trips - 15 }} remaining)
+            </button>
+          </div>
+          {% endif %}
           {% else %}
           <div class="no-data">
             <div class="no-data-icon">
@@ -1373,7 +1410,7 @@
           </div>
           
           <div class="items-container" id="itemsContainer">
-            <!-- Shopping items will be populated here -->
+            Shopping items will be populated here
           </div>
         </div>
       </div>
@@ -1942,6 +1979,82 @@
       document.getElementById('shoppingModal').style.display = 'none';
     }
     */
+
+    // Load More History Functionality
+    let currentOffset = 15; // We already loaded 15 trips
+    const maxTrips = JSON.parse('{{ total_trips|default(0) }}');
+
+    async function loadMoreHistory() {
+      const showMoreBtn = document.getElementById('showMoreBtn');
+      const tableBody = document.getElementById('historyTableBody');
+      
+      // Show loading state
+      showMoreBtn.disabled = true;
+      showMoreBtn.innerHTML = '<i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Loading...';
+      
+      try {
+        const response = await fetch(`/api/shopping-history?offset=${currentOffset}&limit=35`);
+        
+        if (response.ok) {
+          const data = await response.json();
+          
+          // Add new rows to the table
+          data.history.forEach(cart => {
+            const row = document.createElement('tr');
+            row.className = 'clickable-row';
+            row.setAttribute('data-cart-id', cart.cart_ID);
+            
+            row.innerHTML = `
+              <td>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <i class="fas fa-store" style="color: var(--primary-color);"></i>
+                  ${cart.store_name}
+                </div>
+              </td>
+              <td>
+                <span class="cart-badge">
+                  <i class="fas fa-shopping-basket" aria-hidden="true"></i>
+                  ${cart.total_items} items
+                </span>
+              </td>
+              <td>
+                <span class="amount">$${cart.total_spent}</span>
+              </td>
+              <td>
+                <span class="cart-badge">
+                  <i class="fas fa-check-circle" aria-hidden="true"></i>
+                  Completed
+                </span>
+              </td>
+            `;
+            
+            tableBody.appendChild(row);
+          });
+          
+          currentOffset += data.history.length;
+          
+          // Update or hide the "Show More" button
+          if (currentOffset >= maxTrips) {
+            showMoreBtn.style.display = 'none';
+          } else {
+            const remaining = maxTrips - currentOffset;
+            showMoreBtn.disabled = false;
+            showMoreBtn.innerHTML = `
+              <i class="fas fa-chevron-down" aria-hidden="true"></i>
+              Show More (${remaining} remaining)
+            `;
+          }
+        } else {
+          console.error('Failed to load more history');
+          showMoreBtn.disabled = false;
+          showMoreBtn.innerHTML = '<i class="fas fa-chevron-down" aria-hidden="true"></i> Show More';
+        }
+      } catch (error) {
+        console.error('Error loading more history:', error);
+        showMoreBtn.disabled = false;
+        showMoreBtn.innerHTML = '<i class="fas fa-chevron-down" aria-hidden="true"></i> Show More';
+      }
+    }
 
     // Initialize all functionality
     document.addEventListener('DOMContentLoaded', function() {

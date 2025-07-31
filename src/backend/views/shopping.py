@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, session, url_for, redirect, flash
+from flask import Blueprint, render_template, request, session, url_for, redirect, flash, jsonify
 from src.database import get_db
 
 shopping_bp = Blueprint("shopping", __name__)
@@ -43,7 +43,7 @@ def home():
     user_data = cursor.fetchone()
     user_first_name = user_data.get("first_name") if user_data and user_data.get("first_name") else None
 
-    # Get cart history (completed carts)
+    # Get cart history (completed carts) - limit to 15 initially
     query = """
     SELECT c.cart_ID, c.store_name, 
            (SELECT COUNT(*) FROM cart_item i WHERE i.cart_ID = c.cart_ID) as total_items,
@@ -53,9 +53,22 @@ def home():
       AND c.status = 'purchased'
       AND EXISTS (SELECT 1 FROM cart_item i WHERE i.cart_ID = c.cart_ID)
     ORDER BY c.created_at DESC
+    LIMIT 15
     """
     cursor.execute(query, (user_ID,))
     cart_history = cursor.fetchall()
+
+    # Check if there are more than 15 trips total
+    count_query = """
+    SELECT COUNT(*) as total_count
+    FROM shopping_cart c
+    WHERE c.user_ID = %s 
+      AND c.status = 'purchased'
+      AND EXISTS (SELECT 1 FROM cart_item i WHERE i.cart_ID = c.cart_ID)
+    """
+    cursor.execute(count_query, (user_ID,))
+    count_result = cursor.fetchone()
+    total_trips = count_result.get("total_count", 0) if count_result else 0
 
     # Check for active shopping trip
     active_query = """
@@ -72,8 +85,40 @@ def home():
     cursor.close()
 
     return render_template(
-        "home.html", user_ID=user_ID, user_first_name=user_first_name, cart_history=cart_history, active_trip=active_trip
+        "home.html", user_ID=user_ID, user_first_name=user_first_name, cart_history=cart_history, active_trip=active_trip, total_trips=total_trips
     )
+
+
+@shopping_bp.route("/api/shopping-history")
+def get_shopping_history():
+    """API endpoint to get extended shopping history"""
+    if "user_ID" not in session:
+        return jsonify({"error": "Not authenticated"}), 401
+
+    user_ID = session["user_ID"]
+    offset = request.args.get("offset", 0, type=int)
+    limit = request.args.get("limit", 35, type=int)  # Default to 35 more (15 + 35 = 50 total)
+
+    db = get_db()
+    cursor = db.cursor()
+
+    # Get additional cart history
+    query = """
+    SELECT c.cart_ID, c.store_name, 
+           (SELECT COUNT(*) FROM cart_item i WHERE i.cart_ID = c.cart_ID) as total_items,
+           (SELECT SUM(i.price * i.quantity) FROM cart_item i WHERE i.cart_ID = c.cart_ID) as total_spent
+    FROM shopping_cart c
+    WHERE c.user_ID = %s 
+      AND c.status = 'purchased'
+      AND EXISTS (SELECT 1 FROM cart_item i WHERE i.cart_ID = c.cart_ID)
+    ORDER BY c.created_at DESC
+    LIMIT %s OFFSET %s
+    """
+    cursor.execute(query, (user_ID, limit, offset))
+    additional_history = cursor.fetchall()
+    cursor.close()
+
+    return jsonify({"history": additional_history})
     
     
 @shopping_bp.route("/start-shopping", methods=["POST"])
