@@ -1483,42 +1483,29 @@
         if (isOverCard && cardDirection && cardDirection !== 'center') {
           pauseAutoRotate();
           
-          // Clear any existing navigation timeout
-          if (container.navigationTimeout) {
-            clearTimeout(container.navigationTimeout);
+          // Start continuous navigation if not already running
+          if (!container.continuousNavigation) {
+            container.continuousNavigation = true;
+            startContinuousNavigation(cardDirection);
           }
           
-          // Set up navigation based on card position with cooldown
-          container.navigationTimeout = setTimeout(() => {
-            const currentTime = Date.now();
-            
-            // Check if enough time has passed since last navigation
-            if (currentTime - lastNavigationTime < NAVIGATION_COOLDOWN) {
-              return; // Skip navigation if still in cooldown period
-            }
-            
-            if (cardDirection === 'right') {
-              // Mouse over card on right side - move to next slide
-              currentSlide = (currentSlide + 1) % totalSlides;
-              updateCarousel();
-              lastNavigationTime = currentTime;
-              
-            } else if (cardDirection === 'left') {
-              // Mouse over card on left side - move to previous slide
-              currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
-              updateCarousel();
-              lastNavigationTime = currentTime;
-            }
-          }, 300); // Increased initial delay to 300ms
+          // Update direction for continuous navigation
+          container.currentDirection = cardDirection;
           
           // Visual feedback when over a navigable card
           container.style.filter = 'brightness(1.05)';
         } else {
-          // Clear navigation timeout when not over any card or over center card
-          if (container.navigationTimeout) {
-            clearTimeout(container.navigationTimeout);
-            container.navigationTimeout = null;
+          // Stop continuous navigation when not over any card or over center card
+          if (container.continuousNavigation) {
+            container.continuousNavigation = false;
+            container.currentDirection = null;
+            
+            if (container.navigationInterval) {
+              clearInterval(container.navigationInterval);
+              container.navigationInterval = null;
+            }
           }
+          
           container.style.filter = 'brightness(1)';
           resumeAutoRotate();
         }
@@ -1528,10 +1515,15 @@
         container.style.transform = 'perspective(1000px) rotateY(0deg)';
         container.style.filter = 'brightness(1)';
         
-        // Clear any pending navigation
-        if (container.navigationTimeout) {
-          clearTimeout(container.navigationTimeout);
-          container.navigationTimeout = null;
+        // Stop continuous navigation on mouse leave
+        if (container.continuousNavigation) {
+          container.continuousNavigation = false;
+          container.currentDirection = null;
+          
+          if (container.navigationInterval) {
+            clearInterval(container.navigationInterval);
+            container.navigationInterval = null;
+          }
         }
         
         resumeAutoRotate();
@@ -1633,6 +1625,39 @@
         // Update active class
         item.classList.toggle('active', index === currentSlide);
       });
+    }
+    
+    // Continuous navigation function for smooth movement
+    function startContinuousNavigation(initialDirection) {
+      const container = document.querySelector('.carousel-container');
+      
+      // Set up interval for continuous movement
+      container.navigationInterval = setInterval(() => {
+        // Check if we should still be navigating
+        if (!container.continuousNavigation || !container.currentDirection) {
+          clearInterval(container.navigationInterval);
+          container.navigationInterval = null;
+          return;
+        }
+        
+        const currentTime = Date.now();
+        
+        // Check cooldown to cap the rate
+        if (currentTime - lastNavigationTime < NAVIGATION_COOLDOWN) {
+          return; // Skip this iteration if still in cooldown
+        }
+        
+        // Navigate based on current direction
+        if (container.currentDirection === 'right') {
+          currentSlide = (currentSlide + 1) % totalSlides;
+          updateCarousel();
+          lastNavigationTime = currentTime;
+        } else if (container.currentDirection === 'left') {
+          currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+          updateCarousel();
+          lastNavigationTime = currentTime;
+        }
+      }, 100); // Check every 100ms, but actual navigation is rate-limited by cooldown
     }
     
     function startAutoRotate() {
