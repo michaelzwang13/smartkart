@@ -1451,25 +1451,31 @@
         container.style.transform = `perspective(1000px) rotateY(${rotation}deg)`;
         
         // Check if mouse is over any card
-        const cards = container.querySelectorAll('.action-card');
+        const carouselItems = container.querySelectorAll('.carousel-item');
         let isOverCard = false;
         let cardDirection = null;
+        let hoveredCardIndex = -1;
         
-        cards.forEach((card, index) => {
+        carouselItems.forEach((item, index) => {
+          const card = item.querySelector('.action-card');
           const cardRect = card.getBoundingClientRect();
-          const cardCenterX = cardRect.left + cardRect.width / 2;
           
           if (e.clientX >= cardRect.left && e.clientX <= cardRect.right && 
               e.clientY >= cardRect.top && e.clientY <= cardRect.bottom) {
             isOverCard = true;
+            hoveredCardIndex = index;
             
-            // Determine if this card is to the left or right of center
-            if (cardCenterX < centerX) {
-              cardDirection = 'left';
-            } else if (cardCenterX > centerX) {
-              cardDirection = 'right';
-            } else {
+            // Check if this is the center card (active card)
+            if (index === currentSlide) {
               cardDirection = 'center';
+            } else {
+              // Determine if this card is to the left or right of center based on card position
+              const cardCenterX = cardRect.left + cardRect.width / 2;
+              if (cardCenterX < centerX) {
+                cardDirection = 'left';
+              } else if (cardCenterX > centerX) {
+                cardDirection = 'right';
+              }
             }
           }
         });
@@ -1595,7 +1601,7 @@
     function updateCarousel() {
       const items = document.querySelectorAll('.carousel-item');
       
-      // Define position configurations for each slot (7 cards for symmetry)
+      // Define position configurations for each slot (smooth rotation)
       const positions = [
         { x: -540, rotation: -18, scale: 0.75, opacity: 0.5, zIndex: 0 },
         { x: -360, rotation: -12, scale: 0.8, opacity: 0.7, zIndex: 1 },
@@ -1609,11 +1615,20 @@
       items.forEach((item, index) => {
         // Calculate the position index for this item based on current slide
         const positionIndex = (index - currentSlide + totalSlides) % totalSlides;
-        const position = positions[positionIndex] || positions[6]; // Default to last position if out of range
+        const position = positions[positionIndex] || positions[6];
+        
+        // Ensure smooth z-index transitions to prevent overlapping
+        let zIndex = position.zIndex;
+        
+        // Boost z-index for cards that are transitioning to/from center
+        const distanceFromCenter = Math.abs(positionIndex - 3);
+        if (distanceFromCenter <= 1) {
+          zIndex = position.zIndex + (2 - distanceFromCenter);
+        }
         
         item.style.transform = `translateX(${position.x}px) rotateY(${position.rotation}deg) scale(${position.scale})`;
         item.style.opacity = position.opacity;
-        item.style.zIndex = position.zIndex;
+        item.style.zIndex = zIndex;
         
         // Update active class
         item.classList.toggle('active', index === currentSlide);
