@@ -903,97 +903,178 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.7);
+      background: rgba(0, 0, 0, 0.75);
       z-index: 1000;
       display: flex;
       align-items: center;
       justify-content: center;
-      backdrop-filter: blur(4px);
+      backdrop-filter: blur(8px);
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .modal-overlay.show {
+      opacity: 1;
+      visibility: visible;
     }
 
     .modal-content {
       background: var(--bg-primary);
       border-radius: var(--radius-xl);
-      box-shadow: var(--shadow-xl);
-      max-width: 600px;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+      max-width: 700px;
       width: 90%;
-      max-height: 80vh;
+      max-height: 85vh;
       overflow: hidden;
       border: 1px solid var(--border-light);
+      transform: scale(0.95) translateY(20px);
+      transition: transform 0.3s ease;
+    }
+
+    .modal-overlay.show .modal-content {
+      transform: scale(1) translateY(0);
     }
 
     .modal-header {
-      padding: var(--spacing-lg);
+      padding: var(--spacing-xl);
       border-bottom: 1px solid var(--border-light);
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      background: var(--primary-gradient);
+      align-items: flex-start;
+      background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
       color: var(--text-white);
     }
 
-    .modal-header h3 {
+    .modal-title-section h3 {
+      margin: 0 0 var(--spacing-xs) 0;
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .modal-date {
       margin: 0;
-      font-size: 1.25rem;
-      font-weight: 600;
+      font-size: 0.875rem;
+      opacity: 0.9;
+      font-weight: 500;
     }
 
     .modal-close {
-      background: none;
-      border: none;
-      font-size: 2rem;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: var(--radius-md);
+      width: 40px;
+      height: 40px;
       color: var(--text-white);
       cursor: pointer;
-      padding: 0;
-      line-height: 1;
-      opacity: 0.8;
-      transition: opacity 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.125rem;
+      transition: all 0.2s ease;
     }
 
     .modal-close:hover {
-      opacity: 1;
+      background: rgba(255, 255, 255, 0.2);
+      transform: scale(1.05);
     }
 
     .modal-body {
-      padding: var(--spacing-lg);
-      max-height: 60vh;
+      padding: var(--spacing-xl);
+      max-height: 65vh;
       overflow-y: auto;
     }
 
     .modal-summary {
-      margin-bottom: var(--spacing-lg);
+      margin-bottom: var(--spacing-xl);
     }
 
     .summary-stats {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
+      gap: var(--spacing-lg);
+    }
+
+    .summary-stats .stat-item {
+      display: flex;
+      align-items: center;
       gap: var(--spacing-md);
-      text-align: center;
-    }
-
-    .modal-summary .stat-item {
-      padding: var(--spacing-md);
-      background: var(--bg-secondary);
-      border-radius: var(--radius-md);
+      padding: var(--spacing-lg);
+      background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+      border-radius: var(--radius-lg);
       border: 1px solid var(--border-light);
+      transition: all 0.2s ease;
     }
 
-    .modal-summary .stat-value {
+    .summary-stats .stat-item:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .stat-icon {
+      width: 50px;
+      height: 50px;
+      background: var(--primary-gradient);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-white);
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+
+    .stat-content {
+      flex: 1;
+    }
+
+    .summary-stats .stat-value {
       font-size: 1.5rem;
       font-weight: 700;
-      color: var(--primary-color);
+      color: var(--text-primary);
       margin-bottom: var(--spacing-xs);
+      line-height: 1.2;
     }
 
-    .modal-summary .stat-label {
+    .summary-stats .stat-label {
       font-size: 0.875rem;
       color: var(--text-secondary);
-      font-weight: 500;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .modal-section {
+      margin-bottom: var(--spacing-xl);
+    }
+
+    .modal-section .section-title {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--spacing-lg);
+      padding-bottom: var(--spacing-sm);
+      border-bottom: 2px solid var(--border-light);
+    }
+
+    .loading-state {
+      text-align: center;
+      padding: var(--spacing-2xl);
+      color: var(--text-secondary);
+    }
+
+    .loading-state i {
+      font-size: 2rem;
+      margin-bottom: var(--spacing-md);
+      color: var(--primary-color);
     }
 
     .items-container {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
       gap: var(--spacing-md);
     }
 
@@ -1001,51 +1082,107 @@
       display: flex;
       align-items: center;
       gap: var(--spacing-md);
-      padding: var(--spacing-md);
-      background: var(--bg-secondary);
-      border-radius: var(--radius-md);
-      border: 1px solid var(--border-light);
+      padding: var(--spacing-lg);
+      background: var(--bg-primary);
+      border-radius: var(--radius-lg);
+      border: 2px solid var(--border-light);
       transition: all 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .item-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--primary-gradient);
+      transform: scaleY(0);
+      transition: transform 0.2s ease;
     }
 
     .item-card:hover {
       border-color: var(--primary-color);
-      box-shadow: var(--shadow-sm);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .item-card:hover::before {
+      transform: scaleY(1);
     }
 
     .item-image {
-      width: 50px;
-      height: 50px;
-      border-radius: var(--radius-sm);
+      width: 60px;
+      height: 60px;
+      border-radius: var(--radius-md);
       object-fit: cover;
       background: var(--bg-tertiary);
+      flex-shrink: 0;
+      border: 2px solid var(--border-light);
     }
 
     .item-details {
       flex: 1;
+      min-width: 0;
     }
 
     .item-name {
       font-weight: 600;
       color: var(--text-primary);
-      margin-bottom: 2px;
+      margin-bottom: var(--spacing-xs);
+      font-size: 1rem;
+      line-height: 1.3;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
     }
 
     .item-quantity {
       font-size: 0.875rem;
       color: var(--text-secondary);
-      margin-bottom: 2px;
+      margin-bottom: var(--spacing-xs);
+      font-weight: 500;
     }
 
     .item-price {
       font-size: 0.875rem;
       color: var(--text-muted);
+      font-weight: 500;
     }
 
     .item-total {
       font-weight: 700;
       color: var(--primary-color);
-      font-size: 1.125rem;
+      font-size: 1.25rem;
+      text-align: center;
+      min-width: 80px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: var(--spacing-2xl);
+      color: var(--text-secondary);
+    }
+
+    .empty-state i {
+      font-size: 3rem;
+      margin-bottom: var(--spacing-lg);
+      color: var(--text-muted);
+    }
+
+    .error-state {
+      text-align: center;
+      padding: var(--spacing-2xl);
+      color: var(--error-color);
+    }
+
+    .error-state i {
+      font-size: 2.5rem;
+      margin-bottom: var(--spacing-md);
     }
 
     .clickable-row {
@@ -1125,15 +1262,56 @@
       .modal-content {
         margin: var(--spacing-md);
         width: calc(100% - 2rem);
+        max-height: 90vh;
+      }
+
+      .modal-header {
+        padding: var(--spacing-lg);
+      }
+
+      .modal-body {
+        padding: var(--spacing-lg);
       }
 
       .summary-stats {
         grid-template-columns: 1fr;
-        gap: var(--spacing-sm);
+        gap: var(--spacing-md);
+      }
+
+      .summary-stats .stat-item {
+        padding: var(--spacing-md);
+      }
+
+      .stat-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+      }
+
+      .summary-stats .stat-value {
+        font-size: 1.25rem;
       }
 
       .items-container {
         grid-template-columns: 1fr;
+      }
+
+      .item-card {
+        padding: var(--spacing-md);
+      }
+
+      .item-image {
+        width: 50px;
+        height: 50px;
+      }
+
+      .item-name {
+        font-size: 0.9rem;
+      }
+
+      .item-total {
+        font-size: 1.125rem;
+        min-width: 70px;
       }
     }
   </style>
@@ -1412,39 +1590,66 @@
       </section>
     </div>
 
-    <!-- Shopping Details Popup Modal - TEMPORARILY DISABLED -->
-    <!--
+    <!-- Shopping Details Popup Modal -->
     <div id="shoppingModal" class="modal-overlay" style="display: none;">
       <div class="modal-content">
         <div class="modal-header">
-          <h3 id="modalTitle">Shopping Trip Details</h3>
-          <button class="modal-close" onclick="closeShoppingModal()">&times;</button>
+          <div class="modal-title-section">
+            <h3 id="modalTitle">Shopping Trip Details</h3>
+            <p id="modalDate" class="modal-date"></p>
+          </div>
+          <button class="modal-close" onclick="closeShoppingModal()" aria-label="Close modal">
+            <i class="fas fa-times"></i>
+          </button>
         </div>
         <div class="modal-body">
           <div class="modal-summary">
             <div class="summary-stats">
               <div class="stat-item">
-                <div class="stat-value" id="modalStoreName">-</div>
-                <div class="stat-label">Store</div>
+                <div class="stat-icon">
+                  <i class="fas fa-store"></i>
+                </div>
+                <div class="stat-content">
+                  <div class="stat-value" id="modalStoreName">-</div>
+                  <div class="stat-label">Store</div>
+                </div>
               </div>
               <div class="stat-item">
-                <div class="stat-value" id="modalTotalAmount">$0.00</div>
-                <div class="stat-label">Total Spent</div>
+                <div class="stat-icon">
+                  <i class="fas fa-shopping-basket"></i>
+                </div>
+                <div class="stat-content">
+                  <div class="stat-value" id="modalTotalItems">0</div>
+                  <div class="stat-label">Items</div>
+                </div>
               </div>
               <div class="stat-item">
-                <div class="stat-value" id="modalTotalItems">0</div>
-                <div class="stat-label">Items Purchased</div>
+                <div class="stat-icon">
+                  <i class="fas fa-dollar-sign"></i>
+                </div>
+                <div class="stat-content">
+                  <div class="stat-value" id="modalTotalAmount">$0.00</div>
+                  <div class="stat-label">Total</div>
+                </div>
               </div>
             </div>
           </div>
           
-          <div class="items-container" id="itemsContainer">
-            Shopping items will be populated here
+          <div class="modal-section">
+            <h4 class="section-title">
+              <i class="fas fa-list-ul"></i>
+              Items Purchased
+            </h4>
+            <div class="items-container" id="itemsContainer">
+              <div class="loading-state">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Loading items...</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
-    -->
   </main>
 
   <!-- Footer -->
@@ -1925,89 +2130,163 @@
       });
     }
 
-    // Shopping Details Modal Functions - TEMPORARILY DISABLED
-    /*
+    // Shopping Details Modal Functions
     async function openShoppingDetails(cartId) {
       console.log('Opening shopping details for cart:', cartId);
       
-      // Show loading state
-      showShoppingModal('Loading...', 'Loading shopping details...', [], 0, 0, '');
+      const modal = document.getElementById('shoppingModal');
+      const itemsContainer = document.getElementById('itemsContainer');
+      
+      // Show modal with loading state
+      showModal();
+      resetModalContent();
       
       try {
         const response = await fetch(`/api/shopping-trip/details?cart_id=${cartId}`);
-        console.log('Response status:', response.status);
         
         if (response.ok) {
           const data = await response.json();
           console.log('Received data:', data);
-          
-          showShoppingModal(
-            `${data.store_name} Shopping Trip`,
-            data.store_name,
-            data.items,
-            data.total_amount,
-            data.total_items,
-            data.store_name
-          );
+          populateModal(data);
         } else {
           console.error('Failed to load shopping details:', response.status);
-          showShoppingModal('Error', 'Failed to load shopping details', [], 0, 0, '');
+          showErrorState('Failed to load shopping trip details. Please try again.');
         }
       } catch (error) {
         console.error('Error loading shopping details:', error);
-        showShoppingModal('Error', 'Failed to load shopping details', [], 0, 0, '');
+        showErrorState('Unable to connect to server. Please check your connection and try again.');
       }
     }
     
-    function showShoppingModal(title, storeName, items, totalAmount, totalItems, store) {
-      // Update modal title and summary
-      document.getElementById('modalTitle').textContent = title;
-      document.getElementById('modalStoreName').textContent = storeName;
-      document.getElementById('modalTotalAmount').textContent = '$' + totalAmount.toFixed(2);
-      document.getElementById('modalTotalItems').textContent = totalItems;
+    function showModal() {
+      const modal = document.getElementById('shoppingModal');
+      modal.style.display = 'flex';
+      // Trigger animation
+      setTimeout(() => {
+        modal.classList.add('show');
+      }, 10);
       
-      // Clear and populate items container
-      const itemsContainer = document.getElementById('itemsContainer');
-      itemsContainer.innerHTML = '';
-      
-      if (items.length === 0) {
-        itemsContainer.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 2rem;">No items found for this shopping trip.</p>';
-      } else {
-        items.forEach(item => {
-          const itemCard = document.createElement('div');
-          itemCard.className = 'item-card';
-          
-          itemCard.innerHTML = `
-            <img src="${item.image_url || 'https://via.placeholder.com/50'}" 
-                 alt="${item.item_name}" class="item-image" 
-                 onerror="this.src='https://via.placeholder.com/50'">
-            <div class="item-details">
-              <div class="item-name">${item.item_name}</div>
-              <div class="item-quantity">Quantity: ${item.quantity}</div>
-              <div class="item-price">$${item.price.toFixed(2)} each</div>
-            </div>
-            <div class="item-total">$${(item.price * item.quantity).toFixed(2)}</div>
-          `;
-          
-          itemsContainer.appendChild(itemCard);
-        });
-      }
-      
-      // Show modal
-      document.getElementById('shoppingModal').style.display = 'flex';
+      // Prevent body scroll
+      document.body.style.overflow = 'hidden';
       
       // Close modal when clicking overlay
-      document.getElementById('shoppingModal').onclick = function(e) {
-        if (e.target === this) {
+      modal.onclick = function(e) {
+        if (e.target === modal) {
           closeShoppingModal();
         }
       };
+      
+      // Close modal with Escape key
+      document.addEventListener('keydown', handleEscapeKey);
     }
     
     function closeShoppingModal() {
-      document.getElementById('shoppingModal').style.display = 'none';
+      const modal = document.getElementById('shoppingModal');
+      modal.classList.remove('show');
+      
+      // Wait for animation to complete before hiding
+      setTimeout(() => {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+      }, 300);
+      
+      // Remove event listener
+      document.removeEventListener('keydown', handleEscapeKey);
     }
-    */
+    
+    function handleEscapeKey(e) {
+      if (e.key === 'Escape') {
+        closeShoppingModal();
+      }
+    }
+    
+    function resetModalContent() {
+      document.getElementById('modalTitle').textContent = 'Shopping Trip Details';
+      document.getElementById('modalDate').textContent = '';
+      document.getElementById('modalStoreName').textContent = '-';
+      document.getElementById('modalTotalAmount').textContent = '$0.00';
+      document.getElementById('modalTotalItems').textContent = '0';
+      
+      const itemsContainer = document.getElementById('itemsContainer');
+      itemsContainer.innerHTML = `
+        <div class="loading-state">
+          <i class="fas fa-spinner fa-spin"></i>
+          <p>Loading shopping trip details...</p>
+        </div>
+      `;
+    }
+    
+    function populateModal(data) {
+      // Format date
+      const date = new Date(data.created_at);
+      const formattedDate = date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      const formattedTime = date.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      
+      // Update modal content
+      document.getElementById('modalTitle').textContent = `${data.store_name} Shopping Trip`;
+      document.getElementById('modalDate').textContent = `${formattedDate} at ${formattedTime}`;
+      document.getElementById('modalStoreName').textContent = data.store_name;
+      document.getElementById('modalTotalAmount').textContent = `$${Number(data.total_amount).toFixed(2)}`;
+      document.getElementById('modalTotalItems').textContent = `${data.total_items}`;
+      
+      // Populate items
+      const itemsContainer = document.getElementById('itemsContainer');
+      
+      if (!data.items || data.items.length === 0) {
+        itemsContainer.innerHTML = `
+          <div class="empty-state">
+            <i class="fas fa-shopping-cart"></i>
+            <h3>No Items Found</h3>
+            <p>This shopping trip doesn't have any recorded items.</p>
+          </div>
+        `;
+        return;
+      }
+      
+      itemsContainer.innerHTML = '';
+      
+      data.items.forEach(item => {
+        const itemCard = document.createElement('div');
+        itemCard.className = 'item-card';
+        
+        const itemTotal = Number(item.price * item.quantity).toFixed(2);
+        const imageUrl = item.image_url || 'https://images.unsplash.com/photo-1523294587484-bae6cc870010?w=60&h=60&fit=crop&crop=center';
+        
+        itemCard.innerHTML = `
+          <img src="${imageUrl}" 
+               alt="${item.item_name}" 
+               class="item-image" 
+               onerror="this.src='https://images.unsplash.com/photo-1523294587484-bae6cc870010?w=60&h=60&fit=crop&crop=center'">
+          <div class="item-details">
+            <div class="item-name" title="${item.item_name}">${item.item_name}</div>
+            <div class="item-quantity">Qty: ${item.quantity}</div>
+            <div class="item-price">$${item.price} each</div>
+          </div>
+          <div class="item-total">$${itemTotal}</div>
+        `;
+        
+        itemsContainer.appendChild(itemCard);
+      });
+    }
+    
+    function showErrorState(message) {
+      const itemsContainer = document.getElementById('itemsContainer');
+      itemsContainer.innerHTML = `
+        <div class="error-state">
+          <i class="fas fa-exclamation-triangle"></i>
+          <h3>Unable to Load Details</h3>
+          <p>${message}</p>
+        </div>
+      `;
+    }
 
     // Load More History Functionality
     let currentOffset = 15; // We already loaded 15 trips
@@ -2062,9 +2341,17 @@
                 </span>
               </td>
               <td>
-                <span class="amount">$${cart.total_spent.toFixed(2)}</span>
+                <span class="amount">$${cart.total_spent}</span>
               </td>
             `;
+            
+            // Add click handler to the new row
+            row.addEventListener('click', function() {
+              const cartId = this.getAttribute('data-cart-id');
+              if (cartId) {
+                openShoppingDetails(cartId);
+              }
+            });
             
             tableBody.appendChild(row);
           });
@@ -2120,6 +2407,19 @@
       `;
     }
 
+    // Initialize Shopping History Click Handlers
+    function initializeShoppingHistory() {
+      // Add click handlers to existing rows  
+      document.querySelectorAll('.clickable-row').forEach(row => {
+        row.addEventListener('click', function() {
+          const cartId = this.getAttribute('data-cart-id');
+          if (cartId) {
+            openShoppingDetails(cartId);
+          }
+        });
+      });
+    }
+
     // Initialize all functionality
     document.addEventListener('DOMContentLoaded', function() {
       updateWelcomeMessage();
@@ -2130,6 +2430,7 @@
       initializeMobileMenu();
       initializeDropdowns();
       handleDropdownResize();
+      initializeShoppingHistory();
       
       // Update time-based greeting every minute
       setInterval(updateWelcomeMessage, 60000);
