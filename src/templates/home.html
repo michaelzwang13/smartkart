@@ -1353,9 +1353,9 @@
             <thead>
               <tr>
                 <th>Store</th>
+                <th>Date</th>
                 <th>Items</th>
                 <th>Total Spent</th>
-                <th>Status</th>
               </tr>
             </thead>
             <tbody id="historyTableBody">
@@ -1368,6 +1368,12 @@
                   </div>
                 </td>
                 <td>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-calendar-alt" style="color: var(--text-secondary);"></i>
+                    {{ cart['created_at'].strftime('%m/%d/%y') }}
+                  </div>
+                </td>
+                <td>
                   <span class="cart-badge">
                     <i class="fas fa-shopping-basket" aria-hidden="true"></i>
                     {{ cart['total_items'] }} items
@@ -1375,12 +1381,6 @@
                 </td>
                 <td>
                   <span class="amount">${{ "%.2f"|format(cart['total_spent']) }}</span>
-                </td>
-                <td>
-                  <span class="cart-badge">
-                    <i class="fas fa-check-circle" aria-hidden="true"></i>
-                    Completed
-                  </span>
                 </td>
               </tr>
               {% endfor %}
@@ -2034,11 +2034,25 @@
             row.className = 'clickable-row additional-history';
             row.setAttribute('data-cart-id', cart.cart_ID);
             
+            // Format the date
+            const date = new Date(cart.created_at);
+            const formattedDate = date.toLocaleDateString('en-US', {
+              month: '2-digit',
+              day: '2-digit',
+              year: '2-digit'
+            });
+            
             row.innerHTML = `
               <td>
                 <div style="display: flex; align-items: center; gap: 8px;">
                   <i class="fas fa-store" style="color: var(--primary-color);"></i>
                   ${cart.store_name}
+                </div>
+              </td>
+              <td>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <i class="fas fa-calendar-alt" style="color: var(--text-secondary);"></i>
+                  ${formattedDate}
                 </div>
               </td>
               <td>
@@ -2048,13 +2062,7 @@
                 </span>
               </td>
               <td>
-                <span class="amount">$${cart.total_spent}</span>
-              </td>
-              <td>
-                <span class="cart-badge">
-                  <i class="fas fa-check-circle" aria-hidden="true"></i>
-                  Completed
-                </span>
+                <span class="amount">$${cart.total_spent.toFixed(2)}</span>
               </td>
             `;
             

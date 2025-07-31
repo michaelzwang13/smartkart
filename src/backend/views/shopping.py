@@ -45,7 +45,7 @@ def home():
 
     # Get cart history (completed carts) - limit to 15 initially
     query = """
-    SELECT c.cart_ID, c.store_name, 
+    SELECT c.cart_ID, c.store_name, c.created_at,
            (SELECT COUNT(*) FROM cart_item i WHERE i.cart_ID = c.cart_ID) as total_items,
            (SELECT SUM(i.price * i.quantity) FROM cart_item i WHERE i.cart_ID = c.cart_ID) as total_spent
     FROM shopping_cart c
@@ -104,7 +104,7 @@ def get_shopping_history():
 
     # Get additional cart history
     query = """
-    SELECT c.cart_ID, c.store_name, 
+    SELECT c.cart_ID, c.store_name, c.created_at,
            (SELECT COUNT(*) FROM cart_item i WHERE i.cart_ID = c.cart_ID) as total_items,
            (SELECT SUM(i.price * i.quantity) FROM cart_item i WHERE i.cart_ID = c.cart_ID) as total_spent
     FROM shopping_cart c
