@@ -37,6 +37,12 @@ def home():
     db = get_db()
     cursor = db.cursor()
 
+    # Get user's first name
+    user_query = "SELECT first_name FROM user_account WHERE user_ID = %s"
+    cursor.execute(user_query, (user_ID,))
+    user_data = cursor.fetchone()
+    user_first_name = user_data.get("first_name") if user_data and user_data.get("first_name") else None
+
     # Get cart history (completed carts)
     query = """
     SELECT c.cart_ID, c.store_name, 
@@ -66,7 +72,7 @@ def home():
     cursor.close()
 
     return render_template(
-        "home.html", user_ID=user_ID, cart_history=cart_history, active_trip=active_trip
+        "home.html", user_ID=user_ID, user_first_name=user_first_name, cart_history=cart_history, active_trip=active_trip
     )
     
     
