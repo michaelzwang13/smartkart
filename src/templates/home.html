@@ -510,37 +510,6 @@
     }
     
     
-    /* Carousel Indicators */
-    .carousel-indicators {
-      position: absolute;
-      bottom: -60px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: var(--spacing-sm);
-      z-index: 10;
-    }
-    
-    .indicator {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      border: none;
-      background: rgba(16, 185, 129, 0.3);
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-    
-    .indicator.active {
-      background: var(--primary-color);
-      transform: scale(1.2);
-      box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
-    }
-    
-    .indicator:hover {
-      background: var(--primary-color);
-      transform: scale(1.1);
-    }
     
     /* Stats Cards */
     .stats-section {
@@ -1273,16 +1242,6 @@
           </div>
           
           
-          <!-- Carousel Indicators -->
-          <div class="carousel-indicators" id="carouselIndicators">
-            <button class="indicator active" data-slide="0"></button>
-            <button class="indicator" data-slide="1"></button>
-            <button class="indicator" data-slide="2"></button>
-            <button class="indicator" data-slide="3"></button>
-            <button class="indicator" data-slide="4"></button>
-            <button class="indicator" data-slide="5"></button>
-            <button class="indicator" data-slide="6"></button>
-          </div>
         </div>
       </section>
 
@@ -1474,14 +1433,11 @@
     
     function initializeCarousel() {
       const container = document.querySelector('.carousel-container');
-      const prevBtn = document.getElementById('prevBtn');
-      const nextBtn = document.getElementById('nextBtn');
-      const indicators = document.querySelectorAll('.indicator');
       
       // Set initial positions
       updateCarousel();
       
-      // Mouse movement for dynamic navigation and rotation effect
+      // Mouse movement for card-based navigation
       container.addEventListener('mousemove', (e) => {
         const rect = container.getBoundingClientRect();
         const centerX = rect.left + rect.width / 2;
@@ -1492,49 +1448,81 @@
         const rotation = offsetX * 8; // Max 4 degrees rotation
         container.style.transform = `perspective(1000px) rotateY(${rotation}deg)`;
         
-        // Continuous navigation based on mouse position
-        const threshold = 0.15; // Sensitivity threshold
-        const navigationZone = 0.25; // Zone where navigation becomes more aggressive
+        // Check if mouse is over any card
+        const cards = container.querySelectorAll('.action-card');
+        let isOverCard = false;
+        let cardDirection = null;
         
-        if (Math.abs(offsetX) > threshold) {
-          pauseAutoRotate();
+        cards.forEach((card, index) => {
+          const cardRect = card.getBoundingClientRect();
+          const cardCenterX = cardRect.left + cardRect.width / 2;
           
-          // Calculate navigation speed based on distance from center
-          const intensity = Math.min(Math.abs(offsetX) / navigationZone, 1);
-          const navigationSpeed = 50 + (intensity * 150); // 50ms to 200ms delay
+          if (e.clientX >= cardRect.left && e.clientX <= cardRect.right && 
+              e.clientY >= cardRect.top && e.clientY <= cardRect.bottom) {
+            isOverCard = true;
+            
+            // Determine if this card is to the left or right of center
+            if (cardCenterX < centerX) {
+              cardDirection = 'left';
+            } else if (cardCenterX > centerX) {
+              cardDirection = 'right';
+            } else {
+              cardDirection = 'center';
+            }
+          }
+        });
+        
+        if (isOverCard && cardDirection && cardDirection !== 'center') {
+          pauseAutoRotate();
           
           // Clear any existing navigation timeout
           if (container.navigationTimeout) {
             clearTimeout(container.navigationTimeout);
           }
           
-          // Set up continuous navigation
+          // Set up navigation based on card position
           container.navigationTimeout = setTimeout(() => {
-            if (offsetX > threshold) {
-              // Mouse on right side - move to next slide
+            if (cardDirection === 'right') {
+              // Mouse over card on right side - move to next slide
               currentSlide = (currentSlide + 1) % totalSlides;
               updateCarousel();
               
-              // Continue navigation if mouse is still in zone
-              if (Math.abs(offsetX) > threshold) {
-                container.dispatchEvent(new MouseEvent('mousemove', { clientX: mouseX }));
+              // Continue navigation if mouse is still over a right card
+              const stillOverRightCard = Array.from(cards).some((card, index) => {
+                const cardRect = card.getBoundingClientRect();
+                const cardCenterX = cardRect.left + cardRect.width / 2;
+                return (e.clientX >= cardRect.left && e.clientX <= cardRect.right && 
+                        e.clientY >= cardRect.top && e.clientY <= cardRect.bottom &&
+                        cardCenterX > centerX);
+              });
+              
+              if (stillOverRightCard) {
+                container.dispatchEvent(new MouseEvent('mousemove', e));
               }
-            } else if (offsetX < -threshold) {
-              // Mouse on left side - move to previous slide
+            } else if (cardDirection === 'left') {
+              // Mouse over card on left side - move to previous slide
               currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
               updateCarousel();
               
-              // Continue navigation if mouse is still in zone
-              if (Math.abs(offsetX) > threshold) {
-                container.dispatchEvent(new MouseEvent('mousemove', { clientX: mouseX }));
+              // Continue navigation if mouse is still over a left card
+              const stillOverLeftCard = Array.from(cards).some((card, index) => {
+                const cardRect = card.getBoundingClientRect();
+                const cardCenterX = cardRect.left + cardRect.width / 2;
+                return (e.clientX >= cardRect.left && e.clientX <= cardRect.right && 
+                        e.clientY >= cardRect.top && e.clientY <= cardRect.bottom &&
+                        cardCenterX < centerX);
+              });
+              
+              if (stillOverLeftCard) {
+                container.dispatchEvent(new MouseEvent('mousemove', e));
               }
             }
-          }, navigationSpeed);
+          }, 200); // Fixed 200ms delay for card-based navigation
           
-          // Visual feedback
-          container.style.filter = `brightness(${1 + intensity * 0.1})`;
+          // Visual feedback when over a navigable card
+          container.style.filter = 'brightness(1.05)';
         } else {
-          // Clear navigation timeout when in center zone
+          // Clear navigation timeout when not over any card or over center card
           if (container.navigationTimeout) {
             clearTimeout(container.navigationTimeout);
             container.navigationTimeout = null;
@@ -1579,16 +1567,6 @@
       });
       
       
-      // Indicator clicks
-      indicators.forEach((indicator, index) => {
-        indicator.addEventListener('click', (e) => {
-          e.stopPropagation();
-          pauseAutoRotate();
-          currentSlide = index;
-          updateCarousel();
-          resumeAutoRotate();
-        });
-      });
       
       // Touch/swipe support
       let startX = 0;
@@ -1630,7 +1608,6 @@
     
     function updateCarousel() {
       const items = document.querySelectorAll('.carousel-item');
-      const indicators = document.querySelectorAll('.indicator');
       
       // Define position configurations for each slot (7 cards for symmetry)
       const positions = [
@@ -1654,11 +1631,6 @@
         
         // Update active class
         item.classList.toggle('active', index === currentSlide);
-      });
-      
-      // Update indicators
-      indicators.forEach((indicator, index) => {
-        indicator.classList.toggle('active', index === currentSlide);
       });
     }
     
