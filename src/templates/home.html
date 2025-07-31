@@ -1174,26 +1174,6 @@
         <div class="carousel-container">
           <div class="carousel" id="actionCarousel">
             <div class="carousel-item active">
-              <a href="{{ url_for('shopping.shopping_trip') }}" class="action-card">
-                <div class="action-icon">
-                  <i class="fas fa-shopping-cart" aria-hidden="true"></i>
-                </div>
-                <h3 class="action-title">Start Shopping</h3>
-                <p class="action-description">Begin a new smart shopping trip with AI recommendations</p>
-              </a>
-            </div>
-            
-            <div class="carousel-item">
-              <a href="{{ url_for('shopping.shopping_lists') }}" class="action-card">
-                <div class="action-icon">
-                  <i class="fas fa-list-ul" aria-hidden="true"></i>
-                </div>
-                <h3 class="action-title">Manage Lists</h3>
-                <p class="action-description">Create and organize your shopping lists</p>
-              </a>
-            </div>
-            
-            <div class="carousel-item">
               <a href="{{ url_for('shopping.pantry') }}" class="action-card">
                 <div class="action-icon">
                   <i class="fas fa-warehouse" aria-hidden="true"></i>
@@ -1214,13 +1194,23 @@
             </div>
             
             <div class="carousel-item">
-              <a href="{{ url_for('shopping.budget') }}" class="action-card">
+              <a href="{{ url_for('shopping.shopping_trip') }}" class="action-card">
                 <div class="action-icon">
-                  <i class="fas fa-chart-line" aria-hidden="true"></i>
+                  <i class="fas fa-shopping-cart" aria-hidden="true"></i>
                 </div>
-                <h3 class="action-title">Budget & Analytics</h3>
-                <p class="action-description">Track spending, analyze trends, and manage your budget</p>
+                <h3 class="action-title">Start Shopping</h3>
+                <p class="action-description">Begin a new smart shopping trip with AI recommendations</p>
               </a>
+            </div>
+            
+            <div class="carousel-item">
+              <div class="action-card">
+                <div class="action-icon">
+                  <i class="fas fa-plus" aria-hidden="true"></i>
+                </div>
+                <h3 class="action-title">Coming Soon</h3>
+                <p class="action-description">More features in development</p>
+              </div>
             </div>
             
             <div class="carousel-item">
@@ -1234,13 +1224,23 @@
             </div>
             
             <div class="carousel-item">
-              <div class="action-card">
+              <a href="{{ url_for('shopping.budget') }}" class="action-card">
                 <div class="action-icon">
-                  <i class="fas fa-plus" aria-hidden="true"></i>
+                  <i class="fas fa-chart-line" aria-hidden="true"></i>
                 </div>
-                <h3 class="action-title">Coming Soon</h3>
-                <p class="action-description">More features in development</p>
-              </div>
+                <h3 class="action-title">Budget & Analytics</h3>
+                <p class="action-description">Track spending, analyze trends, and manage your budget</p>
+              </a>
+            </div>
+            
+            <div class="carousel-item">
+              <a href="{{ url_for('shopping.shopping_lists') }}" class="action-card">
+                <div class="action-icon">
+                  <i class="fas fa-list-ul" aria-hidden="true"></i>
+                </div>
+                <h3 class="action-title">Manage Lists</h3>
+                <p class="action-description">Create and organize your shopping lists</p>
+              </a>
             </div>
           </div>
           
