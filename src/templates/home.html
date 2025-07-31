@@ -1368,6 +1368,10 @@
               <i class="fas fa-chevron-down" aria-hidden="true"></i>
               Show More ({{ total_trips - 15 }} remaining)
             </button>
+            <button id="showLessBtn" class="btn btn-secondary" onclick="showLessHistory()" style="display: none; margin-left: var(--spacing-md);">
+              <i class="fas fa-chevron-up" aria-hidden="true"></i>
+              Show Less
+            </button>
           </div>
           {% endif %}
           {% else %}
@@ -1986,6 +1990,7 @@
 
     async function loadMoreHistory() {
       const showMoreBtn = document.getElementById('showMoreBtn');
+      const showLessBtn = document.getElementById('showLessBtn');
       const tableBody = document.getElementById('historyTableBody');
       
       // Show loading state
@@ -1998,10 +2003,10 @@
         if (response.ok) {
           const data = await response.json();
           
-          // Add new rows to the table
+          // Add new rows to the table with a class to identify them as additional
           data.history.forEach(cart => {
             const row = document.createElement('tr');
-            row.className = 'clickable-row';
+            row.className = 'clickable-row additional-history';
             row.setAttribute('data-cart-id', cart.cart_ID);
             
             row.innerHTML = `
@@ -2033,6 +2038,9 @@
           
           currentOffset += data.history.length;
           
+          // Show the "Show Less" button
+          showLessBtn.style.display = 'inline-flex';
+          
           // Update or hide the "Show More" button
           if (currentOffset >= maxTrips) {
             showMoreBtn.style.display = 'none';
@@ -2054,6 +2062,31 @@
         showMoreBtn.disabled = false;
         showMoreBtn.innerHTML = '<i class="fas fa-chevron-down" aria-hidden="true"></i> Show More';
       }
+    }
+
+    function showLessHistory() {
+      const showMoreBtn = document.getElementById('showMoreBtn');
+      const showLessBtn = document.getElementById('showLessBtn');
+      const tableBody = document.getElementById('historyTableBody');
+      
+      // Remove all additional history rows
+      const additionalRows = tableBody.querySelectorAll('.additional-history');
+      additionalRows.forEach(row => row.remove());
+      
+      // Reset the offset to 15
+      currentOffset = 15;
+      
+      // Hide the "Show Less" button
+      showLessBtn.style.display = 'none';
+      
+      // Show and reset the "Show More" button
+      const remaining = maxTrips - currentOffset;
+      showMoreBtn.style.display = 'inline-flex';
+      showMoreBtn.disabled = false;
+      showMoreBtn.innerHTML = `
+        <i class="fas fa-chevron-down" aria-hidden="true"></i>
+        Show More (${remaining} remaining)
+      `;
     }
 
     // Initialize all functionality
