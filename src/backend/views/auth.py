@@ -137,16 +137,16 @@ def login():
 @auth_bp.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
-        first_name = request.form["first_name"].strip()
-        last_name = request.form["last_name"].strip()
+        first_name = request.form.get("first_name", "").strip()
+        last_name = request.form.get("last_name", "").strip()
         user_ID = request.form["user_ID"].strip()
         password = request.form["password"]
         email_address = request.form["email_address"].strip()
         confirm_password = request.form.get("confirmPassword", "")
 
-        # Validation
-        if not first_name or not last_name or not user_ID or not password or not email_address:
-            error = "All fields are required"
+        # Validation - first_name and last_name are optional
+        if not user_ID or not password or not email_address:
+            error = "Email, username, and password are required"
             return render_template("register.html", error=error)
 
         if len(user_ID) < 3:
