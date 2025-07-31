@@ -1352,7 +1352,7 @@
               required
             />
           </div>
-          <button type="submit" class="btn-primary">
+          <button type="button" class="btn-primary" id="startShoppingBtn">
             <i class="fas fa-play" aria-hidden="true"></i>
             Start Shopping
           </button>
@@ -1371,12 +1371,6 @@
             <select id="availableListsSelect" class="form-input" style="margin-bottom: 1rem;">
               <option value="">Select a shopping list...</option>
             </select>
-            <div style="display: flex; justify-content: center; width: 100%;">
-              <button type="button" id="importListBtn" class="btn-primary" disabled>
-                <i class="fas fa-play" aria-hidden="true"></i>
-                Start Shopping with List
-              </button>
-            </div>
           </div>
           <div style="display: flex; justify-content: center; width: 100%;">
             <button type="button" id="loadListsBtn" class="btn-primary">
@@ -2169,28 +2163,24 @@
         loadListsBtn.addEventListener('click', loadAvailableLists);
       }
 
-      // Import list button
-      const importListBtn = document.getElementById('importListBtn');
-      if (importListBtn) {
-        importListBtn.addEventListener('click', importSelectedList);
+      // Start shopping button
+      const startShoppingBtn = document.getElementById('startShoppingBtn');
+      if (startShoppingBtn) {
+        startShoppingBtn.addEventListener('click', handleStartShopping);
       }
 
       // List selection change
       const listSelect = document.getElementById('availableListsSelect');
       if (listSelect) {
         listSelect.addEventListener('change', function() {
-          const importBtn = document.getElementById('importListBtn');
-          const regularForm = document.getElementById('startShoppingForm');
+          const startBtn = document.getElementById('startShoppingBtn');
           
-          importBtn.disabled = !this.value;
-          
-          // Show/hide the regular start shopping form based on list selection
+          // Update button text based on selection
           if (this.value) {
-            regularForm.style.opacity = '0.5';
-            regularForm.style.pointerEvents = 'none';
+            startBtn.innerHTML = '<i class="fas fa-play" aria-hidden="true"></i> Start Shopping with List';
+            showNotification('💡 List selected - click "Start Shopping with List" to begin', 'info');
           } else {
-            regularForm.style.opacity = '1';
-            regularForm.style.pointerEvents = 'auto';
+            startBtn.innerHTML = '<i class="fas fa-play" aria-hidden="true"></i> Start Shopping';
           }
         });
       }
@@ -2251,18 +2241,11 @@
       loadBtn.style.display = 'none';
     }
 
-    // Import selected shopping list
-    async function importSelectedList() {
+    // Handle start shopping button click
+    async function handleStartShopping() {
       const select = document.getElementById('availableListsSelect');
-      const listId = select.value;
       const storeNameInput = document.getElementById('storeName');
-
-      console.log("LEBRON JAMES")
-
-      if (!listId) {
-        showNotification('❌ Please select a list', 'error');
-        return;
-      }
+      const listId = select ? select.value : null;
 
       if (!storeNameInput || !storeNameInput.value.trim()) {
         showNotification('❌ Please enter a store name first', 'error');
@@ -2271,37 +2254,51 @@
       }
 
       try {
-        showNotification('Creating shopping trip with imported list...', 'info');
+        if (listId) {
+          // Create shopping trip with imported list
+          showNotification('Creating shopping trip with imported list...', 'info');
 
-        // First, create a new shopping cart
-        const cartResponse = await fetch('/api/shopping-trip/create-cart', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            store_name: storeNameInput.value.trim(),
-            import_list_id: parseInt(listId)
-          })
-        });
+          const cartResponse = await fetch('/api/shopping-trip/create-cart', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              store_name: storeNameInput.value.trim(),
+              import_list_id: parseInt(listId)
+            })
+          });
 
-        const cartData = await cartResponse.json();
+          const cartData = await cartResponse.json();
 
-        if (cartResponse.ok) {
-          // Update currentCartId with the new cart ID  
-          currentCartId = cartData.cart_id;
-          console.log('Updated currentCartId after cart creation:', currentCartId);
-          
-          // Wait a moment for session to be updated, then redirect
-          setTimeout(() => {
-            window.location.href = '/shopping-trip';
-          }, 500);
+          if (cartResponse.ok) {
+            showNotification(`✅ Shopping trip created with imported list!`, 'success');
+            currentCartId = cartData.cart_id;
+            setTimeout(() => {
+              window.location.href = '/shopping-trip';
+            }, 500);
+          } else {
+            showNotification(`❌ Failed to create trip: ${cartData.error}`, 'error');
+          }
         } else {
-          showNotification(`❌ Failed to create trip: ${cartData.error}`, 'error');
+          // Regular shopping trip without list
+          const form = document.getElementById('startShoppingForm');
+          const formData = new FormData(form);
+          
+          const response = await fetch(form.action, {
+            method: 'POST',
+            body: formData
+          });
+
+          if (response.ok) {
+            window.location.href = '/shopping-trip';
+          } else {
+            showNotification('❌ Failed to start shopping trip', 'error');
+          }
         }
       } catch (error) {
-        console.error('Error creating trip with list:', error);
-        showNotification('❌ Error creating shopping trip', 'error');
+        console.error('Error starting shopping trip:', error);
+        showNotification('❌ Error starting shopping trip', 'error');
       }
     }
 
@@ -2470,7 +2467,6 @@
 
         if (response.ok) {
           loadShoppingListStatus(); // Refresh the display
-          showNotification(isFound ? '✅ Item marked as found' : '⚪ Item marked as not found', 'success');
         } else {
           const data = await response.json();
           showNotification(`❌ Failed to update item: ${data.error}`, 'error');
