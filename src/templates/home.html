@@ -1445,12 +1445,42 @@
       container.addEventListener('mousemove', (e) => {
         const rect = container.getBoundingClientRect();
         const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
         const mouseX = e.clientX;
+        const mouseY = e.clientY;
         const offsetX = (mouseX - centerX) / rect.width; // -0.5 to 0.5
+        
+        // Define center dead zone (rectangular area in the middle)
+        const deadZoneWidth = 200; // Width of the dead zone
+        const deadZoneHeight = rect.height * 0.8; // Height covers most of the card height
+        
+        const isInDeadZone = (
+          mouseX >= centerX - deadZoneWidth / 2 && 
+          mouseX <= centerX + deadZoneWidth / 2 &&
+          mouseY >= centerY - deadZoneHeight / 2 && 
+          mouseY <= centerY + deadZoneHeight / 2
+        );
         
         // Apply subtle rotation based on mouse position
         const rotation = offsetX * 8; // Max 4 degrees rotation
         container.style.transform = `perspective(1000px) rotateY(${rotation}deg)`;
+        
+        // If in dead zone, stop any continuous navigation
+        if (isInDeadZone) {
+          if (container.continuousNavigation) {
+            container.continuousNavigation = false;
+            container.currentDirection = null;
+            
+            if (container.navigationInterval) {
+              clearInterval(container.navigationInterval);
+              container.navigationInterval = null;
+            }
+          }
+          
+          container.style.filter = 'brightness(1)';
+          resumeAutoRotate();
+          return; // Exit early, no further processing
+        }
         
         // Check if mouse is over any card
         const carouselItems = container.querySelectorAll('.carousel-item');
