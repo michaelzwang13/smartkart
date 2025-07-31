@@ -1371,15 +1371,19 @@
             <select id="availableListsSelect" class="form-input" style="margin-bottom: 1rem;">
               <option value="">Select a shopping list...</option>
             </select>
-            <button type="button" id="importListBtn" class="btn-primary" disabled>
-              <i class="fas fa-play" aria-hidden="true"></i>
-              Start Shopping with List
+            <div style="display: flex; justify-content: center; width: 100%;">
+              <button type="button" id="importListBtn" class="btn-primary" disabled>
+                <i class="fas fa-play" aria-hidden="true"></i>
+                Start Shopping with List
+              </button>
+            </div>
+          </div>
+          <div style="display: flex; justify-content: center; width: 100%;">
+            <button type="button" id="loadListsBtn" class="btn-primary">
+              <i class="fas fa-search" aria-hidden="true"></i>
+              Browse My Lists
             </button>
           </div>
-          <button type="button" id="loadListsBtn" class="btn-secondary">
-            <i class="fas fa-search" aria-hidden="true"></i>
-            Browse My Lists
-          </button>
         </div>
       </section>
 
@@ -2184,7 +2188,6 @@
           if (this.value) {
             regularForm.style.opacity = '0.5';
             regularForm.style.pointerEvents = 'none';
-            showNotification('💡 Using list mode - fill in store name above, then click "Start Shopping with List"', 'info');
           } else {
             regularForm.style.opacity = '1';
             regularForm.style.pointerEvents = 'auto';
@@ -2246,8 +2249,6 @@
       // Show the container and hide load button
       container.style.display = 'block';
       loadBtn.style.display = 'none';
-
-      showNotification(`✅ Found ${lists.length} shopping lists`, 'success');
     }
 
     // Import selected shopping list
@@ -2287,7 +2288,6 @@
         const cartData = await cartResponse.json();
 
         if (cartResponse.ok) {
-          showNotification(`✅ Shopping trip created with imported list!`, 'success');
           // Update currentCartId with the new cart ID  
           currentCartId = cartData.cart_id;
           console.log('Updated currentCartId after cart creation:', currentCartId);
