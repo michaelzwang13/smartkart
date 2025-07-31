@@ -391,13 +391,6 @@
       opacity: 0.7;
     }
     
-    .carousel-item.active .action-card {
-      transform: scale(1.02);
-      box-shadow: 
-        0 25px 50px rgba(16, 185, 129, 0.25),
-        0 15px 30px rgba(0, 0, 0, 0.1);
-      border-color: var(--primary-color);
-    }
     
     .action-card {
       width: 100%;
@@ -1173,7 +1166,7 @@
       <section class="carousel-section">
         <div class="carousel-container">
           <div class="carousel" id="actionCarousel">
-            <div class="carousel-item active">
+            <div class="carousel-item">
               <a href="{{ url_for('shopping.pantry') }}" class="action-card">
                 <div class="action-icon">
                   <i class="fas fa-warehouse" aria-hidden="true"></i>
@@ -1689,8 +1682,6 @@
         item.style.opacity = position.opacity;
         item.style.zIndex = zIndex;
         
-        // Update active class
-        item.classList.toggle('active', index === currentSlide);
       });
     }
     
