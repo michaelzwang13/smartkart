@@ -292,7 +292,10 @@ INSERT INTO pantry_categories (category_name, default_storage_type, typical_shel
 ('Condiments', 'pantry', 180),
 ('Spices', 'pantry', 1095),
 ('Bread', 'pantry', 5),
-('Other', 'pantry', 30);
+('Other', 'pantry', 30),
+('Fresh Herbs', 'fridge', 7),
+('Oils & Vinegars', 'pantry', 365),
+('Baking Supplies', 'pantry', 730);
 
 -- Create pantry_transfer_sessions table to track bulk transfers from shopping trips
 CREATE TABLE pantry_transfer_sessions (

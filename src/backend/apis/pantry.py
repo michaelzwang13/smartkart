@@ -130,13 +130,18 @@ def add_pantry_item():
     cursor = db.cursor()
 
     try:
-        # Handle AI expiration prediction
+        # Handle AI expiration prediction and category prediction
         is_ai_predicted = False
+        predicted_category = None
         if use_ai_prediction and not expiration_date:
-            predicted_expiry = predict_expiration_date(item_name, storage_type)
-            if predicted_expiry:
-                expiration_date = predicted_expiry
-                is_ai_predicted = True
+            prediction_result = predict_expiration_and_category(item_name, storage_type)
+            if prediction_result:
+                expiration_date = prediction_result.get('expiration_date')
+                predicted_category = prediction_result.get('category')
+                if expiration_date:
+                    is_ai_predicted = True
+                if predicted_category and category == 'Other':
+                    category = predicted_category
 
         # Insert pantry item
         query = """
@@ -284,11 +289,16 @@ def transfer_shopping_trip_to_pantry():
 
             # Handle AI prediction if requested
             is_ai_predicted = False
+            predicted_category = None
             if use_ai_prediction and not expiration_date:
-                predicted_expiry = predict_expiration_date(item_name, storage_type)
-                if predicted_expiry:
-                    expiration_date = predicted_expiry
-                    is_ai_predicted = True
+                prediction_result = predict_expiration_and_category(item_name, storage_type)
+                if prediction_result:
+                    expiration_date = prediction_result.get('expiration_date')
+                    predicted_category = prediction_result.get('category')
+                    if expiration_date:
+                        is_ai_predicted = True
+                    if predicted_category and category == 'Other':
+                        category = predicted_category
 
             # Insert pantry item
             insert_query = """
@@ -338,7 +348,13 @@ def transfer_shopping_trip_to_pantry():
 
 
 def predict_expiration_date(item_name, storage_type):
-    """Predict expiration date using AI or cached predictions"""
+    """Predict expiration date using AI or cached predictions (backward compatibility)"""
+    result = predict_expiration_and_category(item_name, storage_type)
+    return result.get('expiration_date') if result else None
+
+
+def predict_expiration_and_category(item_name, storage_type):
+    """Predict expiration date and category using AI or cached predictions"""
     db = get_db()
     cursor = db.cursor()
 
@@ -369,12 +385,22 @@ def predict_expiration_date(item_name, storage_type):
                 days=cached["predicted_days"]
             )
             cursor.close()
-            return expiry_date.strftime("%Y-%m-%d")
+            
+            # For cached predictions, predict category using simple heuristics
+            predicted_category = get_simple_category_prediction(item_name)
+            
+            return {
+                'expiration_date': expiry_date.strftime("%Y-%m-%d"),
+                'category': predicted_category
+            }
 
-        # Use Gemini AI to predict expiration
-        predicted_days = get_gemini_prediction(item_name, storage_type)
+        # Use Gemini AI to predict expiration and category
+        prediction_result = get_gemini_prediction_with_category(item_name, storage_type)
 
-        if predicted_days:
+        if prediction_result and prediction_result.get('days'):
+            predicted_days = prediction_result['days']
+            predicted_category = prediction_result.get('category', 'Other')
+            
             # Cache the prediction
             cursor.execute(
                 """
@@ -392,15 +418,106 @@ def predict_expiration_date(item_name, storage_type):
 
             expiry_date = datetime.now().date() + timedelta(days=predicted_days)
             cursor.close()
-            return expiry_date.strftime("%Y-%m-%d")
+            
+            return {
+                'expiration_date': expiry_date.strftime("%Y-%m-%d"),
+                'category': predicted_category
+            }
 
         cursor.close()
         return None
 
     except Exception as e:
-        print(f"Error predicting expiration: {str(e)}")
+        print(f"Error predicting expiration and category: {str(e)}")
         cursor.close()
         return None
+
+
+def get_gemini_prediction_with_category(item_name, storage_type):
+    """Use Gemini AI to predict expiration date and category based on item and storage type"""
+    import os
+    import google.generativeai as genai
+
+    try:
+        # Configure Gemini with API key from environment
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            print(
+                "WARNING: GEMINI_API_KEY not found in environment, falling back to simple prediction"
+            )
+            return get_simple_prediction_with_category(item_name, storage_type)
+
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel("gemini-1.5-flash-latest")
+
+        # Create a specific prompt for food expiration and category prediction
+        prompt = f"""You are a food safety expert. I need to know how many days a food item will last and its category.
+
+Item: {item_name}
+Storage: {storage_type} (pantry, fridge, or freezer)
+
+Based on typical food safety guidelines:
+1. How many days will this item last from today if stored in the {storage_type}?
+2. What category does this item belong to?
+
+Available categories: Produce, Meat, Dairy, Grains, Canned Goods, Frozen Foods, Beverages, Snacks, Condiments, Spices, Bread, Other, Fresh Herbs, Oils & Vinegars, Baking Supplies
+
+Important instructions:
+- Respond with ONLY a JSON object in this exact format: {{"days": NUMBER, "category": "CATEGORY_NAME"}}
+- Use conservative estimates for food safety
+- For pantry items, assume they are in a cool, dry place
+- For fridge items, assume proper refrigeration (35-40°F)
+- For freezer items, assume proper freezing (0°F or below)
+
+Examples:
+- Fresh milk in fridge: {{"days": 7, "category": "Dairy"}}
+- Bread in pantry: {{"days": 5, "category": "Bread"}}
+- Frozen chicken in freezer: {{"days": 365, "category": "Meat"}}
+- Bananas in pantry: {{"days": 5, "category": "Produce"}}
+
+Respond only with the JSON object:"""
+
+        # Generate prediction
+        response = model.generate_content(prompt)
+        prediction_text = response.text.strip()
+
+        # Log the actual response for debugging
+        print(
+            f"DEBUG: Gemini raw response for {item_name} in {storage_type}: '{prediction_text}'"
+        )
+
+        # Parse JSON response
+        import json
+        import re
+        
+        # Try to extract JSON from response
+        json_match = re.search(r'\{[^}]*\}', prediction_text)
+        if json_match:
+            try:
+                result = json.loads(json_match.group())
+                days = result.get('days', 0)
+                category = result.get('category', 'Other')
+                
+                # Validate the prediction (sanity check)
+                if 1 <= days <= 3650:  # Between 1 day and 10 years
+                    return {'days': days, 'category': category}
+                else:
+                    print(
+                        f"WARNING: Gemini prediction {days} days seems unrealistic, falling back"
+                    )
+                    return get_simple_prediction_with_category(item_name, storage_type)
+            except json.JSONDecodeError:
+                print(f"WARNING: Could not parse JSON from Gemini response: {prediction_text}")
+                return get_simple_prediction_with_category(item_name, storage_type)
+        else:
+            print(f"WARNING: No JSON found in Gemini response: {prediction_text}")
+            return get_simple_prediction_with_category(item_name, storage_type)
+
+    except Exception as e:
+        print(
+            f"ERROR: Gemini prediction failed: {str(e)}, falling back to simple prediction"
+        )
+        return get_simple_prediction_with_category(item_name, storage_type)
 
 
 def get_gemini_prediction(item_name, storage_type):
@@ -482,39 +599,90 @@ Just respond with the number of days:"""
         return get_simple_prediction(item_name, storage_type)
 
 
-def get_simple_prediction(item_name, storage_type):
-    """Simple heuristic-based expiration prediction"""
+def get_simple_prediction_with_category(item_name, storage_type):
+    """Simple heuristic-based expiration and category prediction"""
     item_lower = item_name.lower()
 
     # Storage-based multipliers
     storage_multiplier = {"freezer": 30, "fridge": 1, "pantry": 1}
 
     # Item category predictions (base days for fridge)
-    if any(word in item_lower for word in ["milk", "dairy", "yogurt", "cheese"]):
-        return 14 * storage_multiplier.get(storage_type, 1)
-    elif any(
-        word in item_lower for word in ["meat", "chicken", "beef", "pork", "fish"]
-    ):
-        return 3 * storage_multiplier.get(storage_type, 1)
-    elif any(word in item_lower for word in ["bread", "bagel", "muffin"]):
-        return 5 * storage_multiplier.get(storage_type, 1)
-    elif any(
-        word in item_lower
-        for word in ["apple", "banana", "orange", "fruit", "vegetable"]
-    ):
-        return 7 * storage_multiplier.get(storage_type, 1)
-    elif any(word in item_lower for word in ["rice", "pasta", "grain", "cereal"]):
-        return 365 * storage_multiplier.get(storage_type, 1)
+    if any(word in item_lower for word in ["milk", "dairy", "yogurt", "cheese", "butter", "cream"]):
+        return {"days": 14 * storage_multiplier.get(storage_type, 1), "category": "Dairy"}
+    elif any(word in item_lower for word in ["meat", "chicken", "beef", "pork", "fish", "turkey", "lamb"]):
+        return {"days": 3 * storage_multiplier.get(storage_type, 1), "category": "Meat"}
+    elif any(word in item_lower for word in ["bread", "bagel", "muffin", "baguette", "roll"]):
+        return {"days": 5 * storage_multiplier.get(storage_type, 1), "category": "Bread"}
+    elif any(word in item_lower for word in ["apple", "banana", "orange", "fruit", "vegetable", "lettuce", "carrot", "tomato", "onion", "potato"]):
+        return {"days": 7 * storage_multiplier.get(storage_type, 1), "category": "Produce"}
+    elif any(word in item_lower for word in ["rice", "pasta", "grain", "cereal", "oats", "quinoa", "barley"]):
+        return {"days": 365 * storage_multiplier.get(storage_type, 1), "category": "Grains"}
     elif any(word in item_lower for word in ["canned", "can", "jar"]):
-        return 730 * storage_multiplier.get(storage_type, 1)
+        return {"days": 730 * storage_multiplier.get(storage_type, 1), "category": "Canned Goods"}
+    elif any(word in item_lower for word in ["frozen", "ice cream"]):
+        return {"days": 90 * storage_multiplier.get(storage_type, 1), "category": "Frozen Foods"}
+    elif any(word in item_lower for word in ["juice", "soda", "water", "beer", "wine", "coffee", "tea"]):
+        return {"days": 30 * storage_multiplier.get(storage_type, 1), "category": "Beverages"}
+    elif any(word in item_lower for word in ["chips", "crackers", "cookies", "candy", "chocolate"]):
+        return {"days": 60 * storage_multiplier.get(storage_type, 1), "category": "Snacks"}
+    elif any(word in item_lower for word in ["ketchup", "mustard", "mayo", "sauce", "dressing", "vinegar"]):
+        return {"days": 180 * storage_multiplier.get(storage_type, 1), "category": "Condiments"}
+    elif any(word in item_lower for word in ["salt", "pepper", "spice", "herb", "oregano", "basil", "thyme"]):
+        return {"days": 1095 * storage_multiplier.get(storage_type, 1), "category": "Spices"}
+    elif any(word in item_lower for word in ["parsley", "cilantro", "mint", "dill", "chives"]):
+        return {"days": 7 * storage_multiplier.get(storage_type, 1), "category": "Fresh Herbs"}
+    elif any(word in item_lower for word in ["oil", "olive oil", "coconut oil", "vinegar", "balsamic"]):
+        return {"days": 365 * storage_multiplier.get(storage_type, 1), "category": "Oils & Vinegars"}
+    elif any(word in item_lower for word in ["flour", "sugar", "baking powder", "baking soda", "vanilla", "cocoa"]):
+        return {"days": 730 * storage_multiplier.get(storage_type, 1), "category": "Baking Supplies"}
     else:
         # Default prediction
         base_days = (
             30 if storage_type == "pantry" else 14 if storage_type == "fridge" else 90
         )
-        return base_days
+        return {"days": base_days, "category": "Other"}
 
-    return None
+
+def get_simple_category_prediction(item_name):
+    """Simple heuristic-based category prediction"""
+    item_lower = item_name.lower()
+    
+    if any(word in item_lower for word in ["milk", "dairy", "yogurt", "cheese", "butter", "cream"]):
+        return "Dairy"
+    elif any(word in item_lower for word in ["meat", "chicken", "beef", "pork", "fish", "turkey", "lamb"]):
+        return "Meat"
+    elif any(word in item_lower for word in ["bread", "bagel", "muffin", "baguette", "roll"]):
+        return "Bread"
+    elif any(word in item_lower for word in ["apple", "banana", "orange", "fruit", "vegetable", "lettuce", "carrot", "tomato", "onion", "potato"]):
+        return "Produce"
+    elif any(word in item_lower for word in ["rice", "pasta", "grain", "cereal", "oats", "quinoa", "barley"]):
+        return "Grains"
+    elif any(word in item_lower for word in ["canned", "can", "jar"]):
+        return "Canned Goods"
+    elif any(word in item_lower for word in ["frozen", "ice cream"]):
+        return "Frozen Foods"
+    elif any(word in item_lower for word in ["juice", "soda", "water", "beer", "wine", "coffee", "tea"]):
+        return "Beverages"
+    elif any(word in item_lower for word in ["chips", "crackers", "cookies", "candy", "chocolate"]):
+        return "Snacks"
+    elif any(word in item_lower for word in ["ketchup", "mustard", "mayo", "sauce", "dressing", "vinegar"]):
+        return "Condiments"
+    elif any(word in item_lower for word in ["salt", "pepper", "spice", "herb", "oregano", "basil", "thyme"]):
+        return "Spices"
+    elif any(word in item_lower for word in ["parsley", "cilantro", "mint", "dill", "chives"]):
+        return "Fresh Herbs"
+    elif any(word in item_lower for word in ["oil", "olive oil", "coconut oil", "vinegar", "balsamic"]):
+        return "Oils & Vinegars"
+    elif any(word in item_lower for word in ["flour", "sugar", "baking powder", "baking soda", "vanilla", "cocoa"]):
+        return "Baking Supplies"
+    else:
+        return "Other"
+
+
+def get_simple_prediction(item_name, storage_type):
+    """Simple heuristic-based expiration prediction (backward compatibility)"""
+    result = get_simple_prediction_with_category(item_name, storage_type)
+    return result.get("days") if result else None
 
 
 @pantry_bp.route("/pantry/items/<int:item_id>", methods=["GET"])
@@ -594,11 +762,16 @@ def update_pantry_item(item_id):
 
         # Handle AI prediction if requested
         is_ai_predicted = False
+        predicted_category = None
         if use_ai_prediction and not expiration_date:
-            predicted_expiry = predict_expiration_date(item_name, storage_type)
-            if predicted_expiry:
-                expiration_date = predicted_expiry
-                is_ai_predicted = True
+            prediction_result = predict_expiration_and_category(item_name, storage_type)
+            if prediction_result:
+                expiration_date = prediction_result.get('expiration_date')
+                predicted_category = prediction_result.get('category')
+                if expiration_date:
+                    is_ai_predicted = True
+                if predicted_category and category == 'Other':
+                    category = predicted_category
 
         # Update the item
         update_query = """
@@ -737,3 +910,24 @@ def test_gemini():
         )
     except Exception as e:
         return jsonify({"success": False, "message": f"Gemini test failed: {str(e)}"})
+
+
+@pantry_bp.route("/pantry/test-gemini-category", methods=["GET"])
+def test_gemini_category():
+    """Test Gemini AI integration with category prediction"""
+    item_name = request.args.get("item_name", "banana")
+    storage_type = request.args.get("storage_type", "pantry")
+
+    try:
+        prediction_result = get_gemini_prediction_with_category(item_name, storage_type)
+        return jsonify(
+            {
+                "success": True,
+                "item_name": item_name,
+                "storage_type": storage_type,
+                "prediction_result": prediction_result,
+                "message": f"Gemini predicted {prediction_result.get('days', 'unknown')} days and category '{prediction_result.get('category', 'unknown')}' for {item_name} in {storage_type}",
+            }
+        )
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Gemini category test failed: {str(e)}"})
