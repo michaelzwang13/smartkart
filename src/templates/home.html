@@ -368,14 +368,14 @@
     }
     
     .carousel-item:nth-child(1) { 
-      transform: translateX(-320px) rotateY(-10deg) scale(0.85);
+      transform: translateX(-400px) rotateY(-12deg) scale(0.82);
       z-index: 1;
-      opacity: 0.8;
+      opacity: 0.75;
     }
     .carousel-item:nth-child(2) { 
-      transform: translateX(-160px) rotateY(-5deg) scale(0.92);
+      transform: translateX(-200px) rotateY(-6deg) scale(0.90);
       z-index: 2;
-      opacity: 0.9;
+      opacity: 0.85;
     }
     .carousel-item:nth-child(3) { 
       transform: translateX(0) rotateY(0deg) scale(1);
@@ -383,14 +383,14 @@
       opacity: 1;
     }
     .carousel-item:nth-child(4) { 
-      transform: translateX(160px) rotateY(5deg) scale(0.92);
+      transform: translateX(200px) rotateY(6deg) scale(0.90);
       z-index: 2;
-      opacity: 0.9;
+      opacity: 0.85;
     }
     .carousel-item:nth-child(5) { 
-      transform: translateX(320px) rotateY(10deg) scale(0.85);
+      transform: translateX(400px) rotateY(12deg) scale(0.82);
       z-index: 1;
-      opacity: 0.8;
+      opacity: 0.75;
     }
     
     
@@ -1995,11 +1995,11 @@
       
       // Define position configurations for each slot (5 cards: 2 left + 1 center + 2 right)
       const positions = [
-        { x: -320, rotation: -10, scale: 0.85, opacity: 0.8, zIndex: 1 },  // Far left
-        { x: -160, rotation: -5, scale: 0.92, opacity: 0.9, zIndex: 2 },   // Near left
-        { x: 0, rotation: 0, scale: 1, opacity: 1, zIndex: 5 },            // Center
-        { x: 160, rotation: 5, scale: 0.92, opacity: 0.9, zIndex: 2 },     // Near right
-        { x: 320, rotation: 10, scale: 0.85, opacity: 0.8, zIndex: 1 },    // Far right
+        { x: -400, rotation: -12, scale: 0.82, opacity: 0.75, zIndex: 1 },  // Far left
+        { x: -200, rotation: -6, scale: 0.90, opacity: 0.85, zIndex: 2 },   // Near left
+        { x: 0, rotation: 0, scale: 1, opacity: 1, zIndex: 5 },             // Center
+        { x: 200, rotation: 6, scale: 0.90, opacity: 0.85, zIndex: 2 },     // Near right
+        { x: 400, rotation: 12, scale: 0.82, opacity: 0.75, zIndex: 1 },    // Far right
       ];
       
       items.forEach((item, index) => {
