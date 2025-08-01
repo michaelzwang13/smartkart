@@ -271,10 +271,6 @@ def shopping_lists():
     return render_template("shopping_list.html")
 
 
-@shopping_bp.route("/rewards")
-def rewards():
-    return render_template("reward.html")
-
 
 @shopping_bp.route("/budget")
 def budget():

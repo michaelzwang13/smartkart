@@ -40,24 +40,6 @@ CREATE TABLE cart_item (
     FOREIGN KEY (user_ID) REFERENCES user_account(user_ID)
 );
 
--- Create the achievements table
-CREATE TABLE achievements (
-    achievement_ID INT AUTO_INCREMENT,
-    name VARCHAR(100) NOT NULL,
-    points INT NOT NULL,
-    description VARCHAR(500) NOT NULL,
-    PRIMARY KEY (achievement_ID)
-);
-
--- Create the user_achievements table
-CREATE TABLE user_achievements (
-    user_ID VARCHAR(50),
-    achievement_ID INT NOT NULL,
-    date_earned DATETIME NOT NULL,
-    PRIMARY KEY (user_ID, achievement_ID),
-    FOREIGN KEY (user_ID) REFERENCES user_account(user_ID),
-    FOREIGN KEY (achievement_ID) REFERENCES achievements(achievement_ID)
-);
 
 -- Create the budget table
 CREATE TABLE budget (
