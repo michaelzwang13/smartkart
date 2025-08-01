@@ -392,11 +392,6 @@
       z-index: 1;
       opacity: 0.8;
     }
-    .carousel-item:nth-child(6) { 
-      transform: translateX(460px) rotateY(15deg) scale(0.8);
-      z-index: 0;
-      opacity: 0.7;
-    }
     
     
     .action-card {
@@ -847,11 +842,10 @@
       }
       
       .carousel-item:nth-child(1) { transform: rotateY(0deg) translateZ(350px); }
-      .carousel-item:nth-child(2) { transform: rotateY(60deg) translateZ(350px); }
-      .carousel-item:nth-child(3) { transform: rotateY(120deg) translateZ(350px); }
-      .carousel-item:nth-child(4) { transform: rotateY(180deg) translateZ(350px); }
-      .carousel-item:nth-child(5) { transform: rotateY(240deg) translateZ(350px); }
-      .carousel-item:nth-child(6) { transform: rotateY(300deg) translateZ(350px); }
+      .carousel-item:nth-child(2) { transform: rotateY(72deg) translateZ(350px); }
+      .carousel-item:nth-child(3) { transform: rotateY(144deg) translateZ(350px); }
+      .carousel-item:nth-child(4) { transform: rotateY(216deg) translateZ(350px); }
+      .carousel-item:nth-child(5) { transform: rotateY(288deg) translateZ(350px); }
       
       .action-card {
         padding: var(--spacing-lg);
@@ -925,11 +919,10 @@
       }
       
       .carousel-item:nth-child(1) { transform: rotateY(0deg) translateZ(250px); }
-      .carousel-item:nth-child(2) { transform: rotateY(60deg) translateZ(250px); }
-      .carousel-item:nth-child(3) { transform: rotateY(120deg) translateZ(250px); }
-      .carousel-item:nth-child(4) { transform: rotateY(180deg) translateZ(250px); }
-      .carousel-item:nth-child(5) { transform: rotateY(240deg) translateZ(250px); }
-      .carousel-item:nth-child(6) { transform: rotateY(300deg) translateZ(250px); }
+      .carousel-item:nth-child(2) { transform: rotateY(72deg) translateZ(250px); }
+      .carousel-item:nth-child(3) { transform: rotateY(144deg) translateZ(250px); }
+      .carousel-item:nth-child(4) { transform: rotateY(216deg) translateZ(250px); }
+      .carousel-item:nth-child(5) { transform: rotateY(288deg) translateZ(250px); }
       
       .action-card {
         padding: var(--spacing-md);
@@ -1524,17 +1517,6 @@
             </div>
             
             <div class="carousel-item">
-              <div class="action-card">
-                <div class="action-icon">
-                  <i class="fas fa-plus" aria-hidden="true"></i>
-                </div>
-                <h3 class="action-title">Coming Soon</h3>
-                <p class="action-description">More features in development</p>
-              </div>
-            </div>
-            
-            
-            <div class="carousel-item">
               <a href="{{ url_for('shopping.budget') }}" class="action-card">
                 <div class="action-icon">
                   <i class="fas fa-chart-line" aria-hidden="true"></i>
@@ -1780,8 +1762,8 @@
     }
 
     // Interactive Card Stack Functionality
-    let currentSlide = 3; // Start with center card (index 3) - now "Start Shopping" with 7 cards
-    const totalSlides = 7;
+    let currentSlide = 2; // Start with center card (index 2) - "Start Shopping" with 5 cards
+    const totalSlides = 5;
     let autoRotateInterval;
     let isUserInteracting = false;
     let lastNavigationTime = 0;
@@ -2011,21 +1993,19 @@
     function updateCarousel() {
       const items = document.querySelectorAll('.carousel-item');
       
-      // Define position configurations for each slot (smooth rotation)
+      // Define position configurations for each slot (5 cards: 2 left + 1 center + 2 right)
       const positions = [
-        { x: -540, rotation: -18, scale: 0.75, opacity: 0.5, zIndex: 0 },
-        { x: -360, rotation: -12, scale: 0.8, opacity: 0.7, zIndex: 1 },
-        { x: -180, rotation: -6, scale: 0.9, opacity: 0.85, zIndex: 2 },
-        { x: 0, rotation: 0, scale: 1, opacity: 1, zIndex: 5 },
-        { x: 180, rotation: 6, scale: 0.9, opacity: 0.85, zIndex: 2 },
-        { x: 360, rotation: 12, scale: 0.8, opacity: 0.7, zIndex: 1 },
-        { x: 540, rotation: 18, scale: 0.75, opacity: 0.5, zIndex: 0 },
+        { x: -320, rotation: -10, scale: 0.85, opacity: 0.8, zIndex: 1 },  // Far left
+        { x: -160, rotation: -5, scale: 0.92, opacity: 0.9, zIndex: 2 },   // Near left
+        { x: 0, rotation: 0, scale: 1, opacity: 1, zIndex: 5 },            // Center
+        { x: 160, rotation: 5, scale: 0.92, opacity: 0.9, zIndex: 2 },     // Near right
+        { x: 320, rotation: 10, scale: 0.85, opacity: 0.8, zIndex: 1 },    // Far right
       ];
       
       items.forEach((item, index) => {
         // Calculate the position index for this item based on current slide
         const positionIndex = (index - currentSlide + totalSlides) % totalSlides;
-        const position = positions[positionIndex] || positions[6];
+        const position = positions[positionIndex] || positions[4];
         
         // Ensure smooth z-index transitions to prevent overlapping
         let zIndex = position.zIndex;
