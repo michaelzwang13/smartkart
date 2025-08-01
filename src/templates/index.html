@@ -25,6 +25,7 @@
       --accent-color: #34d399;
       --success-color: #10b981;
       --warning-color: #f59e0b;
+      --info-color: #3b82f6;
       
       --text-primary: #1f2937;
       --text-secondary: #6b7280;
@@ -73,34 +74,8 @@
       font-family: var(--font-family);
       color: var(--text-primary);
       line-height: 1.6;
-      background: var(--bg-secondary);
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
       overflow-x: hidden;
-    }
-    
-    /* Typography */
-    h1, h2, h3, h4, h5, h6 {
-      font-weight: 600;
-      line-height: 1.2;
-      margin-bottom: var(--spacing-md);
-    }
-    
-    h1 {
-      font-size: clamp(2.5rem, 5vw, 4rem);
-      font-weight: 700;
-    }
-    
-    h2 {
-      font-size: clamp(2rem, 4vw, 3rem);
-    }
-    
-    h3 {
-      font-size: clamp(1.5rem, 3vw, 2rem);
-    }
-    
-    p {
-      font-size: 1.125rem;
-      color: var(--text-secondary);
-      margin-bottom: var(--spacing-md);
     }
     
     /* Header and Navigation */
@@ -130,7 +105,7 @@
       display: flex;
       align-items: center;
       gap: var(--spacing-sm);
-      font-size: 1.5rem;
+      font-size: 1.75rem;
       font-weight: 700;
       color: var(--primary-color);
       text-decoration: none;
@@ -142,15 +117,15 @@
     }
     
     .logo-icon {
-      width: 40px;
-      height: 40px;
+      width: 45px;
+      height: 45px;
       background: var(--primary-gradient);
       border-radius: var(--radius-lg);
       display: flex;
       align-items: center;
       justify-content: center;
       color: white;
-      font-size: 1.2rem;
+      font-size: 1.3rem;
     }
     
     .nav-links {
@@ -193,7 +168,7 @@
       padding: var(--spacing-sm) var(--spacing-lg);
       border-radius: var(--radius-lg);
       text-decoration: none;
-      font-weight: 500;
+      font-weight: 600;
       transition: all 0.3s ease;
       box-shadow: var(--shadow-md);
     }
@@ -259,11 +234,14 @@
     }
     
     .hero h1 {
+      font-size: clamp(2.5rem, 5vw, 4rem);
+      font-weight: 700;
       background: var(--primary-gradient);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
       margin-bottom: var(--spacing-lg);
+      line-height: 1.2;
     }
     
     .hero-description {
@@ -291,6 +269,9 @@
       box-shadow: var(--shadow-md);
       border: none;
       cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: var(--spacing-xs);
     }
     
     .btn-primary:hover {
@@ -315,43 +296,67 @@
       transform: translateY(-2px);
     }
     
+    /* Hero Visual Section */
     .hero-visual {
       display: flex;
       justify-content: center;
       animation: fadeInRight 1s ease;
+      position: relative;
     }
     
-    .hero-image {
-      position: relative;
-      width: 100%;
+    .feature-showcase {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--spacing-lg);
       max-width: 500px;
     }
     
-    .floating-card {
+    .showcase-card {
       background: var(--bg-primary);
       border-radius: var(--radius-xl);
       padding: var(--spacing-lg);
-      box-shadow: var(--shadow-xl);
-      position: absolute;
+      box-shadow: var(--shadow-lg);
+      text-align: center;
+      transition: all 0.3s ease;
       animation: float 6s ease-in-out infinite;
     }
     
-    .floating-card-1 {
-      top: 20%;
-      right: -10%;
-      animation-delay: 0s;
+    .showcase-card:nth-child(1) { animation-delay: 0s; }
+    .showcase-card:nth-child(2) { animation-delay: 1.5s; }
+    .showcase-card:nth-child(3) { animation-delay: 3s; }
+    .showcase-card:nth-child(4) { animation-delay: 4.5s; }
+    
+    .showcase-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-xl);
     }
     
-    .floating-card-2 {
-      bottom: 20%;
-      left: -10%;
-      animation-delay: 2s;
+    .showcase-icon {
+      width: 50px;
+      height: 50px;
+      margin: 0 auto var(--spacing-sm);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.25rem;
     }
     
-    .floating-card-3 {
-      top: 50%;
-      right: 20%;
-      animation-delay: 4s;
+    .showcase-card:nth-child(1) .showcase-icon { background: var(--primary-gradient); }
+    .showcase-card:nth-child(2) .showcase-icon { background: var(--warning-color); }
+    .showcase-card:nth-child(3) .showcase-icon { background: var(--info-color); }
+    .showcase-card:nth-child(4) .showcase-icon { background: var(--success-color); }
+    
+    .showcase-title {
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--spacing-xs);
+    }
+    
+    .showcase-desc {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
     }
     
     /* Features Section */
@@ -382,6 +387,7 @@
     }
     
     .section-title {
+      font-size: clamp(2rem, 4vw, 3rem);
       color: var(--text-primary);
       margin-bottom: var(--spacing-md);
     }
@@ -395,7 +401,7 @@
     
     .features-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
       gap: var(--spacing-xl);
       margin-top: var(--spacing-2xl);
     }
@@ -446,8 +452,10 @@
     }
     
     .feature-title {
+      font-size: 1.5rem;
       color: var(--text-primary);
       margin-bottom: var(--spacing-md);
+      font-weight: 600;
     }
     
     .feature-description {
@@ -468,7 +476,7 @@
     
     .steps-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: var(--spacing-xl);
       margin-top: var(--spacing-2xl);
     }
@@ -479,8 +487,8 @@
     }
     
     .step-number {
-      width: 60px;
-      height: 60px;
+      width: 70px;
+      height: 70px;
       background: var(--primary-gradient);
       border-radius: 50%;
       display: flex;
@@ -488,13 +496,15 @@
       justify-content: center;
       margin: 0 auto var(--spacing-lg);
       color: var(--text-white);
-      font-size: 1.5rem;
+      font-size: 1.75rem;
       font-weight: 700;
     }
     
     .step-title {
+      font-size: 1.25rem;
       color: var(--text-primary);
       margin-bottom: var(--spacing-md);
+      font-weight: 600;
     }
     
     .step-description {
@@ -518,6 +528,7 @@
     .cta h2 {
       color: var(--text-white);
       margin-bottom: var(--spacing-lg);
+      font-size: clamp(2rem, 4vw, 2.5rem);
     }
     
     .cta p {
@@ -536,6 +547,9 @@
       font-size: 1.125rem;
       transition: all 0.3s ease;
       box-shadow: var(--shadow-md);
+      display: inline-flex;
+      align-items: center;
+      gap: var(--spacing-xs);
     }
     
     .btn-white:hover {
@@ -599,7 +613,7 @@
         transform: translateY(0px);
       }
       50% {
-        transform: translateY(-20px);
+        transform: translateY(-15px);
       }
     }
     
@@ -631,16 +645,22 @@
       .btn-secondary {
         width: 100%;
         text-align: center;
+        justify-content: center;
       }
       
-      .floating-card {
-        display: none;
+      .feature-showcase {
+        grid-template-columns: 1fr;
+        max-width: 300px;
       }
       
       .features-grid,
       .steps-grid {
         grid-template-columns: 1fr;
         gap: var(--spacing-lg);
+      }
+      
+      .features-grid {
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       }
       
       h1 {
@@ -683,7 +703,9 @@
   <header class="header">
     <div class="nav-container">
       <a href="{{ url_for('shopping.index') }}" class="logo">
-        <img src="{{ url_for('static', filename='images/preppr-logo.png') }}" alt="Preppr Logo" style="width: 40px; height: 40px; border-radius: var(--radius-lg);">
+        <div class="logo-icon">
+          <i class="fas fa-utensils"></i>
+        </div>
         Preppr
       </a>
       
@@ -706,20 +728,20 @@
     <div class="hero-container">
       <div class="hero-content">
         <div class="hero-badge">
-          <i class="fas fa-sparkles" aria-hidden="true"></i>
-          AI-Powered Shopping Assistant
+          <i class="fas fa-brain" aria-hidden="true"></i>
+          AI-Powered Meal Prep Assistant
         </div>
         
-        <h1>Shop Smarter with AI-Powered Recommendations</h1>
+        <h1>Prep Smarter. Save Time. Eat Better.</h1>
         
         <p class="hero-description">
-          Transform your meal prep experience with Preppr's AI-powered meal planning, pantry tracking, and smart shopping. Save time, money, and reduce food waste while eating better.
+          Transform your meal prep experience with Preppr's intelligent meal planning, pantry tracking, and smart shopping. Reduce food waste, save money, and maintain consistency with your healthy eating goals.
         </p>
         
         <div class="hero-actions">
           <a href="{{ url_for('auth.login') }}" class="btn-primary">
-            Start Shopping Smart
-            <i class="fas fa-arrow-right" style="margin-left: 8px;" aria-hidden="true"></i>
+            <i class="fas fa-rocket"></i>
+            Start Meal Prepping
           </a>
           <a href="#features" class="btn-secondary">
             Learn More
@@ -728,42 +750,37 @@
       </div>
       
       <div class="hero-visual">
-        <div class="hero-image">
-          <!-- Floating cards with feature highlights -->
-          <div class="floating-card floating-card-1">
-            <div style="display: flex; align-items: center; gap: 12px;">
-              <div style="width: 40px; height: 40px; background: var(--success-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
-                <i class="fas fa-check"></i>
-              </div>
-              <div>
-                <div style="font-weight: 600; color: var(--text-primary);">Healthy Choice</div>
-                <div style="font-size: 0.875rem; color: var(--text-secondary);">AI Recommendation</div>
-              </div>
+        <div class="feature-showcase">
+          <div class="showcase-card">
+            <div class="showcase-icon">
+              <i class="fas fa-brain"></i>
             </div>
+            <div class="showcase-title">AI Meal Plans</div>
+            <div class="showcase-desc">Generated weekly plans</div>
           </div>
           
-          <div class="floating-card floating-card-2">
-            <div style="display: flex; align-items: center; gap: 12px;">
-              <div style="width: 40px; height: 40px; background: var(--primary-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
-                <i class="fas fa-dollar-sign"></i>
-              </div>
-              <div>
-                <div style="font-weight: 600; color: var(--text-primary);">Budget Saved</div>
-                <div style="font-size: 0.875rem; color: var(--text-secondary);">$23.50 this trip</div>
-              </div>
+          <div class="showcase-card">
+            <div class="showcase-icon">
+              <i class="fas fa-clock"></i>
             </div>
+            <div class="showcase-title">Batch Prep</div>
+            <div class="showcase-desc">Efficient cooking sessions</div>
           </div>
           
-          <div class="floating-card floating-card-3">
-            <div style="display: flex; align-items: center; gap: 12px;">
-              <div style="width: 40px; height: 40px; background: var(--warning-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
-                <i class="fas fa-exclamation-triangle"></i>
-              </div>
-              <div>
-                <div style="font-weight: 600; color: var(--text-primary);">Impulse Alert</div>
-                <div style="font-size: 0.875rem; color: var(--text-secondary);">Consider alternatives</div>
-              </div>
+          <div class="showcase-card">
+            <div class="showcase-icon">
+              <i class="fas fa-archive"></i>
             </div>
+            <div class="showcase-title">Pantry Tracking</div>
+            <div class="showcase-desc">Expiration predictions</div>
+          </div>
+          
+          <div class="showcase-card">
+            <div class="showcase-icon">
+              <i class="fas fa-trophy"></i>
+            </div>
+            <div class="showcase-title">Gamification</div>
+            <div class="showcase-desc">XP, streaks & achievements</div>
           </div>
         </div>
       </div>
@@ -774,10 +791,10 @@
   <section id="features" class="features">
     <div class="features-container">
       <div class="section-header">
-        <span class="section-badge">Features</span>
-        <h2 class="section-title">Why Choose Preppr?</h2>
+        <span class="section-badge">Core Features</span>
+        <h2 class="section-title">Everything You Need for Smart Meal Prep</h2>
         <p class="section-description">
-          Experience the future of shopping with our AI-powered platform designed to help you make smarter, healthier, and more budget-conscious decisions.
+          Experience the future of meal preparation with our comprehensive suite of AI-powered tools designed to streamline your kitchen workflow.
         </p>
       </div>
       
@@ -786,59 +803,59 @@
           <div class="feature-icon">
             <i class="fas fa-brain" aria-hidden="true"></i>
           </div>
-          <h3 class="feature-title">AI-Powered Recommendations</h3>
+          <h3 class="feature-title">AI-Powered Meal Planning</h3>
           <p class="feature-description">
-            Get personalized suggestions for healthier alternatives based on your shopping habits and dietary preferences.
+            Generate personalized weekly meal plans using Google Gemini AI based on your pantry items, time constraints, and dietary preferences. Never run out of meal ideas again.
           </p>
         </div>
         
         <div class="feature-card">
           <div class="feature-icon">
-            <i class="fas fa-wallet" aria-hidden="true"></i>
+            <i class="fas fa-clock" aria-hidden="true"></i>
           </div>
-          <h3 class="feature-title">Smart Budget Tracking</h3>
+          <h3 class="feature-title">Batch Prep Scheduling</h3>
           <p class="feature-description">
-            Monitor your expenses in real-time and receive alerts when you're approaching your budget limits.
+            Optimize your cooking time with intelligent batch prep schedules. Group meals into efficient cooking sessions that maximize your productivity in the kitchen.
           </p>
         </div>
         
         <div class="feature-card">
           <div class="feature-icon">
-            <i class="fas fa-shield-alt" aria-hidden="true"></i>
+            <i class="fas fa-archive" aria-hidden="true"></i>
           </div>
-          <h3 class="feature-title">Impulse Purchase Prevention</h3>
+          <h3 class="feature-title">Smart Pantry Tracking</h3>
           <p class="feature-description">
-            Our AI identifies potential impulse purchases and helps you make more mindful shopping decisions.
+            Keep track of your pantry inventory with AI-powered expiration date predictions. Reduce food waste and always know what ingredients you have available.
           </p>
         </div>
         
         <div class="feature-card">
           <div class="feature-icon">
-            <i class="fas fa-barcode" aria-hidden="true"></i>
+            <i class="fas fa-shopping-cart" aria-hidden="true"></i>
           </div>
-          <h3 class="feature-title">Quick Barcode Scanning</h3>
+          <h3 class="feature-title">Intelligent Shopping Lists</h3>
           <p class="feature-description">
-            Instantly scan products to add them to your cart and get comprehensive nutritional information.
+            Automatically generate shopping lists from your meal plans. Track costs, set budgets, and make smarter purchasing decisions with real-time budget monitoring.
           </p>
         </div>
         
         <div class="feature-card">
           <div class="feature-icon">
-            <i class="fas fa-heart" aria-hidden="true"></i>
+            <i class="fas fa-trophy" aria-hidden="true"></i>
           </div>
-          <h3 class="feature-title">Health-Focused Shopping</h3>
+          <h3 class="feature-title">Gamified Experience</h3>
           <p class="feature-description">
-            Make healthier choices with detailed nutritional analysis and wellness-oriented product suggestions.
+            Stay motivated with XP points, meal prep streaks, achievements, and progress visualization. Turn healthy eating into an engaging, rewarding experience.
           </p>
         </div>
         
         <div class="feature-card">
           <div class="feature-icon">
-            <i class="fas fa-mobile-alt" aria-hidden="true"></i>
+            <i class="fas fa-chart-line" aria-hidden="true"></i>
           </div>
-          <h3 class="feature-title">Seamless Mobile Experience</h3>
+          <h3 class="feature-title">Budget & Analytics</h3>
           <p class="feature-description">
-            Enjoy a smooth, intuitive shopping experience optimized for mobile devices and on-the-go use.
+            Monitor your spending with detailed cost tracking per meal and overall savings analysis. Make data-driven decisions about your food budget.
           </p>
         </div>
       </div>
@@ -849,35 +866,35 @@
   <section id="how-it-works" class="how-it-works">
     <div class="steps-container">
       <div class="section-header">
-        <span class="section-badge">How It Works</span>
-        <h2 class="section-title">Three Simple Steps to Smarter Shopping</h2>
+        <span class="section-badge">Getting Started</span>
+        <h2 class="section-title">How Preppr Works</h2>
         <p class="section-description">
-          Get started with Preppr in minutes and transform your meal prep experience forever.
+          Get started with intelligent meal prepping in three simple steps and transform your kitchen routine forever.
         </p>
       </div>
       
       <div class="steps-grid">
         <div class="step-card">
           <div class="step-number">1</div>
-          <h3 class="step-title">Scan & Add Items</h3>
+          <h3 class="step-title">Set Your Preferences</h3>
           <p class="step-description">
-            Use your smartphone to quickly scan product barcodes and add items to your smart shopping cart.
+            Tell us about your dietary preferences, time constraints, and budget. Input your current pantry items and let our AI understand your needs.
           </p>
         </div>
         
         <div class="step-card">
           <div class="step-number">2</div>
-          <h3 class="step-title">Get AI Recommendations</h3>
+          <h3 class="step-title">Get AI-Generated Plans</h3>
           <p class="step-description">
-            Receive instant recommendations for healthier alternatives, better deals, and budget-friendly options.
+            Receive personalized weekly meal plans with batch prep schedules, shopping lists, and cost breakdowns tailored to your lifestyle and goals.
           </p>
         </div>
         
         <div class="step-card">
           <div class="step-number">3</div>
-          <h3 class="step-title">Shop with Confidence</h3>
+          <h3 class="step-title">Execute & Track Progress</h3>
           <p class="step-description">
-            Make informed decisions with real-time budget tracking and impulse purchase alerts.
+            Follow your optimized prep schedule, track your pantry inventory, and earn achievements as you build consistent, healthy eating habits.
           </p>
         </div>
       </div>
@@ -887,13 +904,13 @@
   <!-- Call to Action Section -->
   <section class="cta">
     <div class="cta-container">
-      <h2>Ready to Transform Your Shopping Experience?</h2>
+      <h2>Ready to Revolutionize Your Meal Prep?</h2>
       <p>
-        Join thousands of meal preppers who are already saving time and money while eating better with Preppr.
+        Join the future of intelligent meal preparation. Save hours every week, reduce food waste, and maintain your healthy eating goals with AI-powered assistance.
       </p>
       <a href="{{ url_for('auth.login') }}" class="btn-white">
-        Get Started Today
-        <i class="fas fa-arrow-right" style="margin-left: 8px;" aria-hidden="true"></i>
+        <i class="fas fa-utensils"></i>
+        Start Your Meal Prep Journey
       </a>
     </div>
   </section>
@@ -948,12 +965,22 @@
     }, observerOptions);
 
     // Observe feature cards and step cards
-    document.querySelectorAll('.feature-card, .step-card').forEach(card => {
+    document.querySelectorAll('.feature-card, .step-card, .showcase-card').forEach(card => {
       card.style.opacity = '0';
       card.style.transform = 'translateY(20px)';
       card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
       observer.observe(card);
     });
+
+    // Add mobile menu functionality (if needed in future)
+    const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+    const navLinks = document.querySelector('.nav-links');
+    
+    if (mobileMenuBtn) {
+      mobileMenuBtn.addEventListener('click', function() {
+        navLinks.classList.toggle('active');
+      });
+    }
   </script>
 </body>
 </html>
