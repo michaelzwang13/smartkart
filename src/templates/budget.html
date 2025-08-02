@@ -546,108 +546,10 @@
       box-shadow: var(--shadow-lg);
     }
     
-    /* Category Breakdown */
-    .category-section {
-      background: var(--bg-primary);
-      border-radius: var(--radius-xl);
-      padding: var(--spacing-xl);
-      border: 1px solid var(--border-light);
-      box-shadow: var(--shadow-md);
-      animation: fadeInUp 0.8s ease 0.6s both;
-    }
-    
-    .section-title {
-      font-size: 1.5rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: var(--spacing-lg);
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-sm);
-    }
-    
-    .category-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: var(--spacing-xl);
-    }
-    
-    .category-list {
-      display: flex;
-      flex-direction: column;
-      gap: var(--spacing-md);
-    }
-    
-    .category-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: var(--spacing-md);
-      background: var(--bg-secondary);
-      border-radius: var(--radius-lg);
-      border: 1px solid var(--border-light);
-    }
-    
-    .category-info {
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-md);
-    }
-    
-    .category-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--text-white);
-      font-size: 1rem;
-    }
-    
-    .category-details {
-      display: flex;
-      flex-direction: column;
-    }
-    
-    .category-name {
-      font-weight: 600;
-      color: var(--text-primary);
-    }
-    
-    .category-progress {
-      font-size: 0.875rem;
-      color: var(--text-secondary);
-    }
-    
-    .category-amount {
-      font-weight: 600;
-      color: var(--text-primary);
-    }
-    
-    .progress-bar {
-      width: 100%;
-      height: 8px;
-      background: var(--bg-tertiary);
-      border-radius: 4px;
-      overflow: hidden;
-      margin-top: var(--spacing-xs);
-    }
-    
-    .progress-fill {
-      height: 100%;
-      background: var(--primary-gradient);
-      border-radius: 4px;
-      transition: width 0.5s ease;
-    }
     
     /* Responsive Design */
     @media (max-width: 1024px) {
       .dashboard-grid {
-        grid-template-columns: 1fr;
-      }
-      
-      .category-grid {
         grid-template-columns: 1fr;
       }
     }
@@ -1108,73 +1010,6 @@
         </div>
       </div>
 
-      <!-- Category Breakdown -->
-      <section class="category-section">
-        <h2 class="section-title">
-          <i class="fas fa-chart-pie" aria-hidden="true"></i>
-          Category Breakdown
-        </h2>
-        <div class="category-grid">
-          <div class="category-list">
-            <div class="category-item">
-              <div class="category-info">
-                <div class="category-icon" style="background: var(--success-gradient);">
-                  <i class="fas fa-apple-alt"></i>
-                </div>
-                <div class="category-details">
-                  <div class="category-name">Fresh Produce</div>
-                  <div class="category-progress">$120 of $200</div>
-                  <div class="progress-bar">
-                    <div class="progress-fill" style="width: 60%;"></div>
-                  </div>
-                </div>
-              </div>
-              <div class="category-amount">$120.00</div>
-            </div>
-            
-            <div class="category-item">
-              <div class="category-info">
-                <div class="category-icon" style="background: var(--warning-gradient);">
-                  <i class="fas fa-bread-slice"></i>
-                </div>
-                <div class="category-details">
-                  <div class="category-name">Bakery & Dairy</div>
-                  <div class="category-progress">$85 of $150</div>
-                  <div class="progress-bar">
-                    <div class="progress-fill" style="width: 57%;"></div>
-                  </div>
-                </div>
-              </div>
-              <div class="category-amount">$85.00</div>
-            </div>
-            
-            <div class="category-item">
-              <div class="category-info">
-                <div class="category-icon" style="background: var(--primary-gradient);">
-                  <i class="fas fa-fish"></i>
-                </div>
-                <div class="category-details">
-                  <div class="category-name">Meat & Seafood</div>
-                  <div class="category-progress">$180 of $250</div>
-                  <div class="progress-bar">
-                    <div class="progress-fill" style="width: 72%;"></div>
-                  </div>
-                </div>
-              </div>
-              <div class="category-amount">$180.00</div>
-            </div>
-          </div>
-          
-          <div class="chart-container">
-            <div class="chart-header">
-              <h3 class="chart-title">Category Distribution</h3>
-            </div>
-            <div class="chart-wrapper" style="min-height: 280px;">
-              <canvas id="categoryChart" class="chart-canvas"></canvas>
-            </div>
-          </div>
-        </div>
-      </section>
     </div>
 
     <!-- Shopping Details Popup Modal -->
@@ -1213,7 +1048,6 @@
   <script>
     // Initialize charts and functionality
     let spendingChart;
-    let categoryChart;
     
     // Mock data removed for debugging - using real API data only
     
@@ -1276,49 +1110,6 @@
       });
     }
     
-    // Initialize category chart
-    function initCategoryChart() {
-      const ctx = document.getElementById('categoryChart').getContext('2d');
-      
-      categoryChart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-          labels: [],
-          datasets: [{
-            data: [],
-            backgroundColor: ['#10b981', '#667eea', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'],
-            borderWidth: 0,
-            hoverOffset: 10
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              position: 'bottom',
-              labels: {
-                padding: 20,
-                usePointStyle: true,
-                font: {
-                  size: 12
-                }
-              }
-            },
-            tooltip: {
-              callbacks: {
-                label: function(context) {
-                  const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                  const percentage = ((context.raw / total) * 100).toFixed(1);
-                  return context.label + ': $' + context.raw + ' (' + percentage + '%)';
-                }
-              }
-            }
-          },
-          cutout: '60%'
-        }
-      });
-    }
     
     // Update chart based on time period (legacy function - now using loadSpendingTrends directly)
     function updateChart(period) {
@@ -1431,84 +1222,6 @@
       }
     }
     
-    // Load category data from API
-    async function loadCategoryData() {
-      try {
-        const response = await fetch('/api/budget/categories');
-        if (response.ok) {
-          const data = await response.json();
-          
-          if (data.categories) {
-            // Update category chart
-            const categories = Object.keys(data.categories).filter(key => data.categories[key].amount > 0);
-            const amounts = categories.map(key => data.categories[key].amount);
-            const colors = ['#10b981', '#667eea', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
-            
-            categoryChart.data.labels = categories;
-            categoryChart.data.datasets[0].data = amounts;
-            categoryChart.data.datasets[0].backgroundColor = colors.slice(0, categories.length);
-            categoryChart.update();
-            
-            // Update category list in DOM
-            updateCategoryList(data.categories);
-          }
-        }
-      } catch (error) {
-        console.error('Error loading category data:', error);
-      }
-    }
-    
-    // Update category list display
-    function updateCategoryList(categories) {
-      const categoryList = document.querySelector('.category-list');
-      if (!categoryList) return;
-      
-      const colors = {
-        'Fresh Produce': 'var(--success-gradient)',
-        'Meat & Seafood': 'var(--primary-gradient)',
-        'Bakery & Dairy': 'var(--warning-gradient)',
-        'Pantry Items': 'var(--error-gradient)',
-        'Frozen Foods': 'var(--secondary-gradient)',
-        'Beverages': 'var(--accent-gradient)'
-      };
-      
-      const icons = {
-        'Fresh Produce': 'fas fa-apple-alt',
-        'Meat & Seafood': 'fas fa-fish',
-        'Bakery & Dairy': 'fas fa-bread-slice',
-        'Pantry Items': 'fas fa-box',
-        'Frozen Foods': 'fas fa-snowflake',
-        'Beverages': 'fas fa-glass-water'
-      };
-      
-      categoryList.innerHTML = '';
-      
-      Object.entries(categories).forEach(([name, data]) => {
-        if (data.amount > 0) {
-          const percentage = Math.min((data.amount / 250) * 100, 100); // Assuming max $250 per category
-          
-          const categoryItem = document.createElement('div');
-          categoryItem.className = 'category-item';
-          categoryItem.innerHTML = `
-            <div class="category-info">
-              <div class="category-icon" style="background: ${colors[name] || 'var(--primary-gradient)'};">
-                <i class="${icons[name] || 'fas fa-shopping-bag'}"></i>
-              </div>
-              <div class="category-details">
-                <div class="category-name">${name}</div>
-                <div class="category-progress">$${data.amount.toFixed(2)} spent</div>
-                <div class="progress-bar">
-                  <div class="progress-fill" style="width: ${percentage}%;"></div>
-                </div>
-              </div>
-            </div>
-            <div class="category-amount">$${data.amount.toFixed(2)}</div>
-          `;
-          
-          categoryList.appendChild(categoryItem);
-        }
-      });
-    }
     
     // Update chart based on time period
     function updateChart(period) {
@@ -1726,7 +1439,6 @@
       initializeDropdowns();
       handleDropdownResize();
       initSpendingChart();
-      initCategoryChart();
       
       // Chart period controls
       document.querySelectorAll('.chart-btn').forEach(btn => {
@@ -1747,7 +1459,6 @@
       // Load real data
       loadBudgetData();
       loadSpendingTrends('7d');
-      loadCategoryData();
     });
   </script>
 </body>
