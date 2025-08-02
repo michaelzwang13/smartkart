@@ -11,6 +11,7 @@ PyMySQL==1.1.1
 
 # Security
 bcrypt==4.1.2
+PyJWT==2.8.0
 
 # Environment & Configuration
 python-dotenv==1.0.0

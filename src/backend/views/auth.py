@@ -1,23 +1,22 @@
-from flask import Blueprint, render_template, request, session, url_for, redirect, g
+from flask import Blueprint, render_template, request, session, url_for, redirect, g, jsonify
 import bcrypt
 
 from src.database import get_db
 from src.logging_config import get_logger
+from src.auth_utils import AuthUtils, jwt_required
 
 auth_bp = Blueprint("auth", __name__)
 logger = get_logger("preppr.auth")
 
 
 def hash_password_bcrypt(password):
-    """Generates a bcrypt hash for a given password."""
-    salt = bcrypt.gensalt()
-    hashed = bcrypt.hashpw(password.encode("utf-8"), salt)
-    return hashed.decode("utf-8")
+    """Legacy function - use AuthUtils.hash_password instead"""
+    return AuthUtils.hash_password(password)
 
 
 def verify_password_bcrypt(password, hashed_password):
-    """Verifies a password against its bcrypt hash."""
-    return bcrypt.checkpw(password.encode("utf-8"), hashed_password.encode("utf-8"))
+    """Legacy function - use AuthUtils.verify_password instead"""
+    return AuthUtils.verify_password(password, hashed_password)
 
 
 def restore_active_cart(user_ID):
@@ -368,3 +367,262 @@ def logout():
     session.clear()
 
     return redirect(url_for("auth.login"))
+
+
+# JWT API Endpoints
+@auth_bp.route("/api/auth/login", methods=["POST"])
+def api_login():
+    """JWT-based login endpoint for API access"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "Request must be JSON"}), 400
+            
+        user_id = data.get("user_id", "").strip()
+        password = data.get("password", "")
+        
+        if not user_id or not password:
+            return jsonify({"error": "Username and password are required"}), 400
+            
+        # Authenticate user
+        db = get_db()
+        cursor = db.cursor()
+        query = "SELECT * FROM user_account WHERE user_ID = %s"
+        cursor.execute(query, (user_id,))
+        user_data = cursor.fetchone()
+        cursor.close()
+        
+        if not user_data or not verify_password_bcrypt(password, user_data["password"]):
+            logger.warning(
+                "API login failed - invalid credentials",
+                extra={
+                    "user_id": user_id,
+                    "request_id": getattr(g, "request_id", None),
+                },
+            )
+            return jsonify({"error": "Invalid username or password"}), 401
+            
+        # Generate JWT tokens
+        from src.auth_utils import AuthUtils
+        tokens = AuthUtils.generate_tokens(user_id)
+        
+        logger.info(
+            "API login successful",
+            extra={
+                "user_id": user_id,
+                "request_id": getattr(g, "request_id", None),
+            },
+        )
+        
+        return jsonify({
+            "message": "Login successful",
+            "user": {
+                "user_id": user_data["user_ID"],
+                "email": user_data["email"],
+                "first_name": user_data["first_name"],
+                "last_name": user_data["last_name"]
+            },
+            **tokens
+        }), 200
+        
+    except Exception as e:
+        logger.error(
+            "API login failed - server error",
+            extra={
+                "error": str(e),
+                "request_id": getattr(g, "request_id", None),
+            },
+            exc_info=True,
+        )
+        return jsonify({"error": "Login failed. Please try again."}), 500
+
+
+@auth_bp.route("/api/auth/register", methods=["POST"])
+def api_register():
+    """JWT-based registration endpoint for API access"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "Request must be JSON"}), 400
+            
+        first_name = data.get("first_name", "").strip()
+        last_name = data.get("last_name", "").strip()
+        user_id = data.get("user_id", "").strip()
+        password = data.get("password", "")
+        email = data.get("email", "").strip()
+        
+        # Validation
+        if not user_id or not password or not email:
+            return jsonify({"error": "Email, username, and password are required"}), 400
+            
+        if len(user_id) < 3:
+            return jsonify({"error": "Username must be at least 3 characters long"}), 400
+            
+        if len(password) < 6:
+            return jsonify({"error": "Password must be at least 6 characters long"}), 400
+            
+        db = get_db()
+        cursor = db.cursor()
+        
+        # Check if username exists
+        query = "SELECT user_ID FROM user_account WHERE user_ID = %s"
+        cursor.execute(query, (user_id,))
+        if cursor.fetchone():
+            cursor.close()
+            return jsonify({"error": "This username already exists"}), 409
+            
+        # Check if email exists
+        query = "SELECT user_ID FROM user_account WHERE email = %s"
+        cursor.execute(query, (email,))
+        if cursor.fetchone():
+            cursor.close()
+            return jsonify({"error": "This email address is already registered"}), 409
+            
+        # Create user
+        hashed_password = hash_password_bcrypt(password)
+        insert_query = (
+            "INSERT INTO user_account (user_ID, email, password, first_name, last_name) "
+            "VALUES (%s, %s, %s, %s, %s)"
+        )
+        cursor.execute(insert_query, (user_id, email, hashed_password, first_name, last_name))
+        db.commit()
+        cursor.close()
+        
+        # Generate JWT tokens
+        from src.auth_utils import AuthUtils
+        tokens = AuthUtils.generate_tokens(user_id)
+        
+        logger.info(
+            "API registration successful",
+            extra={
+                "user_id": user_id,
+                "request_id": getattr(g, "request_id", None),
+            },
+        )
+        
+        return jsonify({
+            "message": "Registration successful",
+            "user": {
+                "user_id": user_id,
+                "email": email,
+                "first_name": first_name,
+                "last_name": last_name
+            },
+            **tokens
+        }), 201
+        
+    except Exception as e:
+        logger.error(
+            "API registration failed - server error",
+            extra={
+                "error": str(e),
+                "request_id": getattr(g, "request_id", None),
+            },
+            exc_info=True,
+        )
+        return jsonify({"error": "Registration failed. Please try again."}), 500
+
+
+@auth_bp.route("/api/auth/refresh", methods=["POST"])
+def api_refresh():
+    """Refresh JWT access token using refresh token"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "Request must be JSON"}), 400
+            
+        refresh_token = data.get("refresh_token")
+        if not refresh_token:
+            return jsonify({"error": "Refresh token is required"}), 400
+            
+        from src.auth_utils import AuthUtils
+        new_tokens = AuthUtils.refresh_access_token(refresh_token)
+        
+        if not new_tokens:
+            return jsonify({"error": "Invalid or expired refresh token"}), 401
+            
+        return jsonify({
+            "message": "Token refreshed successfully",
+            **new_tokens
+        }), 200
+        
+    except Exception as e:
+        logger.error(
+            "Token refresh failed",
+            extra={
+                "error": str(e),
+                "request_id": getattr(g, "request_id", None),
+            },
+            exc_info=True,
+        )
+        return jsonify({"error": "Token refresh failed"}), 500
+
+
+@auth_bp.route("/api/auth/me", methods=["GET"])
+@jwt_required
+def api_me():
+    """Get current user information using JWT token"""
+    try:
+        user_id = g.current_user_id
+        
+        db = get_db()
+        cursor = db.cursor()
+        query = "SELECT user_ID, email, first_name, last_name FROM user_account WHERE user_ID = %s"
+        cursor.execute(query, (user_id,))
+        user_data = cursor.fetchone()
+        cursor.close()
+        
+        if not user_data:
+            return jsonify({"error": "User not found"}), 404
+            
+        return jsonify({
+            "user": {
+                "user_id": user_data["user_ID"],
+                "email": user_data["email"],
+                "first_name": user_data["first_name"],
+                "last_name": user_data["last_name"]
+            }
+        }), 200
+        
+    except Exception as e:
+        logger.error(
+            "Get user info failed",
+            extra={
+                "error": str(e),
+                "request_id": getattr(g, "request_id", None),
+            },
+            exc_info=True,
+        )
+        return jsonify({"error": "Failed to get user information"}), 500
+
+
+@auth_bp.route("/api/auth/logout", methods=["POST"])
+@jwt_required
+def api_logout():
+    """Logout endpoint for JWT tokens (token invalidation would require blacklist)"""
+    try:
+        # Note: In a production system, you would typically implement a token blacklist
+        # For now, we'll just return success as tokens will expire naturally
+        
+        logger.info(
+            "API logout",
+            extra={
+                "user_id": g.current_user_id,
+                "request_id": getattr(g, "request_id", None),
+            },
+        )
+        
+        return jsonify({
+            "message": "Logout successful. Token will expire naturally."
+        }), 200
+        
+    except Exception as e:
+        logger.error(
+            "API logout failed",
+            extra={
+                "error": str(e),
+                "request_id": getattr(g, "request_id", None),
+            },
+            exc_info=True,
+        )
+        return jsonify({"error": "Logout failed"}), 500
