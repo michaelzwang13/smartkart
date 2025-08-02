@@ -1378,10 +1378,19 @@ document.addEventListener('DOMContentLoaded', function() {
         const diffDays = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
         
         if (diffDays < 0) {
-            return { status: 'expired', text: `Expired ${Math.abs(diffDays)} days ago` };
+            const absDays = Math.abs(diffDays);
+            if (absDays >= 365) {
+                const years = Math.floor(absDays / 365);
+                return { status: 'expired', text: `Expired ${years}+ years ago` };
+            }
+            return { status: 'expired', text: `Expired ${absDays} days ago` };
         } else if (diffDays <= 3) {
             return { status: 'expiring_soon', text: `Expires in ${diffDays} days` };
         } else {
+            if (diffDays >= 365) {
+                const years = Math.floor(diffDays / 365);
+                return { status: 'fresh', text: `Expires in ${years}+ years` };
+            }
             return { status: 'fresh', text: `Expires in ${diffDays} days` };
         }
     }
