@@ -273,6 +273,11 @@
       margin-bottom: 20px;
     }
 
+    .header-actions {
+      display: flex;
+      align-items: center;
+    }
+
     .btn-primary {
       background: var(--primary-gradient);
       color: white;
@@ -749,7 +754,10 @@
   <div class="container">
     <div class="pantry-header">
         <h2>My Pantry</h2>
-        <button id="addItemBtn" class="btn-primary">+ Add Item Manually</button>
+        <div class="header-actions">
+            <button id="deleteExpiredBtn" class="btn-secondary" style="margin-right: 10px;">🗑️ Delete All Expired</button>
+            <button id="addItemBtn" class="btn-primary">+ Add Item Manually</button>
+        </div>
     </div>
     
     <div class="pantry-filters">
@@ -1050,6 +1058,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const addItemBtn = document.getElementById('addItemBtn');
     const addFirstItemBtn = document.getElementById('addFirstItemBtn');
+    const deleteExpiredBtn = document.getElementById('deleteExpiredBtn');
     const addItemModal = document.getElementById('addItemModal');
     const addItemForm = document.getElementById('addItemForm');
     const editItemModal = document.getElementById('editItemModal');
@@ -1060,6 +1069,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Modal controls
     addItemBtn.addEventListener('click', () => addItemModal.style.display = 'flex');
     addFirstItemBtn.addEventListener('click', () => addItemModal.style.display = 'flex');
+    
+    // Delete expired items
+    deleteExpiredBtn.addEventListener('click', deleteAllExpiredItems);
     
     // Handle custom unit functionality for Add Item modal
     const unitSelect = document.getElementById('unitSelect');
@@ -1409,6 +1421,57 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('totalItems').textContent = totalItems;
         document.getElementById('expiredItems').textContent = expiredItems;
         document.getElementById('expiringSoonItems').textContent = expiringSoonItems;
+    }
+    
+    async function deleteAllExpiredItems() {
+        try {
+            // First get all current items to find expired ones
+            const response = await fetch('/api/pantry/items');
+            const result = await response.json();
+            
+            if (!result.success) {
+                alert('Error fetching pantry items');
+                return;
+            }
+            
+            const expiredItems = result.items.filter(item => {
+                const status = getExpiryStatus(item.expiration_date);
+                return status.status === 'expired';
+            });
+            
+            if (expiredItems.length === 0) {
+                alert('No expired items found to delete.');
+                return;
+            }
+            
+            const confirmDelete = confirm(`Are you sure you want to delete ${expiredItems.length} expired item(s)? This action cannot be undone.`);
+            
+            if (!confirmDelete) return;
+            
+            // Delete each expired item
+            let deletedCount = 0;
+            for (const item of expiredItems) {
+                const deleteResponse = await fetch(`/api/pantry/items/${item.pantry_item_id}`, {
+                    method: 'DELETE'
+                });
+                
+                const deleteResult = await deleteResponse.json();
+                if (deleteResult.success) {
+                    deletedCount++;
+                }
+            }
+            
+            if (deletedCount > 0) {
+                alert(`Successfully deleted ${deletedCount} expired item(s).`);
+                loadPantryItems(); // Refresh the display
+            } else {
+                alert('Error deleting expired items. Please try again.');
+            }
+            
+        } catch (error) {
+            console.error('Delete expired items error:', error);
+            alert('Error deleting expired items. Please try again.');
+        }
     }
     
     // Global functions for item actions
