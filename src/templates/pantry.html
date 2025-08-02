@@ -322,12 +322,19 @@
       color: var(--text-primary);
     }
 
-    .filter-group select {
+    .filter-group select, .filter-group input {
       padding: 8px;
       border: 1px solid var(--border-light);
       border-radius: var(--radius-sm);
       background: var(--bg-primary);
       color: var(--text-primary);
+      font-family: var(--font-family);
+      font-size: 1rem;
+    }
+    
+    .filter-group input:focus {
+      outline: none;
+      border-color: var(--primary-color);
     }
 
     .pantry-stats {
