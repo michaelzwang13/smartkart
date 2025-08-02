@@ -82,10 +82,21 @@ def home():
     cursor.execute(active_query, (user_ID,))
     active_trip = cursor.fetchone()
 
+    # Get count of meals prepped (recipes created)
+    meals_prepped_query = """
+    SELECT COUNT(*) as meals_prepped
+    FROM recipes r
+    JOIN meal_plans mp ON r.plan_id = mp.plan_id
+    WHERE mp.user_id = %s
+    """
+    cursor.execute(meals_prepped_query, (user_ID,))
+    meals_prepped_result = cursor.fetchone()
+    meals_prepped = meals_prepped_result.get("meals_prepped", 0) if meals_prepped_result else 0
+
     cursor.close()
 
     return render_template(
-        "home.html", user_ID=user_ID, user_first_name=user_first_name, cart_history=cart_history, active_trip=active_trip, total_trips=total_trips
+        "home.html", user_ID=user_ID, user_first_name=user_first_name, cart_history=cart_history, active_trip=active_trip, total_trips=total_trips, meals_prepped=meals_prepped
     )
 
 
