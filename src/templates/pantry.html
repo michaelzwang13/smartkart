@@ -762,6 +762,11 @@
     
     <div class="pantry-filters">
         <div class="filter-group">
+            <label>Search Items:</label>
+            <input type="text" id="searchFilter" placeholder="Search by item name...">
+        </div>
+        
+        <div class="filter-group">
             <label>Storage Location:</label>
             <select id="storageFilter">
                 <option value="">All Locations</option>
@@ -1131,6 +1136,7 @@ document.addEventListener('DOMContentLoaded', function() {
     loadPantryItems();
     
     // Filter event listeners
+    document.getElementById('searchFilter').addEventListener('input', loadPantryItems);
     document.getElementById('storageFilter').addEventListener('change', loadPantryItems);
     document.getElementById('categoryFilter').addEventListener('change', loadPantryItems);
     document.getElementById('expiryFilter').addEventListener('change', loadPantryItems);
@@ -1226,6 +1232,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     async function loadPantryItems() {
         try {
+            const searchFilter = document.getElementById('searchFilter').value.toLowerCase().trim();
             const storageFilter = document.getElementById('storageFilter').value;
             const categoryFilter = document.getElementById('categoryFilter').value;
             const expiryFilter = document.getElementById('expiryFilter').value;
@@ -1239,8 +1246,17 @@ document.addEventListener('DOMContentLoaded', function() {
             const result = await response.json();
             
             if (result.success) {
-                displayPantryItems(result.items);
-                updateStats(result.items);
+                let filteredItems = result.items;
+                
+                // Apply client-side search filter
+                if (searchFilter) {
+                    filteredItems = result.items.filter(item => 
+                        item.item_name.toLowerCase().includes(searchFilter)
+                    );
+                }
+                
+                displayPantryItems(filteredItems);
+                updateStats(filteredItems);
             } else {
                 console.error('Error loading pantry items:', result.message);
             }
@@ -1253,17 +1269,38 @@ document.addEventListener('DOMContentLoaded', function() {
         if (items.length === 0) {
             pantryItems.style.display = 'none';
             emptyState.style.display = 'block';
+            
+            const searchFilter = document.getElementById('searchFilter').value.trim();
+            const emptyStateElement = document.getElementById('emptyState');
+            
+            if (searchFilter) {
+                emptyStateElement.innerHTML = `
+                    <h3>No items found</h3>
+                    <p>No pantry items match your search for "${searchFilter}". Try a different search term.</p>
+                `;
+            } else {
+                emptyStateElement.innerHTML = `
+                    <h3>Your pantry is empty</h3>
+                    <p>Start by completing a shopping trip or adding items manually.</p>
+                    <button id="addFirstItemBtn" class="btn-primary">Add Your First Item</button>
+                `;
+                // Re-add event listener for the new button
+                document.getElementById('addFirstItemBtn').addEventListener('click', () => {
+                    document.getElementById('addItemModal').style.display = 'flex';
+                });
+            }
             return;
         }
         
         pantryItems.style.display = 'block';
         emptyState.style.display = 'none';
         
+        const searchFilter = document.getElementById('searchFilter').value.trim();
         const storageFilter = document.getElementById('storageFilter').value;
         const categoryFilter = document.getElementById('categoryFilter').value;
         
-        // If filtering by specific category or storage, use simple grid layout
-        if (categoryFilter || storageFilter) {
+        // If filtering by specific category, storage, or search, use simple grid layout
+        if (categoryFilter || storageFilter || searchFilter) {
             pantryItems.innerHTML = `<div class="pantry-grid">${items.map(item => createItemHTML(item)).join('')}</div>`;
             return;
         }
