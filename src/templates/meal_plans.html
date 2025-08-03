@@ -601,6 +601,11 @@
       flex-direction: column;
     }
     
+    .calendar-day.week-view {
+      min-height: 200px;
+      padding: var(--spacing-sm);
+    }
+    
     .calendar-day:hover {
       background: var(--bg-secondary);
     }
@@ -664,6 +669,79 @@
       font-size: 0.7rem;
       text-align: center;
       margin-top: 2px;
+    }
+    
+    .week-view .calendar-meals {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-xs);
+      flex: 1;
+    }
+    
+    .week-view .calendar-meal-slot {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-xs);
+      min-height: 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      transition: all 0.2s ease;
+    }
+    
+    .week-view .calendar-meal-slot.has-meal {
+      border: none;
+      box-shadow: var(--shadow-sm);
+    }
+    
+    .week-view .calendar-meal-slot.breakfast.has-meal {
+      background: var(--warning-color);
+      color: var(--text-white);
+    }
+    
+    .week-view .calendar-meal-slot.lunch.has-meal {
+      background: var(--primary-color);
+      color: var(--text-white);
+    }
+    
+    .week-view .calendar-meal-slot.dinner.has-meal {
+      background: var(--secondary-color);
+      color: var(--text-white);
+    }
+    
+    .week-view .calendar-meal-slot.snack.has-meal {
+      background: var(--accent-color);
+      color: var(--text-white);
+    }
+    
+    .week-view .calendar-meal-type {
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      opacity: 0.8;
+      margin-bottom: 2px;
+    }
+    
+    .week-view .calendar-meal-slot.has-meal .calendar-meal-type {
+      opacity: 0.9;
+    }
+    
+    .week-view .calendar-meal-name {
+      font-size: 0.75rem;
+      font-weight: 500;
+      line-height: 1.2;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+    
+    .week-view .calendar-meal-slot:not(.has-meal) .calendar-meal-type {
+      color: var(--text-muted);
+      font-style: italic;
     }
     
     .calendar-legend {
@@ -791,6 +869,11 @@
         padding: 4px;
       }
       
+      .calendar-day.week-view {
+        min-height: 150px;
+        padding: var(--spacing-xs);
+      }
+      
       .calendar-day-number {
         font-size: 0.75rem;
       }
@@ -806,6 +889,22 @@
       
       .calendar-legend-item {
         font-size: 0.75rem;
+      }
+      
+      .week-view .calendar-meal-slot {
+        min-height: 32px;
+        padding: 4px 6px;
+      }
+      
+      .week-view .calendar-meal-type {
+        font-size: 0.6rem;
+        margin-bottom: 1px;
+      }
+      
+      .week-view .calendar-meal-name {
+        font-size: 0.65rem;
+        -webkit-line-clamp: 1;
+        line-clamp: 1;
       }
     }
   </style>
@@ -1152,9 +1251,99 @@
         const cellDate = new Date(currentWeekStart);
         cellDate.setDate(currentWeekStart.getDate() + i);
         
-        const dayCell = createDayCell(cellDate, cellDate.getMonth(), true);
+        const dayCell = createWeekDayCell(cellDate);
         container.appendChild(dayCell);
       }
+    }
+    
+    function createWeekDayCell(date) {
+      const dayCell = document.createElement('div');
+      dayCell.className = 'calendar-day week-view';
+      
+      const today = new Date();
+      const isToday = date.toDateString() === today.toDateString();
+      
+      if (isToday) {
+        dayCell.classList.add('today');
+      }
+      
+      // Day number
+      const dayNumber = document.createElement('div');
+      dayNumber.className = 'calendar-day-number';
+      dayNumber.textContent = date.getDate();
+      dayCell.appendChild(dayNumber);
+      
+      // Meals container
+      const mealsContainer = document.createElement('div');
+      mealsContainer.className = 'calendar-meals';
+      
+      // Find meals for this date
+      const dayMeals = getMealsForDate(date);
+      
+      // Group meals by type
+      const mealsByType = {
+        breakfast: [],
+        lunch: [],
+        dinner: [],
+        snack: []
+      };
+      
+      dayMeals.forEach(meal => {
+        if (mealsByType[meal.type]) {
+          mealsByType[meal.type].push(meal);
+        }
+      });
+      
+      // Create fixed slots for each meal type
+      const mealTypes = ['breakfast', 'lunch', 'dinner'];
+      
+      mealTypes.forEach(type => {
+        const mealSlot = document.createElement('div');
+        mealSlot.className = `calendar-meal-slot ${type}`;
+        
+        const meals = mealsByType[type];
+        if (meals.length > 0) {
+          mealSlot.classList.add('has-meal');
+          
+          // Get the dish name from the first meal (or combine if multiple)
+          const dishName = meals.length === 1 
+            ? getDishName(meals[0]) 
+            : `${getDishName(meals[0])} +${meals.length - 1} more`;
+          
+          mealSlot.innerHTML = `
+            <div class="calendar-meal-type">${type}</div>
+            <div class="calendar-meal-name">${dishName}</div>
+          `;
+          
+          mealSlot.title = meals.map(meal => `${type}: ${getDishName(meal)}`).join('\n');
+        } else {
+          mealSlot.innerHTML = `
+            <div class="calendar-meal-type">No ${type}</div>
+          `;
+        }
+        
+        mealsContainer.appendChild(mealSlot);
+      });
+      
+      if (dayMeals.length > 0) {
+        dayCell.classList.add('has-meals');
+      }
+      
+      dayCell.appendChild(mealsContainer);
+      
+      // Click handler for day details
+      dayCell.addEventListener('click', () => showDayDetails(date, dayMeals));
+      
+      return dayCell;
+    }
+    
+    function getDishName(meal) {
+      // Extract actual dish name from meal name
+      // Meal names might be in format "Day X Breakfast: Dish Name" or just "Dish Name"
+      if (meal.name.includes(':')) {
+        return meal.name.split(':').slice(1).join(':').trim();
+      }
+      return meal.name;
     }
     
     function createDayCell(date, currentMonth, isWeekView = false) {
