@@ -253,7 +253,7 @@ async function handleFormSubmit(event) {
     };
 
     // Check if this is linked to a shopping list item
-    const nameInput = document.getElementById("itemName");
+    let nameInput = document.getElementById("itemName");
     if (nameInput && nameInput.dataset.listItemId) {
       requestBody.list_item_id = parseInt(nameInput.dataset.listItemId);
     }
