@@ -502,7 +502,157 @@
       color: var(--text-primary);
     }
     
-    
+    /* Monthly Progress Wheel Section */
+    .monthly-progress-section {
+      margin-bottom: var(--spacing-2xl);
+      animation: fadeInUp 0.8s ease 0.45s both;
+    }
+
+    .progress-wheel-card {
+      background: linear-gradient(135deg, var(--bg-primary) 0%, rgba(248, 250, 252, 0.9) 100%);
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--border-light);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08), 0 3px 10px rgba(0, 0, 0, 0.04);
+      padding: var(--spacing-xl);
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .progress-wheel-card:hover {
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.12), 0 5px 15px rgba(0, 0, 0, 0.06);
+      transform: translateY(-2px);
+    }
+
+    .progress-wheel-header {
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .progress-wheel-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--spacing-xs);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--spacing-sm);
+    }
+
+    .progress-wheel-subtitle {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      margin-bottom: var(--spacing-md);
+    }
+
+    .progress-wheel-container {
+      position: relative;
+      width: 200px;
+      height: 200px;
+      margin: 0 auto var(--spacing-lg);
+    }
+
+    .progress-wheel {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+
+    .progress-wheel-bg {
+      fill: none;
+      stroke: var(--bg-tertiary);
+      stroke-width: 8;
+    }
+
+    .progress-wheel-fill {
+      fill: none;
+      stroke: var(--primary-color);
+      stroke-width: 8;
+      stroke-linecap: round;
+      stroke-dasharray: 0 628;
+      transition: stroke-dasharray 1s ease-in-out;
+    }
+
+    .progress-wheel-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+
+    .progress-percentage {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--primary-color);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .progress-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .progress-stats {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--spacing-lg);
+      margin-top: var(--spacing-md);
+    }
+
+    .progress-stat {
+      text-align: center;
+      flex: 1;
+    }
+
+    .progress-stat-value {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .progress-stat-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .progress-divider {
+      width: 1px;
+      height: 40px;
+      background: var(--border-light);
+    }
+
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+      .progress-wheel-card {
+        padding: var(--spacing-lg);
+      }
+      
+      .progress-wheel-container {
+        width: 150px;
+        height: 150px;
+      }
+      
+      .progress-percentage {
+        font-size: 2rem;
+      }
+      
+      .progress-stats {
+        flex-direction: column;
+        gap: var(--spacing-md);
+      }
+      
+      .progress-divider {
+        width: 100%;
+        height: 1px;
+      }
+    }
     
     /* Stats Cards */
     .stats-section {
@@ -1829,6 +1979,52 @@
         </div>
       </section>
 
+      <!-- Monthly Meals Progress Section -->
+      <section class="monthly-progress-section">
+        <div class="progress-wheel-card">
+          <div class="progress-wheel-header">
+            <h2 class="progress-wheel-title">
+              <i class="fas fa-target"></i>
+              Monthly Meals Goal
+            </h2>
+            <p class="progress-wheel-subtitle" id="progressMonth">Loading progress...</p>
+          </div>
+          
+          <div class="progress-wheel-container">
+            <svg class="progress-wheel" viewBox="0 0 200 200">
+              <circle class="progress-wheel-bg" cx="100" cy="100" r="90"></circle>
+              <circle class="progress-wheel-fill" cx="100" cy="100" r="90" id="progressCircle"></circle>
+            </svg>
+            
+            <div class="progress-wheel-center">
+              <div class="progress-percentage" id="progressPercentage">0%</div>
+              <div class="progress-label">Complete</div>
+            </div>
+          </div>
+          
+          <div class="progress-stats">
+            <div class="progress-stat">
+              <div class="progress-stat-value" id="completedMeals">0</div>
+              <div class="progress-stat-label">Completed</div>
+            </div>
+            
+            <div class="progress-divider"></div>
+            
+            <div class="progress-stat">
+              <div class="progress-stat-value" id="goalTarget">60</div>
+              <div class="progress-stat-label">Goal</div>
+            </div>
+            
+            <div class="progress-divider"></div>
+            
+            <div class="progress-stat">
+              <div class="progress-stat-value" id="remainingMeals">60</div>
+              <div class="progress-stat-label">Remaining</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Stats Section -->
       <section class="stats-section">
         <h2 class="section-title">Your Preppr Insights</h2>
@@ -2903,6 +3099,76 @@
       }
     }
 
+    // Monthly Meals Progress Wheel Functionality
+    async function loadMonthlyProgress() {
+      try {
+        const currentMonth = new Date().getMonth() + 1;
+        const currentYear = new Date().getFullYear();
+        
+        // Update the month display
+        const monthNames = [
+          'January', 'February', 'March', 'April', 'May', 'June',
+          'July', 'August', 'September', 'October', 'November', 'December'
+        ];
+        document.getElementById('progressMonth').textContent = `${monthNames[currentMonth - 1]} ${currentYear}`;
+        
+        // Get goals and progress data
+        const [goalsResponse, progressResponse] = await Promise.all([
+          fetch(`/api/meal-goals?month=${currentMonth}&year=${currentYear}`),
+          fetch(`/api/meal-goals/progress?month=${currentMonth}&year=${currentYear}`)
+        ]);
+        
+        const goalsData = await goalsResponse.json();
+        const progressData = await progressResponse.json();
+        
+        if (goalsData.success && progressData.success) {
+          const goal = goalsData.goals.meals_completed_goal;
+          const completed = progressData.progress.completed_meals_count;
+          
+          updateProgressWheel(completed, goal);
+        } else {
+          // Use default values if API fails
+          updateProgressWheel(0, 60);
+        }
+      } catch (error) {
+        console.error('Error loading monthly progress:', error);
+        // Use default values on error
+        updateProgressWheel(0, 60);
+      }
+    }
+    
+    function updateProgressWheel(completed, goal) {
+      const percentage = Math.min((completed / goal) * 100, 100);
+      const remaining = Math.max(goal - completed, 0);
+      
+      // Update the progress circle
+      const circle = document.getElementById('progressCircle');
+      const circumference = 2 * Math.PI * 90; // radius = 90
+      const dashArray = (percentage / 100) * circumference;
+      circle.style.strokeDasharray = `${dashArray} ${circumference}`;
+      
+      // Update text elements
+      document.getElementById('progressPercentage').textContent = `${Math.round(percentage)}%`;
+      document.getElementById('completedMeals').textContent = completed;
+      document.getElementById('goalTarget').textContent = goal;
+      document.getElementById('remainingMeals').textContent = remaining;
+      
+      // Update progress circle color based on completion
+      if (percentage >= 100) {
+        circle.style.stroke = 'var(--success-color)';
+        document.getElementById('progressPercentage').style.color = 'var(--success-color)';
+      } else if (percentage >= 75) {
+        circle.style.stroke = 'var(--primary-color)';
+        document.getElementById('progressPercentage').style.color = 'var(--primary-color)';
+      } else if (percentage >= 50) {
+        circle.style.stroke = 'var(--warning-color)';
+        document.getElementById('progressPercentage').style.color = 'var(--warning-color)';
+      } else {
+        circle.style.stroke = 'var(--error-color)';
+        document.getElementById('progressPercentage').style.color = 'var(--error-color)';
+      }
+    }
+
     // Initialize all functionality
     document.addEventListener('DOMContentLoaded', function() {
       updateWelcomeMessage();
@@ -2915,6 +3181,7 @@
       handleDropdownResize();
       initializeShoppingHistory();
       loadTodaysMeals();
+      loadMonthlyProgress();
       
       // Update time-based greeting every minute
       setInterval(updateWelcomeMessage, 60000);
