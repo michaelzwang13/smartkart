@@ -642,7 +642,8 @@ function showErrorState(message) {
 
 // Load More History Functionality
 let currentOffset = 15; // We already loaded 15 trips
-const maxTrips = JSON.parse("{{ total_trips|default(0) }}");
+const config = window.HOME_CONFIG || {};
+const maxTrips = config.totalTrips || 0;
 
 async function loadMoreHistory() {
   const showMoreBtn = document.getElementById("showMoreBtn");
@@ -940,7 +941,7 @@ async function showMealDetails(mealId) {
     if (data.success) {
       // For now, just navigate to meal plans page
       // In the future, this could open a modal with meal details
-      window.location.href = '{{ url_for("shopping.meal_plans") }}';
+      window.location.href = config.urls?.mealPlans || '/meal-plans';
     } else {
       alert("Failed to load meal details: " + data.message);
     }
