@@ -337,6 +337,147 @@
       border-color: var(--primary-color);
     }
 
+    /* Tag System Styles */
+    .tag-input-container {
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-sm);
+      background: var(--bg-primary);
+      min-height: 80px;
+    }
+
+    .selected-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 8px;
+      min-height: 32px;
+    }
+
+    .tag-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 8px;
+      border-radius: 16px;
+      font-size: 0.8em;
+      font-weight: 500;
+      color: white;
+      gap: 4px;
+    }
+
+    .tag-badge .remove-tag {
+      background: none;
+      border: none;
+      color: white;
+      cursor: pointer;
+      padding: 0;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      opacity: 0.8;
+    }
+
+    .tag-badge .remove-tag:hover {
+      opacity: 1;
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .tag-input-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .tag-input-row input {
+      flex: 1;
+      border: none;
+      outline: none;
+      padding: 6px;
+      font-size: 0.9em;
+      background: transparent;
+    }
+
+    .btn-tag {
+      padding: 6px 12px;
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 0.8em;
+      font-weight: 500;
+      transition: background 0.2s ease;
+    }
+
+    .btn-tag:hover {
+      background: var(--primary-dark);
+    }
+
+    .btn-tag:disabled {
+      background: var(--text-secondary);
+      cursor: not-allowed;
+    }
+
+    .tag-suggestions {
+      margin-top: 8px;
+      max-height: 120px;
+      overflow-y: auto;
+      border-top: 1px solid var(--border-light);
+      padding-top: 8px;
+    }
+
+    .tag-suggestion {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 8px;
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      transition: background 0.2s ease;
+      font-size: 0.9em;
+    }
+
+    .tag-suggestion:hover {
+      background: var(--bg-secondary);
+    }
+
+    .tag-suggestion-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tag-suggestion-color {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .tag-suggestion-usage {
+      font-size: 0.8em;
+      color: var(--text-secondary);
+    }
+
+    .item-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 4px;
+    }
+
+    .item-tag {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 12px;
+      font-size: 0.7em;
+      font-weight: 500;
+      color: white;
+    }
+
     .pantry-stats {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -803,6 +944,14 @@
         </div>
         
         <div class="filter-group">
+            <label>Tag Filter:</label>
+            <select id="tagFilter">
+                <option value="">All Tags</option>
+                <!-- Dynamic tags will be populated here -->
+            </select>
+        </div>
+        
+        <div class="filter-group">
             <label>Expiration Status:</label>
             <select id="expiryFilter">
                 <option value="">All Items</option>
@@ -914,6 +1063,19 @@
             </div>
             
             <div class="form-group">
+                <label>Tags (optional):</label>
+                <div class="tag-input-container">
+                    <div class="selected-tags" id="selectedTags"></div>
+                    <div class="tag-input-row">
+                        <input type="text" id="tagInput" placeholder="Type to add or search tags..." autocomplete="off">
+                        <button type="button" id="addTagBtn" class="btn-tag">Add</button>
+                    </div>
+                    <div class="tag-suggestions" id="tagSuggestions"></div>
+                </div>
+                <input type="hidden" name="tag_ids" id="tagIdsHidden">
+            </div>
+            
+            <div class="form-group">
                 <label>Notes (optional):</label>
                 <textarea name="notes" rows="3"></textarea>
             </div>
@@ -1000,6 +1162,19 @@
                     <input type="checkbox" id="editAiPredict" name="ai_predict_expiry">
                     Use AI prediction if no date provided
                 </label>
+            </div>
+            
+            <div class="form-group">
+                <label>Tags (optional):</label>
+                <div class="tag-input-container">
+                    <div class="selected-tags" id="editSelectedTags"></div>
+                    <div class="tag-input-row">
+                        <input type="text" id="editTagInput" placeholder="Type to add or search tags..." autocomplete="off">
+                        <button type="button" id="editAddTagBtn" class="btn-tag">Add</button>
+                    </div>
+                    <div class="tag-suggestions" id="editTagSuggestions"></div>
+                </div>
+                <input type="hidden" name="tag_ids" id="editTagIdsHidden">
             </div>
             
             <div class="form-group">
@@ -1146,6 +1321,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('searchFilter').addEventListener('input', loadPantryItems);
     document.getElementById('storageFilter').addEventListener('change', loadPantryItems);
     document.getElementById('categoryFilter').addEventListener('change', loadPantryItems);
+    document.getElementById('tagFilter').addEventListener('change', loadPantryItems);
     document.getElementById('expiryFilter').addEventListener('change', loadPantryItems);
     
     // Add item form submission
@@ -1162,6 +1338,7 @@ document.addEventListener('DOMContentLoaded', function() {
             unit: finalUnit,
             storage_type: formData.get('storage_type'),
             category: formData.get('category'),
+            tag_ids: getSelectedTagIds('selectedTags'),
             expiration_date: formData.get('expiration_date') || null,
             ai_predict_expiry: formData.get('ai_predict_expiry') === 'on',
             notes: formData.get('notes') || null
@@ -1182,6 +1359,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 addItemModal.style.display = 'none';
                 addItemForm.reset();
                 resetCustomUnitInputs();
+                resetTagSelection('selectedTags');
                 loadPantryItems();
             } else {
                 alert('Error adding item: ' + result.message);
@@ -1207,6 +1385,7 @@ document.addEventListener('DOMContentLoaded', function() {
             unit: finalUnit,
             storage_type: formData.get('storage_type'),
             category: formData.get('category'),
+            tag_ids: getSelectedTagIds('editSelectedTags'),
             expiration_date: formData.get('expiration_date') || null,
             ai_predict_expiry: formData.get('ai_predict_expiry') === 'on',
             notes: formData.get('notes') || null
@@ -1227,6 +1406,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 editItemModal.style.display = 'none';
                 editItemForm.reset();
                 resetCustomUnitInputs();
+                resetTagSelection('editSelectedTags');
                 loadPantryItems();
             } else {
                 alert('Error updating item: ' + result.message);
@@ -1242,6 +1422,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const searchFilter = document.getElementById('searchFilter').value.toLowerCase().trim();
             const storageFilter = document.getElementById('storageFilter').value;
             const categoryFilter = document.getElementById('categoryFilter').value;
+            const tagFilter = document.getElementById('tagFilter').value;
             const expiryFilter = document.getElementById('expiryFilter').value;
             
             const params = new URLSearchParams();
@@ -1255,11 +1436,21 @@ document.addEventListener('DOMContentLoaded', function() {
             if (result.success) {
                 let filteredItems = result.items;
                 
+                // Load and populate tag filter
+                await loadAndPopulateTagFilter();
+                
                 // Apply client-side search filter
                 if (searchFilter) {
-                    filteredItems = result.items.filter(item => 
+                    filteredItems = filteredItems.filter(item => 
                         item.item_name.toLowerCase().includes(searchFilter)
                     );
+                }
+                
+                // Apply client-side tag filter
+                if (tagFilter) {
+                    filteredItems = filteredItems.filter(item => {
+                        return item.tags && item.tags.some(tag => tag.name === tagFilter);
+                    });
                 }
                 
                 displayPantryItems(filteredItems);
@@ -1305,9 +1496,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const searchFilter = document.getElementById('searchFilter').value.trim();
         const storageFilter = document.getElementById('storageFilter').value;
         const categoryFilter = document.getElementById('categoryFilter').value;
+        const tagFilter = document.getElementById('tagFilter').value;
         
-        // If filtering by specific category, storage, or search, use simple grid layout
-        if (categoryFilter || storageFilter || searchFilter) {
+        // If filtering by specific category, storage, tag, or search, use simple grid layout
+        if (categoryFilter || storageFilter || tagFilter || searchFilter) {
             pantryItems.innerHTML = `<div class="pantry-grid">${items.map(item => createItemHTML(item)).join('')}</div>`;
             return;
         }
@@ -1415,6 +1607,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     <p><strong>Quantity:</strong> ${item.quantity} ${item.unit}</p>
                     <p><strong>Storage:</strong> ${item.storage_type}</p>
                     <p><strong>Category:</strong> ${item.category}</p>
+                    ${item.tags && item.tags.length > 0 ? 
+                        `<div class="item-tags">
+                            ${item.tags.map(tag => `<span class="item-tag" style="background-color: ${tag.color || '#3B82F6'}">${tag.name}</span>`).join('')}
+                        </div>` : ''
+                    }
                     ${item.expiration_date ? 
                         `<p><strong>Expires:</strong> <span class="expiry-status ${expiryStatus.status}">${expiryStatus.text}</span></p>` : 
                         '<p><strong>Expires:</strong> No expiry date</p>'
@@ -1555,6 +1752,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 document.getElementById('editStorageType').value = item.storage_type;
                 document.getElementById('editCategory').value = item.category;
+                
+                // Populate tags
+                editSelectedTags = [];
+                if (item.tags && item.tags.length > 0) {
+                    editSelectedTags = item.tags.map(tag => ({
+                        id: tag.id,
+                        name: tag.name,
+                        color: tag.color
+                    }));
+                }
+                updateSelectedTagsDisplay('editSelectedTags');
+                populateTagSuggestions('editTagSuggestions', 'editSelectedTags');
+                
                 document.getElementById('editExpirationDate').value = item.expiration_date || '';
                 document.getElementById('editAiPredict').checked = false; // Reset AI prediction
                 document.getElementById('editNotes').value = item.notes || '';
@@ -1590,6 +1800,240 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Error deleting item. Please try again.');
         }
     };
+
+    // Tag Management Functions
+    let allTags = [];
+    let selectedTags = [];
+    let editSelectedTags = [];
+
+    async function loadAndPopulateTagFilter() {
+        try {
+            const response = await fetch('/api/pantry/tags');
+            const result = await response.json();
+            
+            if (result.success) {
+                allTags = result.tags;
+                populateTagFilter();
+                populateTagSuggestions('tagSuggestions', 'selectedTags');
+                populateTagSuggestions('editTagSuggestions', 'editSelectedTags');
+            }
+        } catch (error) {
+            console.error('Error loading tags:', error);
+        }
+    }
+
+    function populateTagFilter() {
+        const tagSelect = document.getElementById('tagFilter');
+        const currentValue = tagSelect.value;
+        
+        tagSelect.innerHTML = '<option value="">All Tags</option>';
+        
+        allTags.forEach(tag => {
+            const option = document.createElement('option');
+            option.value = tag.tag_name;
+            option.textContent = `${tag.tag_name} (${tag.usage_count})`;
+            tagSelect.appendChild(option);
+        });
+        
+        if (currentValue) {
+            tagSelect.value = currentValue;
+        }
+    }
+
+    function populateTagSuggestions(containerId, selectedTagsId) {
+        const container = document.getElementById(containerId);
+        const selectedTagsList = selectedTagsId === 'selectedTags' ? selectedTags : editSelectedTags;
+        
+        container.innerHTML = '';
+        
+        if (allTags.length === 0) {
+            container.innerHTML = '<p style="color: var(--text-secondary); font-size: 0.8em; padding: 8px;">No tags created yet. Type above to create your first tag.</p>';
+            return;
+        }
+        
+        const availableTags = allTags.filter(tag => 
+            !selectedTagsList.find(selected => selected.id === tag.tag_id)
+        );
+        
+        if (availableTags.length === 0) {
+            container.innerHTML = '<p style="color: var(--text-secondary); font-size: 0.8em; padding: 8px;">All tags selected</p>';
+            return;
+        }
+        
+        availableTags.forEach(tag => {
+            const suggestion = document.createElement('div');
+            suggestion.className = 'tag-suggestion';
+            suggestion.innerHTML = `
+                <div class="tag-suggestion-info">
+                    <div class="tag-suggestion-color" style="background-color: ${tag.tag_color}"></div>
+                    <span>${tag.tag_name}</span>
+                </div>
+                <span class="tag-suggestion-usage">${tag.usage_count} uses</span>
+            `;
+            suggestion.addEventListener('click', () => addExistingTag(tag, selectedTagsId));
+            container.appendChild(suggestion);
+        });
+    }
+
+    function addExistingTag(tag, selectedTagsId) {
+        const targetList = selectedTagsId === 'selectedTags' ? selectedTags : editSelectedTags;
+        
+        if (!targetList.find(selected => selected.id === tag.tag_id)) {
+            targetList.push({
+                id: tag.tag_id,
+                name: tag.tag_name,
+                color: tag.tag_color
+            });
+            updateSelectedTagsDisplay(selectedTagsId);
+            populateTagSuggestions(
+                selectedTagsId === 'selectedTags' ? 'tagSuggestions' : 'editTagSuggestions',
+                selectedTagsId
+            );
+        }
+    }
+
+    window.removeTag = function(tagId, selectedTagsId) {
+        const targetList = selectedTagsId === 'selectedTags' ? selectedTags : editSelectedTags;
+        const index = targetList.findIndex(tag => tag.id === tagId);
+        
+        if (index > -1) {
+            targetList.splice(index, 1);
+            updateSelectedTagsDisplay(selectedTagsId);
+            populateTagSuggestions(
+                selectedTagsId === 'selectedTags' ? 'tagSuggestions' : 'editTagSuggestions',
+                selectedTagsId
+            );
+        }
+    }
+
+    function updateSelectedTagsDisplay(selectedTagsId) {
+        const container = document.getElementById(selectedTagsId);
+        const targetList = selectedTagsId === 'selectedTags' ? selectedTags : editSelectedTags;
+        
+        container.innerHTML = '';
+        
+        targetList.forEach(tag => {
+            const badge = document.createElement('div');
+            badge.className = 'tag-badge';
+            badge.style.backgroundColor = tag.color;
+            badge.innerHTML = `
+                ${tag.name}
+                <button class="remove-tag" onclick="removeTag(${tag.id}, '${selectedTagsId}')" type="button">×</button>
+            `;
+            container.appendChild(badge);
+        });
+    }
+
+    function getSelectedTagIds(selectedTagsId) {
+        const targetList = selectedTagsId === 'selectedTags' ? selectedTags : editSelectedTags;
+        return targetList.map(tag => tag.id);
+    }
+
+    function resetTagSelection(selectedTagsId) {
+        if (selectedTagsId === 'selectedTags') {
+            selectedTags = [];
+            document.getElementById('tagInput').value = '';
+        } else {
+            editSelectedTags = [];
+            document.getElementById('editTagInput').value = '';
+        }
+        updateSelectedTagsDisplay(selectedTagsId);
+        populateTagSuggestions(
+            selectedTagsId === 'selectedTags' ? 'tagSuggestions' : 'editTagSuggestions',
+            selectedTagsId
+        );
+    }
+
+    async function createNewTag(tagName) {
+        try {
+            const response = await fetch('/api/pantry/tags', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    tag_name: tagName,
+                    tag_color: generateRandomColor()
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                allTags.push(result.tag);
+                return result.tag;
+            } else {
+                alert(result.message);
+                return null;
+            }
+        } catch (error) {
+            console.error('Error creating tag:', error);
+            alert('Error creating tag. Please try again.');
+            return null;
+        }
+    }
+
+    function generateRandomColor() {
+        const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#84CC16', '#F97316'];
+        return colors[Math.floor(Math.random() * colors.length)];
+    }
+
+    // Tag input event listeners
+    document.getElementById('addTagBtn').addEventListener('click', async function() {
+        const input = document.getElementById('tagInput');
+        const tagName = input.value.trim();
+        
+        if (tagName) {
+            // Check if tag already exists
+            let existingTag = allTags.find(tag => tag.tag_name.toLowerCase() === tagName.toLowerCase());
+            
+            if (!existingTag) {
+                // Create new tag
+                existingTag = await createNewTag(tagName);
+                if (!existingTag) return;
+            }
+            
+            addExistingTag(existingTag, 'selectedTags');
+            input.value = '';
+        }
+    });
+
+    document.getElementById('editAddTagBtn').addEventListener('click', async function() {
+        const input = document.getElementById('editTagInput');
+        const tagName = input.value.trim();
+        
+        if (tagName) {
+            // Check if tag already exists
+            let existingTag = allTags.find(tag => tag.tag_name.toLowerCase() === tagName.toLowerCase());
+            
+            if (!existingTag) {
+                // Create new tag
+                existingTag = await createNewTag(tagName);
+                if (!existingTag) return;
+            }
+            
+            addExistingTag(existingTag, 'editSelectedTags');
+            input.value = '';
+        }
+    });
+
+    // Tag input enter key support
+    document.getElementById('tagInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('addTagBtn').click();
+        }
+    });
+
+    document.getElementById('editTagInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('editAddTagBtn').click();
+        }
+    });
+
+    // Load tags when page loads
+    loadAndPopulateTagFilter();
 });
 </script>
 </body>

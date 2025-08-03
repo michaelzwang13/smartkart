@@ -307,3 +307,32 @@ CREATE TABLE expiry_predictions (
     UNIQUE KEY unique_prediction (item_name, storage_type),
     INDEX idx_item_storage (item_name, storage_type)
 );
+
+-- Create tags table to store unique tags per user
+CREATE TABLE pantry_tags (
+    tag_id INT AUTO_INCREMENT,
+    user_id VARCHAR(50) NOT NULL,
+    tag_name VARCHAR(50) NOT NULL,
+    tag_color VARCHAR(7) DEFAULT '#3B82F6', -- hex color code for UI
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    usage_count INT DEFAULT 0, -- track how often tag is used
+    PRIMARY KEY (tag_id),
+    FOREIGN KEY (user_id) REFERENCES user_account(user_ID) ON DELETE CASCADE,
+    UNIQUE KEY unique_user_tag (user_id, tag_name), -- prevent duplicate tags per user
+    INDEX idx_user_tags (user_id),
+    INDEX idx_tag_name (tag_name)
+);
+
+-- Create junction table for many-to-many relationship between pantry items and tags
+CREATE TABLE pantry_item_tags (
+    item_tag_id INT AUTO_INCREMENT,
+    pantry_item_id INT NOT NULL,
+    tag_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (item_tag_id),
+    FOREIGN KEY (pantry_item_id) REFERENCES pantry_items(pantry_item_id) ON DELETE CASCADE,
+    FOREIGN KEY (tag_id) REFERENCES pantry_tags(tag_id) ON DELETE CASCADE,
+    UNIQUE KEY unique_item_tag (pantry_item_id, tag_id), -- prevent duplicate tag assignments
+    INDEX idx_item_tags (pantry_item_id),
+    INDEX idx_tag_items (tag_id)
+);

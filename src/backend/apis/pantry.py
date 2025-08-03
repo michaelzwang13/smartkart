@@ -8,7 +8,7 @@ pantry_bp = Blueprint("pantry", __name__, url_prefix="/api")
 
 @pantry_bp.route("/pantry/items", methods=["GET"])
 def get_pantry_items():
-    """Get all pantry items for the current user"""
+    """Get all pantry items for the current user with tags"""
     if "user_ID" not in session:
         return jsonify({"success": False, "message": "Not authenticated"})
 
@@ -22,7 +22,7 @@ def get_pantry_items():
     expiry_filter = request.args.get("expiry_status", "")
 
     try:
-        # Build query with filters
+        # Build query with filters - get basic item info
         query = """
             SELECT p.*, 
                    CASE 
@@ -51,6 +51,37 @@ def get_pantry_items():
 
         cursor.execute(query, params)
         all_items = cursor.fetchall()
+
+        # Get tags for all items
+        item_ids = [item['pantry_item_id'] for item in all_items]
+        item_tags = {}
+        
+        if item_ids:
+            # Get tags for all items in one query
+            tags_query = """
+                SELECT pit.pantry_item_id, pt.tag_name, pt.tag_color
+                FROM pantry_item_tags pit
+                JOIN pantry_tags pt ON pit.tag_id = pt.tag_id
+                WHERE pit.pantry_item_id IN (%s)
+                ORDER BY pt.tag_name
+            """ % ','.join(['%s'] * len(item_ids))
+            
+            cursor.execute(tags_query, item_ids)
+            tag_results = cursor.fetchall()
+            
+            # Group tags by item
+            for tag_result in tag_results:
+                item_id = tag_result['pantry_item_id']
+                if item_id not in item_tags:
+                    item_tags[item_id] = []
+                item_tags[item_id].append({
+                    'name': tag_result['tag_name'],
+                    'color': tag_result['tag_color']
+                })
+
+        # Add tags to items
+        for item in all_items:
+            item['tags'] = item_tags.get(item['pantry_item_id'], [])
 
         # Apply expiry filter if needed (post-query filtering for computed field)
         items = []
@@ -115,6 +146,9 @@ def add_pantry_item():
     expiration_date = data.get("expiration_date")  # YYYY-MM-DD format
     use_ai_prediction = data.get("ai_predict_expiry", False)  # Fixed parameter name
     notes = data.get("notes", "")
+    tag_ids = data.get("tag_ids", [])  # List of tag IDs to assign
+    
+    print(f'Tag IDS: {tag_ids}')
 
     if not item_name:
         return jsonify({"success": False, "message": "Item name is required"})
@@ -173,13 +207,50 @@ def add_pantry_item():
         )
 
         item_id = cursor.lastrowid
+        
+        # Handle tags if provided
+        if tag_ids:
+            # Verify tags belong to user
+            placeholders = ','.join(['%s'] * len(tag_ids))
+            tag_verify_query = f"""
+                SELECT tag_id FROM pantry_tags 
+                WHERE tag_id IN ({placeholders}) AND user_id = %s
+            """
+            cursor.execute(tag_verify_query, tag_ids + [user_ID])
+            valid_tags = [row['tag_id'] for row in cursor.fetchall()]
+            
+            # Add valid tags to item
+            for tag_id in valid_tags:
+                try:
+                    cursor.execute(
+                        "INSERT INTO pantry_item_tags (pantry_item_id, tag_id) VALUES (%s, %s)",
+                        (item_id, tag_id)
+                    )
+                    cursor.execute(
+                        "UPDATE pantry_tags SET usage_count = usage_count + 1 WHERE tag_id = %s",
+                        (tag_id,)
+                    )
+                except:
+                    continue  # Skip duplicates (likely due to unique constraint)
+        
         db.commit()
 
-        # Return the created item
-        cursor.execute(
-            "SELECT * FROM pantry_items WHERE pantry_item_id = %s", (item_id,)
-        )
+        # Return the created item with tags
+        cursor.execute("SELECT * FROM pantry_items WHERE pantry_item_id = %s", (item_id,))
         new_item = cursor.fetchone()
+        
+        # Get tags for the new item
+        tags_query = """
+            SELECT pt.tag_name, pt.tag_color
+            FROM pantry_item_tags pit
+            JOIN pantry_tags pt ON pit.tag_id = pt.tag_id
+            WHERE pit.pantry_item_id = %s
+        """
+        cursor.execute(tags_query, (item_id,))
+        item_tags = cursor.fetchall()
+        new_item['tags'] = [{'name': tag['tag_name'], 'color': tag['tag_color']} for tag in item_tags]
+        
+        print(f'New Item: {new_item}')
 
         return jsonify(
             {
@@ -707,6 +778,17 @@ def get_pantry_item(item_id):
                 {"success": False, "message": "Item not found or access denied"}
             )
 
+        # Get tags for the item
+        tags_query = """
+            SELECT pt.tag_id, pt.tag_name, pt.tag_color
+            FROM pantry_item_tags pit
+            JOIN pantry_tags pt ON pit.tag_id = pt.tag_id
+            WHERE pit.pantry_item_id = %s
+        """
+        cursor.execute(tags_query, (item_id,))
+        item_tags = cursor.fetchall()
+        item['tags'] = [{'id': tag['tag_id'], 'name': tag['tag_name'], 'color': tag['tag_color']} for tag in item_tags]
+
         cursor.close()
         return jsonify({"success": True, "item": item})
 
@@ -931,3 +1013,178 @@ def test_gemini_category():
         )
     except Exception as e:
         return jsonify({"success": False, "message": f"Gemini category test failed: {str(e)}"})
+
+
+# Tag management endpoints
+
+@pantry_bp.route("/pantry/tags", methods=["GET"])
+def get_user_tags():
+    """Get all tags for the current user"""
+    if "user_ID" not in session:
+        return jsonify({"success": False, "message": "Not authenticated"})
+
+    user_ID = session["user_ID"]
+    db = get_db()
+    cursor = db.cursor()
+
+    try:
+        query = """
+            SELECT tag_id, tag_name, tag_color, usage_count, created_at
+            FROM pantry_tags 
+            WHERE user_id = %s 
+            ORDER BY usage_count DESC, tag_name ASC
+        """
+        cursor.execute(query, (user_ID,))
+        tags = cursor.fetchall()
+
+        return jsonify({"success": True, "tags": tags})
+
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Failed to get tags: {str(e)}"})
+    finally:
+        cursor.close()
+
+
+@pantry_bp.route("/pantry/tags", methods=["POST"])
+def create_tag():
+    """Create a new tag for the current user"""
+    if "user_ID" not in session:
+        return jsonify({"success": False, "message": "Not authenticated"})
+
+    user_ID = session["user_ID"]
+    data = request.get_json()
+    
+    tag_name = data.get("tag_name", "").strip()
+    tag_color = data.get("tag_color", "#3B82F6")
+    
+    if not tag_name:
+        return jsonify({"success": False, "message": "Tag name is required"})
+    
+    if len(tag_name) > 50:
+        return jsonify({"success": False, "message": "Tag name must be 50 characters or less"})
+
+    db = get_db()
+    cursor = db.cursor()
+
+    try:
+        # Check if tag already exists for this user
+        check_query = "SELECT tag_id FROM pantry_tags WHERE user_id = %s AND tag_name = %s"
+        cursor.execute(check_query, (user_ID, tag_name))
+        if cursor.fetchone():
+            return jsonify({"success": False, "message": "Tag already exists"})
+
+        # Create new tag
+        insert_query = """
+            INSERT INTO pantry_tags (user_id, tag_name, tag_color)
+            VALUES (%s, %s, %s)
+        """
+        cursor.execute(insert_query, (user_ID, tag_name, tag_color))
+        tag_id = cursor.lastrowid
+        db.commit()
+
+        # Return the created tag
+        cursor.execute("SELECT * FROM pantry_tags WHERE tag_id = %s", (tag_id,))
+        new_tag = cursor.fetchone()
+
+        return jsonify({"success": True, "tag": new_tag, "message": "Tag created successfully"})
+
+    except Exception as e:
+        db.rollback()
+        return jsonify({"success": False, "message": f"Failed to create tag: {str(e)}"})
+    finally:
+        cursor.close()
+
+
+@pantry_bp.route("/pantry/items/<int:item_id>/tags", methods=["POST"])
+def add_tag_to_item(item_id):
+    """Add a tag to a pantry item"""
+    if "user_ID" not in session:
+        return jsonify({"success": False, "message": "Not authenticated"})
+
+    user_ID = session["user_ID"]
+    data = request.get_json()
+    tag_ids = data.get("tag_ids", [])
+    
+    if not tag_ids:
+        return jsonify({"success": False, "message": "At least one tag_id is required"})
+
+    db = get_db()
+    cursor = db.cursor()
+
+    try:
+        # Verify item belongs to user
+        verify_query = "SELECT pantry_item_id FROM pantry_items WHERE pantry_item_id = %s AND user_id = %s"
+        cursor.execute(verify_query, (item_id, user_ID))
+        if not cursor.fetchone():
+            return jsonify({"success": False, "message": "Item not found or access denied"})
+
+        # Verify all tags belong to user
+        tag_verify_query = "SELECT tag_id FROM pantry_tags WHERE tag_id IN (%s) AND user_id = %s" % ','.join(['%s'] * len(tag_ids))
+        cursor.execute(tag_verify_query, tag_ids + [user_ID])
+        valid_tags = [row['tag_id'] for row in cursor.fetchall()]
+        
+        if len(valid_tags) != len(tag_ids):
+            return jsonify({"success": False, "message": "One or more tags not found or access denied"})
+
+        # Add tags to item (ignore duplicates)
+        added_count = 0
+        for tag_id in tag_ids:
+            try:
+                insert_query = "INSERT INTO pantry_item_tags (pantry_item_id, tag_id) VALUES (%s, %s)"
+                cursor.execute(insert_query, (item_id, tag_id))
+                added_count += 1
+                
+                # Update tag usage count
+                cursor.execute("UPDATE pantry_tags SET usage_count = usage_count + 1 WHERE tag_id = %s", (tag_id,))
+            except:
+                # Tag already exists for this item, skip
+                continue
+
+        db.commit()
+        return jsonify({"success": True, "added_count": added_count, "message": f"Added {added_count} tags to item"})
+
+    except Exception as e:
+        db.rollback()
+        return jsonify({"success": False, "message": f"Failed to add tags: {str(e)}"})
+    finally:
+        cursor.close()
+
+
+@pantry_bp.route("/pantry/items/<int:item_id>/tags/<int:tag_id>", methods=["DELETE"])
+def remove_tag_from_item(item_id, tag_id):
+    """Remove a tag from a pantry item"""
+    if "user_ID" not in session:
+        return jsonify({"success": False, "message": "Not authenticated"})
+
+    user_ID = session["user_ID"]
+    db = get_db()
+    cursor = db.cursor()
+
+    try:
+        # Verify item belongs to user and tag exists
+        verify_query = """
+            SELECT pit.item_tag_id 
+            FROM pantry_item_tags pit
+            JOIN pantry_items p ON pit.pantry_item_id = p.pantry_item_id
+            JOIN pantry_tags pt ON pit.tag_id = pt.tag_id
+            WHERE pit.pantry_item_id = %s AND pit.tag_id = %s AND p.user_id = %s AND pt.user_id = %s
+        """
+        cursor.execute(verify_query, (item_id, tag_id, user_ID, user_ID))
+        if not cursor.fetchone():
+            return jsonify({"success": False, "message": "Tag assignment not found or access denied"})
+
+        # Remove tag from item
+        delete_query = "DELETE FROM pantry_item_tags WHERE pantry_item_id = %s AND tag_id = %s"
+        cursor.execute(delete_query, (item_id, tag_id))
+        
+        # Update tag usage count
+        cursor.execute("UPDATE pantry_tags SET usage_count = GREATEST(usage_count - 1, 0) WHERE tag_id = %s", (tag_id,))
+        
+        db.commit()
+        return jsonify({"success": True, "message": "Tag removed from item"})
+
+    except Exception as e:
+        db.rollback()
+        return jsonify({"success": False, "message": f"Failed to remove tag: {str(e)}"})
+    finally:
+        cursor.close()
