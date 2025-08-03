@@ -615,6 +615,220 @@
       letter-spacing: 0.5px;
     }
     
+    /* Today's Meals Section */
+    .todays-meals-section {
+      margin-bottom: var(--spacing-2xl);
+      animation: fadeInUp 0.8s ease 0.5s both;
+    }
+    
+    .meals-card {
+      background: linear-gradient(135deg, var(--bg-primary) 0%, rgba(248, 250, 252, 0.9) 100%);
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--border-light);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08), 0 3px 10px rgba(0, 0, 0, 0.04);
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    
+    .meals-card:hover {
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.12), 0 5px 15px rgba(0, 0, 0, 0.06);
+      transform: translateY(-2px);
+    }
+    
+    .meals-header {
+      padding: var(--spacing-xl);
+      background: linear-gradient(135deg, rgba(248, 250, 252, 0.8) 0%, rgba(241, 245, 249, 0.6) 100%);
+      border-bottom: 1px solid var(--border-light);
+      backdrop-filter: blur(10px);
+    }
+    
+    .meals-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+    }
+    
+    .meals-icon {
+      width: 40px;
+      height: 40px;
+      background: var(--primary-gradient);
+      border-radius: var(--radius-lg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-white);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+    
+    .meals-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: var(--spacing-lg);
+      padding: var(--spacing-xl);
+    }
+    
+    .meal-item {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-lg);
+      border-left: 4px solid var(--primary-color);
+      transition: all 0.3s ease;
+      position: relative;
+    }
+    
+    .meal-item:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+    
+    .meal-item.breakfast {
+      border-left-color: var(--warning-color);
+    }
+    
+    .meal-item.lunch {
+      border-left-color: var(--primary-color);
+    }
+    
+    .meal-item.dinner {
+      border-left-color: var(--secondary-color);
+    }
+    
+    .meal-item.completed {
+      opacity: 0.7;
+    }
+    
+    .meal-item.completed .meal-name {
+      text-decoration: line-through;
+    }
+    
+    .meal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--spacing-sm);
+    }
+    
+    .meal-type-badge {
+      background: var(--primary-color);
+      color: var(--text-white);
+      padding: var(--spacing-xs) var(--spacing-sm);
+      border-radius: var(--radius-lg);
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    
+    .meal-type-badge.breakfast {
+      background: var(--warning-color);
+    }
+    
+    .meal-type-badge.lunch {
+      background: var(--primary-color);
+    }
+    
+    .meal-type-badge.dinner {
+      background: var(--secondary-color);
+    }
+    
+    .meal-completion-checkbox {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+    
+    .meal-completion-checkbox input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--border-medium);
+      border-radius: 3px;
+      cursor: pointer;
+      position: relative;
+    }
+    
+    .meal-completion-checkbox input[type="checkbox"]:checked {
+      background: var(--success-color);
+      border-color: var(--success-color);
+    }
+    
+    .meal-completion-checkbox input[type="checkbox"]:checked::after {
+      content: '✓';
+      position: absolute;
+      top: -2px;
+      left: 2px;
+      font-size: 12px;
+      color: white;
+      font-weight: bold;
+    }
+    
+    .meal-name {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--spacing-xs);
+      cursor: pointer;
+      transition: color 0.2s ease;
+    }
+    
+    .meal-name:hover {
+      color: var(--primary-color);
+    }
+    
+    .meal-info {
+      display: flex;
+      gap: var(--spacing-md);
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      align-items: center;
+    }
+    
+    .meal-info i {
+      color: var(--primary-color);
+      width: 14px;
+      text-align: center;
+    }
+    
+    .no-meals-today {
+      text-align: center;
+      padding: var(--spacing-2xl);
+      color: var(--text-muted);
+    }
+    
+    .no-meals-icon {
+      font-size: 3rem;
+      color: var(--text-muted);
+      margin-bottom: var(--spacing-lg);
+    }
+    
+    .no-meals-message {
+      font-size: 1.125rem;
+      margin-bottom: var(--spacing-md);
+    }
+    
+    .no-meals-cta {
+      background: var(--primary-gradient);
+      color: var(--text-white);
+      padding: var(--spacing-sm) var(--spacing-lg);
+      border: none;
+      border-radius: var(--radius-lg);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+    }
+    
+    .no-meals-cta:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
     /* History Section */
     .history-section {
       animation: fadeInUp 0.8s ease 0.6s both;
@@ -1581,6 +1795,48 @@
         </div>
       </section>
 
+      <!-- Today's Meals Section -->
+      <section class="todays-meals-section">
+        <div class="meals-card">
+          <div class="meals-header">
+            <h2 class="meals-title">
+              <div class="meals-icon">
+                <i class="fas fa-utensils" aria-hidden="true"></i>
+              </div>
+              Today's Meals
+            </h2>
+          </div>
+          
+          <div id="todaysMealsContent">
+            <!-- Loading state -->
+            <div id="mealsLoading" class="no-meals-today">
+              <div class="no-meals-icon">
+                <i class="fas fa-spinner fa-spin"></i>
+              </div>
+              <p class="no-meals-message">Loading today's meals...</p>
+            </div>
+            
+            <!-- No meals state -->
+            <div id="noMealsToday" class="no-meals-today" style="display: none;">
+              <div class="no-meals-icon">
+                <i class="fas fa-utensils"></i>
+              </div>
+              <p class="no-meals-message">No meals planned for today</p>
+              <p style="color: var(--text-muted); margin-bottom: var(--spacing-lg);">Start planning your meals to see them here</p>
+              <a href="{{ url_for('shopping.meal_plans') }}" class="no-meals-cta">
+                <i class="fas fa-plus"></i>
+                Generate Meal Plan
+              </a>
+            </div>
+            
+            <!-- Meals grid -->
+            <div id="todaysMealsGrid" class="meals-grid" style="display: none;">
+              <!-- Meals will be populated here by JavaScript -->
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Shopping History -->
       <section class="history-section">
         <div class="history-card">
@@ -2485,6 +2741,131 @@
       });
     }
 
+    // Load and display today's meals
+    async function loadTodaysMeals() {
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const response = await fetch(`/api/meals?start_date=${today}&end_date=${today}`);
+        const data = await response.json();
+        
+        const loadingDiv = document.getElementById('mealsLoading');
+        const noMealsDiv = document.getElementById('noMealsToday');
+        const mealsGrid = document.getElementById('todaysMealsGrid');
+        
+        loadingDiv.style.display = 'none';
+        
+        if (data.success && data.meals && data.meals.length > 0) {
+          displayTodaysMeals(data.meals);
+          noMealsDiv.style.display = 'none';
+          mealsGrid.style.display = 'grid';
+        } else {
+          noMealsDiv.style.display = 'block';
+          mealsGrid.style.display = 'none';
+        }
+      } catch (error) {
+        console.error('Error loading today\'s meals:', error);
+        document.getElementById('mealsLoading').style.display = 'none';
+        document.getElementById('noMealsToday').style.display = 'block';
+        document.getElementById('todaysMealsGrid').style.display = 'none';
+      }
+    }
+    
+    function displayTodaysMeals(meals) {
+      const grid = document.getElementById('todaysMealsGrid');
+      grid.innerHTML = '';
+      
+      // Sort meals by meal type order
+      const mealTypeOrder = { breakfast: 1, lunch: 2, dinner: 3, snack: 4 };
+      meals.sort((a, b) => (mealTypeOrder[a.type] || 5) - (mealTypeOrder[b.type] || 5));
+      
+      meals.forEach(meal => {
+        const mealItem = document.createElement('div');
+        mealItem.className = `meal-item ${meal.type} ${meal.is_completed ? 'completed' : ''}`;
+        
+        const dishName = getDishName(meal);
+        const totalTime = (meal.prep_time || 0) + (meal.cook_time || 0);
+        
+        mealItem.innerHTML = `
+          <div class="meal-header">
+            <span class="meal-type-badge ${meal.type}">${meal.type}</span>
+            <label class="meal-completion-checkbox">
+              <input type="checkbox" ${meal.is_completed ? 'checked' : ''} 
+                     onchange="toggleMealCompletion(${meal.meal_id}, this.checked, this)">
+              <span>Complete</span>
+            </label>
+          </div>
+          <div class="meal-name" onclick="showMealDetails(${meal.meal_id})">${dishName}</div>
+          <div class="meal-info">
+            ${totalTime > 0 ? `<span><i class="fas fa-clock"></i> ${totalTime} min</span>` : ''}
+            ${meal.servings ? `<span><i class="fas fa-users"></i> ${meal.servings} servings</span>` : ''}
+            ${meal.difficulty ? `<span><i class="fas fa-chart-line"></i> ${meal.difficulty}</span>` : ''}
+          </div>
+        `;
+        
+        grid.appendChild(mealItem);
+      });
+    }
+    
+    function getDishName(meal) {
+      // Extract actual dish name from meal name
+      if (meal.name && meal.name.includes(':')) {
+        return meal.name.split(':').slice(1).join(':').trim();
+      }
+      return meal.name || `Custom ${meal.type}`;
+    }
+    
+    async function toggleMealCompletion(mealId, isCompleted, checkbox) {
+      try {
+        const response = await fetch(`/api/meals/${mealId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            is_completed: isCompleted
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          // Update the meal item appearance
+          const mealItem = checkbox.closest('.meal-item');
+          if (isCompleted) {
+            mealItem.classList.add('completed');
+          } else {
+            mealItem.classList.remove('completed');
+          }
+        } else {
+          // Revert checkbox on error
+          checkbox.checked = !isCompleted;
+          alert('Failed to update meal completion: ' + data.message);
+        }
+      } catch (error) {
+        console.error('Error updating meal completion:', error);
+        checkbox.checked = !isCompleted;
+        alert('Failed to update meal completion. Please try again.');
+      }
+    }
+    
+    async function showMealDetails(mealId) {
+      try {
+        const response = await fetch(`/api/meals/${mealId}`);
+        const data = await response.json();
+        
+        if (data.success) {
+          // For now, just navigate to meal plans page
+          // In the future, this could open a modal with meal details
+          window.location.href = '{{ url_for("shopping.meal_plans") }}';
+        } else {
+          alert('Failed to load meal details: ' + data.message);
+        }
+      } catch (error) {
+        console.error('Error loading meal details:', error);
+        alert('Failed to load meal details. Please try again.');
+      }
+    }
+
     // Initialize all functionality
     document.addEventListener('DOMContentLoaded', function() {
       updateWelcomeMessage();
@@ -2496,6 +2877,7 @@
       initializeDropdowns();
       handleDropdownResize();
       initializeShoppingHistory();
+      loadTodaysMeals();
       
       // Update time-based greeting every minute
       setInterval(updateWelcomeMessage, 60000);
