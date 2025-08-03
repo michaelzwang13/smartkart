@@ -647,6 +647,12 @@
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      transition: all 0.2s ease;
+    }
+    
+    .calendar-meal:hover {
+      transform: scale(1.05);
+      box-shadow: var(--shadow-sm);
     }
     
     .calendar-meal.breakfast {
@@ -669,6 +675,12 @@
       font-size: 0.7rem;
       text-align: center;
       margin-top: 2px;
+      transition: all 0.2s ease;
+    }
+    
+    .calendar-meal-count:hover {
+      background: var(--primary-color);
+      transform: scale(1.05);
     }
     
     .week-view .calendar-meals {
@@ -689,6 +701,11 @@
       justify-content: center;
       position: relative;
       transition: all 0.2s ease;
+    }
+    
+    .week-view .calendar-meal-slot.has-meal:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
     }
     
     .week-view .calendar-meal-slot.has-meal {
@@ -736,6 +753,7 @@
       text-overflow: ellipsis;
       display: -webkit-box;
       -webkit-line-clamp: 2;
+      line-clamp: 2;
       -webkit-box-orient: vertical;
     }
     
@@ -905,6 +923,354 @@
         font-size: 0.65rem;
         -webkit-line-clamp: 1;
         line-clamp: 1;
+      }
+    }
+
+    /* Modal Styles for Meal Details */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(8px);
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .modal-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal-content {
+      background: var(--bg-primary);
+      border-radius: var(--radius-xl);
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+      max-width: 600px;
+      width: 90%;
+      max-height: 90vh;
+      overflow: hidden;
+      border: 1px solid var(--border-light);
+      transform: scale(0.9) translateY(20px);
+      transition: transform 0.3s ease;
+    }
+
+    .modal-overlay.show .modal-content {
+      transform: scale(1) translateY(0);
+    }
+
+    .meal-details-modal {
+      max-width: 700px;
+    }
+
+    .modal-header {
+      padding: var(--spacing-xl);
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      background: var(--primary-gradient);
+      color: var(--text-white);
+    }
+
+    .modal-header h3 {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    .meal-meta {
+      margin: var(--spacing-xs) 0 0 0;
+      font-size: 0.875rem;
+      opacity: 0.9;
+    }
+
+    .modal-close {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: var(--radius-md);
+      width: 40px;
+      height: 40px;
+      color: var(--text-white);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.125rem;
+      transition: all 0.2s ease;
+    }
+
+    .modal-close:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: scale(1.05);
+    }
+
+    .modal-body {
+      padding: var(--spacing-xl);
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+
+    /* Meal Selection Grid */
+    .meals-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: var(--spacing-lg);
+    }
+
+    .meal-card {
+      background: var(--bg-secondary);
+      border: 2px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-lg);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-align: center;
+    }
+
+    .meal-card:hover {
+      border-color: var(--primary-color);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .meal-type-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+      background: var(--primary-color);
+      color: var(--text-white);
+      padding: var(--spacing-xs) var(--spacing-sm);
+      border-radius: var(--radius-lg);
+      font-size: 0.875rem;
+      font-weight: 600;
+      margin-bottom: var(--spacing-md);
+    }
+
+    .meal-type-badge.breakfast {
+      background: #f59e0b;
+    }
+
+    .meal-type-badge.lunch {
+      background: #10b981;
+    }
+
+    .meal-type-badge.dinner {
+      background: #6366f1;
+    }
+
+    .meal-type-badge.snack {
+      background: #ec4899;
+    }
+
+    .meal-name {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .meal-time {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    /* Meal Details Content */
+    .meal-details-content {
+      margin-bottom: var(--spacing-xl);
+    }
+
+    .meal-description {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      margin-bottom: var(--spacing-lg);
+      padding: var(--spacing-md);
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-md);
+      border-left: 4px solid var(--primary-color);
+    }
+
+    .meal-info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .info-item {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+      padding: var(--spacing-sm);
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    .info-item i {
+      color: var(--primary-color);
+      width: 16px;
+      text-align: center;
+    }
+
+    .meal-section {
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .meal-section h4 {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--spacing-md);
+      padding-bottom: var(--spacing-sm);
+      border-bottom: 2px solid var(--border-light);
+    }
+
+    .meal-section h4 i {
+      color: var(--primary-color);
+    }
+
+    .ingredients-list {
+      display: grid;
+      gap: var(--spacing-sm);
+    }
+
+    .ingredient-item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: var(--spacing-md);
+      padding: var(--spacing-sm) var(--spacing-md);
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      border-left: 3px solid var(--primary-color);
+    }
+
+    .ingredient-item.custom {
+      border-left-color: var(--warning-color);
+      background: rgba(245, 158, 11, 0.1);
+    }
+
+    .ingredient-name {
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .ingredient-amount {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    .ingredient-notes {
+      grid-column: 1 / -1;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-style: italic;
+      margin-top: var(--spacing-xs);
+    }
+
+    .instructions-content,
+    .notes-content {
+      background: var(--bg-secondary);
+      padding: var(--spacing-md);
+      border-radius: var(--radius-md);
+      line-height: 1.6;
+      color: var(--text-primary);
+    }
+
+    .meal-actions {
+      display: flex;
+      gap: var(--spacing-md);
+      justify-content: flex-end;
+      padding-top: var(--spacing-lg);
+      border-top: 1px solid var(--border-light);
+    }
+
+    .btn {
+      padding: var(--spacing-sm) var(--spacing-lg);
+      border: none;
+      border-radius: var(--radius-md);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      font-size: 0.875rem;
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background: var(--primary-gradient);
+      color: var(--text-white);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+    }
+
+    .btn-secondary {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      border: 2px solid var(--border-medium);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg-secondary);
+      border-color: var(--primary-color);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+      .modal-content {
+        width: 95%;
+        max-height: 95vh;
+      }
+
+      .modal-header {
+        padding: var(--spacing-lg);
+      }
+
+      .modal-body {
+        padding: var(--spacing-lg);
+      }
+
+      .meals-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .meal-info-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .meal-actions {
+        flex-direction: column;
+      }
+
+      .ingredient-item {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-xs);
+      }
+
+      .ingredient-amount {
+        justify-self: start;
       }
     }
   </style>
@@ -1320,6 +1686,19 @@
           `;
           
           mealSlot.title = meals.map(meal => `${type}: ${getDishName(meal)}`).join('\n');
+          
+          // Add click handler for individual meal selection
+          mealSlot.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent day click handler
+            if (meals.length === 1) {
+              showMealDetails(meals[0]);
+            } else {
+              showMealSelectionModal(date, meals);
+            }
+          });
+          
+          // Add hover effect for clickable meals
+          mealSlot.style.cursor = 'pointer';
         } else {
           mealSlot.innerHTML = `
             <div class="calendar-meal-type">No ${type}</div>
@@ -1389,6 +1768,14 @@
           mealElement.className = `calendar-meal ${meal.type}`;
           mealElement.textContent = meal.name;
           mealElement.title = `${meal.type}: ${meal.name}`;
+          
+          // Make individual meals clickable
+          mealElement.style.cursor = 'pointer';
+          mealElement.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent day click handler
+            showMealDetails(meal);
+          });
+          
           mealsContainer.appendChild(mealElement);
         });
         
@@ -1396,6 +1783,15 @@
           const countElement = document.createElement('div');
           countElement.className = 'calendar-meal-count';
           countElement.textContent = `+${dayMeals.length - 3} more`;
+          countElement.style.cursor = 'pointer';
+          countElement.title = 'Click to see all meals for this day';
+          
+          // Show meal selection modal when clicking "+X more"
+          countElement.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent day click handler
+            showMealSelectionModal(date, dayMeals);
+          });
+          
           mealsContainer.appendChild(countElement);
         }
       }
@@ -1436,28 +1832,11 @@
         return;
       }
       
-      // Show meal details modal or navigate to meal details
-      if (meals.length > 0) {
-        // For now, show a simple alert with meal details
-        // In the future, this could open a modal with editing capabilities
-        const dateStr = date.toLocaleDateString('en-US', { 
-          weekday: 'long', 
-          month: 'long', 
-          day: 'numeric' 
-        });
-        
-        let mealList = `Meals for ${dateStr}:\\n\\n`;
-        meals.forEach(meal => {
-          const mealType = meal.type.charAt(0).toUpperCase() + meal.type.slice(1);
-          mealList += `${mealType}: ${meal.name}\\n`;
-        });
-        
-        alert(mealList);
-        
-        // If there's a session_id, navigate to the session details
-        if (meals[0].session_id) {
-          viewPlanDetails(meals[0].session_id);
-        }
+      // Show meal selection modal if multiple meals, or direct meal view if one meal
+      if (meals.length === 1) {
+        showMealDetails(meals[0]);
+      } else {
+        showMealSelectionModal(date, meals);
       }
     }
     
@@ -1659,6 +2038,183 @@
     function viewPlanDetails(planId) {
       // Navigate to plan details page
       window.location.href = `{{ url_for('shopping.meal_plan_details', plan_id=0) }}`.replace('0', planId);
+    }
+
+    function showMealSelectionModal(date, meals) {
+      const dateStr = date.toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+      
+      const modalHTML = `
+        <div id="mealSelectionModal" class="modal-overlay">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3>Select a Meal - ${dateStr}</h3>
+              <button class="modal-close" onclick="closeMealSelectionModal()">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            <div class="modal-body">
+              <div class="meals-grid">
+                ${meals.map(meal => `
+                  <div class="meal-card" onclick="showMealDetails(${JSON.stringify(meal).replace(/"/g, '&quot;')})">
+                    <div class="meal-type-badge ${meal.type}">
+                      <i class="fas fa-${getMealIcon(meal.type)}"></i>
+                      ${meal.type.charAt(0).toUpperCase() + meal.type.slice(1)}
+                    </div>
+                    <div class="meal-name">${meal.name}</div>
+                    ${meal.prep_time ? `<div class="meal-time">${meal.prep_time + (meal.cook_time || 0)} min total</div>` : ''}
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      document.body.insertAdjacentHTML('beforeend', modalHTML);
+      
+      // Show modal with animation
+      setTimeout(() => {
+        document.getElementById('mealSelectionModal').classList.add('show');
+      }, 10);
+    }
+
+    function closeMealSelectionModal() {
+      const modal = document.getElementById('mealSelectionModal');
+      if (modal) {
+        modal.classList.remove('show');
+        setTimeout(() => {
+          modal.remove();
+        }, 300);
+      }
+    }
+
+    async function showMealDetails(meal) {
+      // Close meal selection modal if it exists
+      closeMealSelectionModal();
+      
+      try {
+        // Fetch detailed meal information
+        const response = await fetch(`/api/meals/${meal.meal_id}`);
+        const data = await response.json();
+        
+        if (data.success) {
+          displayMealDetailsModal(data.meal);
+        } else {
+          alert('Failed to load meal details: ' + data.message);
+        }
+      } catch (error) {
+        console.error('Error loading meal details:', error);
+        alert('Failed to load meal details. Please try again.');
+      }
+    }
+
+    function displayMealDetailsModal(meal) {
+      const modalHTML = `
+        <div id="mealDetailsModal" class="modal-overlay">
+          <div class="modal-content meal-details-modal">
+            <div class="modal-header">
+              <div>
+                <h3>${meal.name}</h3>
+                <p class="meal-meta">${meal.type.charAt(0).toUpperCase() + meal.type.slice(1)} • ${new Date(meal.date).toLocaleDateString()}</p>
+              </div>
+              <button class="modal-close" onclick="closeMealDetailsModal()">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            <div class="modal-body">
+              <div class="meal-details-content">
+                ${meal.description ? `<div class="meal-description">${meal.description}</div>` : ''}
+                
+                <div class="meal-info-grid">
+                  ${meal.prep_time ? `<div class="info-item"><i class="fas fa-clock"></i> Prep: ${meal.prep_time} min</div>` : ''}
+                  ${meal.cook_time ? `<div class="info-item"><i class="fas fa-fire"></i> Cook: ${meal.cook_time} min</div>` : ''}
+                  ${meal.servings ? `<div class="info-item"><i class="fas fa-users"></i> Serves: ${meal.servings}</div>` : ''}
+                  ${meal.difficulty ? `<div class="info-item"><i class="fas fa-chart-line"></i> ${meal.difficulty.charAt(0).toUpperCase() + meal.difficulty.slice(1)}</div>` : ''}
+                  ${meal.estimated_cost ? `<div class="info-item"><i class="fas fa-dollar-sign"></i> ~$${meal.estimated_cost}</div>` : ''}
+                  ${meal.calories_per_serving ? `<div class="info-item"><i class="fas fa-fire-alt"></i> ${meal.calories_per_serving} cal</div>` : ''}
+                </div>
+
+                ${meal.ingredients && meal.ingredients.length > 0 ? `
+                  <div class="meal-section">
+                    <h4><i class="fas fa-list-ul"></i> Ingredients</h4>
+                    <div class="ingredients-list">
+                      ${meal.ingredients.map(ingredient => `
+                        <div class="ingredient-item ${ingredient.is_custom ? 'custom' : ''}">
+                          <span class="ingredient-name">${ingredient.ingredient_name}</span>
+                          <span class="ingredient-amount">${ingredient.quantity} ${ingredient.unit}</span>
+                          ${ingredient.notes ? `<span class="ingredient-notes">${ingredient.notes}</span>` : ''}
+                        </div>
+                      `).join('')}
+                    </div>
+                  </div>
+                ` : ''}
+
+                ${meal.instructions ? `
+                  <div class="meal-section">
+                    <h4><i class="fas fa-clipboard-list"></i> Instructions</h4>
+                    <div class="instructions-content">${meal.instructions.replace(/\\n/g, '<br>')}</div>
+                  </div>
+                ` : ''}
+
+                ${meal.notes ? `
+                  <div class="meal-section">
+                    <h4><i class="fas fa-sticky-note"></i> Notes</h4>
+                    <div class="notes-content">${meal.notes}</div>
+                  </div>
+                ` : ''}
+              </div>
+              
+              <div class="meal-actions">
+                ${meal.session_id ? `
+                  <button class="btn btn-secondary" onclick="viewPlanDetails(${meal.session_id})">
+                    <i class="fas fa-calendar-alt"></i> View Full Meal Plan
+                  </button>
+                ` : ''}
+                <button class="btn btn-primary" onclick="editMeal(${meal.meal_id})">
+                  <i class="fas fa-edit"></i> Edit Meal
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      document.body.insertAdjacentHTML('beforeend', modalHTML);
+      
+      // Show modal with animation
+      setTimeout(() => {
+        document.getElementById('mealDetailsModal').classList.add('show');
+      }, 10);
+    }
+
+    function closeMealDetailsModal() {
+      const modal = document.getElementById('mealDetailsModal');
+      if (modal) {
+        modal.classList.remove('show');
+        setTimeout(() => {
+          modal.remove();
+        }, 300);
+      }
+    }
+
+    function getMealIcon(mealType) {
+      const icons = {
+        breakfast: 'coffee',
+        lunch: 'hamburger',
+        dinner: 'utensils',
+        snack: 'cookie-bite'
+      };
+      return icons[mealType] || 'utensils';
+    }
+
+    function editMeal(mealId) {
+      // Placeholder for meal editing functionality
+      alert(`Meal editing functionality will be implemented here for meal ID: ${mealId}`);
+      // This could open an edit modal or navigate to an edit page
     }
   </script>
 </body>
