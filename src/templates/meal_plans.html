@@ -112,7 +112,7 @@
     .nav-links {
       display: flex;
       align-items: center;
-      gap: var(--spacing-xl);
+      gap: var(--spacing-lg);
       list-style: none;
     }
 
@@ -921,6 +921,9 @@
       
       <nav>
         <ul class="nav-links">
+          <li><a href="{{ url_for('shopping.home') }}" class="nav-link">
+            <i class="fas fa-home" style="margin-right: 6px; font-size: 0.85em;"></i>Home
+          </a></li>
           <li class="nav-dropdown">
             <a href="#" class="nav-link dropdown-toggle">
               <i class="fas fa-shopping-cart" style="margin-right: 6px; font-size: 0.85em;"></i>Shopping
