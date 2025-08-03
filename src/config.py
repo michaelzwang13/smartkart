@@ -23,3 +23,11 @@ class Config:
 
     # Gemini AI configuration
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+    # JWT configuration
+    JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", SECRET_KEY)  # Fallback to main secret key
+    JWT_ACCESS_TOKEN_EXPIRES = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRES", 3600))  # 1 hour default
+    JWT_REFRESH_TOKEN_EXPIRES = int(os.getenv("JWT_REFRESH_TOKEN_EXPIRES", 2592000))  # 30 days default
+    
+    # Security configuration
+    BCRYPT_ROUNDS = int(os.getenv("BCRYPT_ROUNDS", 12))  # Stronger default rounds

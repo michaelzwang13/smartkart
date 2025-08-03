@@ -6,7 +6,7 @@ from src import helper
 meal_plan_bp = Blueprint("meal_plan", __name__, url_prefix="/api")
 
 
-@meal_plan_bp.route("/generate-meal-plan", methods=["POST"])
+@meal_plan_bp.route("/generate-meal-plan-legacy", methods=["POST"])
 def generate_meal_plan():
     """Generate a weekly meal plan using AI based on user inputs"""
     if "user_ID" not in session:

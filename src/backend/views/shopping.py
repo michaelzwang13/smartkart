@@ -82,10 +82,20 @@ def home():
     cursor.execute(active_query, (user_ID,))
     active_trip = cursor.fetchone()
 
+    # Get count of meals prepped (individual meals created)
+    meals_prepped_query = """
+    SELECT COUNT(*) as meals_prepped
+    FROM meals m
+    WHERE m.user_id = %s
+    """
+    cursor.execute(meals_prepped_query, (user_ID,))
+    meals_prepped_result = cursor.fetchone()
+    meals_prepped = meals_prepped_result.get("meals_prepped", 0) if meals_prepped_result else 0
+
     cursor.close()
 
     return render_template(
-        "home.html", user_ID=user_ID, user_first_name=user_first_name, cart_history=cart_history, active_trip=active_trip, total_trips=total_trips
+        "home.html", user_ID=user_ID, user_first_name=user_first_name, cart_history=cart_history, active_trip=active_trip, total_trips=total_trips, meals_prepped=meals_prepped
     )
 
 
@@ -271,10 +281,6 @@ def shopping_lists():
     return render_template("shopping_list.html")
 
 
-@shopping_bp.route("/rewards")
-def rewards():
-    return render_template("reward.html")
-
 
 @shopping_bp.route("/budget")
 def budget():
@@ -343,7 +349,7 @@ def meal_plan_details(plan_id):
     
     try:
         # Verify plan belongs to user and get basic info
-        verify_query = "SELECT * FROM meal_plans WHERE plan_id = %s AND user_id = %s"
+        verify_query = "SELECT * FROM meal_plan_sessions WHERE session_id = %s AND user_id = %s"
         cursor.execute(verify_query, (plan_id, user_id))
         plan = cursor.fetchone()
 

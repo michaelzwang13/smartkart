@@ -8,7 +8,7 @@
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   
   <!-- Font Awesome for icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -58,7 +58,7 @@
       --spacing-xl: 2rem;
       --spacing-2xl: 3rem;
       
-      --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-family: 'Quicksand', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
     
     /* Reset and base styles */
@@ -127,19 +127,18 @@
     }
     
     .nav-link {
-      color: var(--text-secondary);
+      color: var(--text-primary);
       text-decoration: none;
       font-weight: 500;
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
+      position: relative;
+      transition: color 0.3s ease;
       padding: var(--spacing-sm) var(--spacing-md);
       border-radius: var(--radius-md);
     }
     
     .nav-link:hover {
       color: var(--primary-color);
-      background: var(--bg-tertiary);
+      background: rgba(102, 126, 234, 0.1);
     }
     
     .nav-link.logout {
@@ -274,17 +273,25 @@
       margin-bottom: 20px;
     }
 
+    .header-actions {
+      display: flex;
+      align-items: center;
+    }
+
     .btn-primary {
       background: var(--primary-gradient);
       color: white;
       border: none;
-      padding: 10px 20px;
+      padding: var(--spacing-md) var(--spacing-lg);
       border-radius: var(--radius-md);
       cursor: pointer;
       text-decoration: none;
       display: inline-block;
-      font-weight: 500;
+      font-family: var(--font-family);
+      font-size: 1rem;
+      font-weight: 600;
       transition: all 0.3s ease;
+      box-shadow: var(--shadow-md);
     }
 
     .btn-primary:hover {
@@ -315,12 +322,178 @@
       color: var(--text-primary);
     }
 
-    .filter-group select {
+    .filter-group select, .filter-group input {
       padding: 8px;
       border: 1px solid var(--border-light);
       border-radius: var(--radius-sm);
       background: var(--bg-primary);
       color: var(--text-primary);
+      font-family: var(--font-family);
+      font-size: 1rem;
+    }
+    
+    .filter-group input:focus {
+      outline: none;
+      border-color: var(--primary-color);
+    }
+
+    /* Tag System Styles */
+    .tag-input-container {
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-sm);
+      background: var(--bg-primary);
+      min-height: 80px;
+    }
+
+    .selected-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 8px;
+      min-height: 32px;
+    }
+
+    .tag-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 8px;
+      border-radius: 16px;
+      font-size: 0.8em;
+      font-weight: 500;
+      color: white;
+      gap: 4px;
+    }
+
+    .tag-badge .remove-tag {
+      background: none;
+      border: none;
+      color: white;
+      cursor: pointer;
+      padding: 0;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      opacity: 0.8;
+    }
+
+    .tag-badge .remove-tag:hover {
+      opacity: 1;
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .tag-input-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .tag-input-row input {
+      flex: 1;
+      border: none;
+      outline: none;
+      padding: 6px;
+      font-size: 0.9em;
+      background: transparent;
+    }
+
+    .btn-tag {
+      padding: 6px 12px;
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 0.8em;
+      font-weight: 500;
+      transition: background 0.2s ease;
+    }
+
+    .btn-tag:hover {
+      background: var(--primary-dark);
+    }
+
+    .btn-tag:disabled {
+      background: var(--text-secondary);
+      cursor: not-allowed;
+    }
+
+    .tag-suggestions {
+      margin-top: 8px;
+      max-height: 120px;
+      overflow-y: auto;
+      border-top: 1px solid var(--border-light);
+      padding-top: 8px;
+    }
+
+    .tag-suggestion {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 8px;
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      transition: background 0.2s ease;
+      font-size: 0.9em;
+    }
+
+    .tag-suggestion:hover {
+      background: var(--bg-secondary);
+    }
+
+    .tag-suggestion-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tag-suggestion-color {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .tag-suggestion-usage {
+      font-size: 0.8em;
+      color: var(--text-secondary);
+    }
+
+    .item-tags-container {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 100px;
+      max-width: 150px;
+    }
+
+    .item-tag {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 12px;
+      font-size: 0.7em;
+      font-weight: 500;
+      color: white;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+
+    .item-tag-overflow {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 12px;
+      font-size: 0.7em;
+      font-weight: 500;
+      color: var(--text-secondary);
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-light);
+      text-align: center;
     }
 
     .pantry-stats {
@@ -466,9 +639,17 @@
       color: var(--text-primary);
     }
 
+    .item-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 15px;
+    }
+
     .item-details {
       font-size: 0.9em;
       color: var(--text-secondary);
+      flex: 1;
     }
 
     .item-details p {
@@ -565,12 +746,21 @@
 
     .form-group input, .form-group select, .form-group textarea {
       width: 100%;
-      padding: 8px;
+      padding: var(--spacing-md);
       border: 1px solid var(--border-light);
-      border-radius: var(--radius-sm);
+      border-radius: var(--radius-md);
       box-sizing: border-box;
       background: var(--bg-primary);
       color: var(--text-primary);
+      font-family: var(--font-family);
+      font-size: 1rem;
+      transition: border-color 0.2s ease;
+    }
+
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      background: var(--bg-primary);
     }
 
     .ai-predict {
@@ -595,18 +785,23 @@
     }
 
     .btn-secondary {
-      background: var(--text-secondary);
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: var(--radius-md);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border: 2px solid var(--border-medium);
+      padding: var(--spacing-sm) var(--spacing-lg);
+      border-radius: var(--radius-lg);
       cursor: pointer;
+      font-family: var(--font-family);
+      font-size: 0.875rem;
       font-weight: 500;
       transition: all 0.3s ease;
+      text-decoration: none;
     }
 
     .btn-secondary:hover {
-      background: var(--text-primary);
+      background: var(--bg-tertiary);
+      border-color: var(--primary-color);
+      color: var(--primary-color);
     }
 
     @media (max-width: 768px) {
@@ -679,6 +874,9 @@
       
       <nav>
         <ul class="nav-links">
+          <li><a href="{{ url_for('shopping.home') }}" class="nav-link">
+            <i class="fas fa-home" style="margin-right: 6px; font-size: 0.85em;"></i>Home
+          </a></li>
           <li class="nav-dropdown">
             <a href="#" class="nav-link dropdown-toggle">
               <i class="fas fa-shopping-cart" style="margin-right: 6px; font-size: 0.85em;"></i>Shopping
@@ -716,8 +914,8 @@
               <i class="fas fa-chevron-down dropdown-arrow" style="margin-left: 6px; font-size: 0.7em;"></i>
             </a>
             <ul class="dropdown-menu">
-              <li><a href="{{ url_for('shopping.rewards') }}" class="dropdown-link">
-                <i class="fas fa-trophy"></i>Rewards
+              <li><a href="{{ url_for('auth.settings') }}" class="dropdown-link">
+                <i class="fas fa-cog"></i>Settings
               </a></li>
               <li><a href="{{ url_for('auth.logout') }}" class="dropdown-link logout">
                 <i class="fas fa-sign-out-alt"></i>Logout
@@ -736,10 +934,19 @@
   <div class="container">
     <div class="pantry-header">
         <h2>My Pantry</h2>
-        <button id="addItemBtn" class="btn-primary">+ Add Item Manually</button>
+        <div class="header-actions">
+            <button id="deleteExpiredBtn" class="btn-secondary" style="margin-right: 10px; font-size: 0.9rem; padding: var(--spacing-sm) var(--spacing-md);"><i class="fas fa-trash"></i> Delete All Expired</button>
+            <button id="clearFiltersBtn" class="btn-secondary" style="margin-right: 10px; font-size: 0.9rem; padding: var(--spacing-sm) var(--spacing-md);"><i class="fas fa-times"></i> Clear Filters</button>
+            <button id="addItemBtn" class="btn-primary" style="font-size: 0.9rem; padding: var(--spacing-sm) var(--spacing-md);">+ Add Item Manually</button>
+        </div>
     </div>
     
     <div class="pantry-filters">
+        <div class="filter-group">
+            <label>Search Items:</label>
+            <input type="text" id="searchFilter" placeholder="Search by item name or notes...">
+        </div>
+        
         <div class="filter-group">
             <label>Storage Location:</label>
             <select id="storageFilter">
@@ -766,6 +973,14 @@
                 <option value="Spices">Spices</option>
                 <option value="Bread">Bread</option>
                 <option value="Other">Other</option>
+            </select>
+        </div>
+        
+        <div class="filter-group">
+            <label>Tag Filter:</label>
+            <select id="tagFilter">
+                <option value="">All Tags</option>
+                <!-- Dynamic tags will be populated here -->
             </select>
         </div>
         
@@ -881,6 +1096,19 @@
             </div>
             
             <div class="form-group">
+                <label>Tags (optional):</label>
+                <div class="tag-input-container">
+                    <div class="selected-tags" id="selectedTags"></div>
+                    <div class="tag-input-row">
+                        <input type="text" id="tagInput" placeholder="Type to add or search tags..." autocomplete="off">
+                        <button type="button" id="addTagBtn" class="btn-tag">Add</button>
+                    </div>
+                    <div class="tag-suggestions" id="tagSuggestions"></div>
+                </div>
+                <input type="hidden" name="tag_ids" id="tagIdsHidden">
+            </div>
+            
+            <div class="form-group">
                 <label>Notes (optional):</label>
                 <textarea name="notes" rows="3"></textarea>
             </div>
@@ -970,6 +1198,19 @@
             </div>
             
             <div class="form-group">
+                <label>Tags (optional):</label>
+                <div class="tag-input-container">
+                    <div class="selected-tags" id="editSelectedTags"></div>
+                    <div class="tag-input-row">
+                        <input type="text" id="editTagInput" placeholder="Type to add or search tags..." autocomplete="off">
+                        <button type="button" id="editAddTagBtn" class="btn-tag">Add</button>
+                    </div>
+                    <div class="tag-suggestions" id="editTagSuggestions"></div>
+                </div>
+                <input type="hidden" name="tag_ids" id="editTagIdsHidden">
+            </div>
+            
+            <div class="form-group">
                 <label>Notes (optional):</label>
                 <textarea id="editNotes" name="notes" rows="3"></textarea>
             </div>
@@ -1037,6 +1278,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const addItemBtn = document.getElementById('addItemBtn');
     const addFirstItemBtn = document.getElementById('addFirstItemBtn');
+    const deleteExpiredBtn = document.getElementById('deleteExpiredBtn');
     const addItemModal = document.getElementById('addItemModal');
     const addItemForm = document.getElementById('addItemForm');
     const editItemModal = document.getElementById('editItemModal');
@@ -1047,6 +1289,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Modal controls
     addItemBtn.addEventListener('click', () => addItemModal.style.display = 'flex');
     addFirstItemBtn.addEventListener('click', () => addItemModal.style.display = 'flex');
+    
+    // Delete expired items
+    deleteExpiredBtn.addEventListener('click', deleteAllExpiredItems);
     
     // Handle custom unit functionality for Add Item modal
     const unitSelect = document.getElementById('unitSelect');
@@ -1106,9 +1351,14 @@ document.addEventListener('DOMContentLoaded', function() {
     loadPantryItems();
     
     // Filter event listeners
+    document.getElementById('searchFilter').addEventListener('input', loadPantryItems);
     document.getElementById('storageFilter').addEventListener('change', loadPantryItems);
     document.getElementById('categoryFilter').addEventListener('change', loadPantryItems);
+    document.getElementById('tagFilter').addEventListener('change', loadPantryItems);
     document.getElementById('expiryFilter').addEventListener('change', loadPantryItems);
+    
+    // Clear filters button
+    document.getElementById('clearFiltersBtn').addEventListener('click', clearAllFilters);
     
     // Add item form submission
     addItemForm.addEventListener('submit', async function(e) {
@@ -1124,6 +1374,7 @@ document.addEventListener('DOMContentLoaded', function() {
             unit: finalUnit,
             storage_type: formData.get('storage_type'),
             category: formData.get('category'),
+            tag_ids: getSelectedTagIds('selectedTags'),
             expiration_date: formData.get('expiration_date') || null,
             ai_predict_expiry: formData.get('ai_predict_expiry') === 'on',
             notes: formData.get('notes') || null
@@ -1144,6 +1395,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 addItemModal.style.display = 'none';
                 addItemForm.reset();
                 resetCustomUnitInputs();
+                resetTagSelection('selectedTags');
                 loadPantryItems();
             } else {
                 alert('Error adding item: ' + result.message);
@@ -1169,6 +1421,7 @@ document.addEventListener('DOMContentLoaded', function() {
             unit: finalUnit,
             storage_type: formData.get('storage_type'),
             category: formData.get('category'),
+            tag_ids: getSelectedTagIds('editSelectedTags'),
             expiration_date: formData.get('expiration_date') || null,
             ai_predict_expiry: formData.get('ai_predict_expiry') === 'on',
             notes: formData.get('notes') || null
@@ -1189,6 +1442,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 editItemModal.style.display = 'none';
                 editItemForm.reset();
                 resetCustomUnitInputs();
+                resetTagSelection('editSelectedTags');
                 loadPantryItems();
             } else {
                 alert('Error updating item: ' + result.message);
@@ -1201,8 +1455,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     async function loadPantryItems() {
         try {
+            const searchFilter = document.getElementById('searchFilter').value.toLowerCase().trim();
             const storageFilter = document.getElementById('storageFilter').value;
             const categoryFilter = document.getElementById('categoryFilter').value;
+            const tagFilter = document.getElementById('tagFilter').value;
             const expiryFilter = document.getElementById('expiryFilter').value;
             
             const params = new URLSearchParams();
@@ -1214,8 +1470,28 @@ document.addEventListener('DOMContentLoaded', function() {
             const result = await response.json();
             
             if (result.success) {
-                displayPantryItems(result.items);
-                updateStats(result.items);
+                let filteredItems = result.items;
+                
+                // Load and populate tag filter
+                await loadAndPopulateTagFilter();
+                
+                // Apply client-side search filter
+                if (searchFilter) {
+                    filteredItems = filteredItems.filter(item => 
+                        item.item_name.toLowerCase().includes(searchFilter) ||
+                        (item.notes && item.notes.toLowerCase().includes(searchFilter))
+                    );
+                }
+                
+                // Apply client-side tag filter
+                if (tagFilter) {
+                    filteredItems = filteredItems.filter(item => {
+                        return item.tags && item.tags.some(tag => tag.name === tagFilter);
+                    });
+                }
+                
+                displayPantryItems(filteredItems);
+                updateStats(filteredItems);
             } else {
                 console.error('Error loading pantry items:', result.message);
             }
@@ -1228,17 +1504,39 @@ document.addEventListener('DOMContentLoaded', function() {
         if (items.length === 0) {
             pantryItems.style.display = 'none';
             emptyState.style.display = 'block';
+            
+            const searchFilter = document.getElementById('searchFilter').value.trim();
+            const emptyStateElement = document.getElementById('emptyState');
+            
+            if (searchFilter) {
+                emptyStateElement.innerHTML = `
+                    <h3>No items found</h3>
+                    <p>No pantry items match your search for "${searchFilter}". Try a different search term.</p>
+                `;
+            } else {
+                emptyStateElement.innerHTML = `
+                    <h3>Your pantry is empty</h3>
+                    <p>Start by completing a shopping trip or adding items manually.</p>
+                    <button id="addFirstItemBtn" class="btn-primary">Add Your First Item</button>
+                `;
+                // Re-add event listener for the new button
+                document.getElementById('addFirstItemBtn').addEventListener('click', () => {
+                    document.getElementById('addItemModal').style.display = 'flex';
+                });
+            }
             return;
         }
         
         pantryItems.style.display = 'block';
         emptyState.style.display = 'none';
         
+        const searchFilter = document.getElementById('searchFilter').value.trim();
         const storageFilter = document.getElementById('storageFilter').value;
         const categoryFilter = document.getElementById('categoryFilter').value;
+        const tagFilter = document.getElementById('tagFilter').value;
         
-        // If filtering by specific category or storage, use simple grid layout
-        if (categoryFilter || storageFilter) {
+        // If filtering by specific category, storage, tag, or search, use simple grid layout
+        if (categoryFilter || storageFilter || tagFilter || searchFilter) {
             pantryItems.innerHTML = `<div class="pantry-grid">${items.map(item => createItemHTML(item)).join('')}</div>`;
             return;
         }
@@ -1342,16 +1640,24 @@ document.addEventListener('DOMContentLoaded', function() {
                         </button>
                     </div>
                 </div>
-                <div class="item-details">
-                    <p><strong>Quantity:</strong> ${item.quantity} ${item.unit}</p>
-                    <p><strong>Storage:</strong> ${item.storage_type}</p>
-                    <p><strong>Category:</strong> ${item.category}</p>
-                    ${item.expiration_date ? 
-                        `<p><strong>Expires:</strong> <span class="expiry-status ${expiryStatus.status}">${expiryStatus.text}</span></p>` : 
-                        '<p><strong>Expires:</strong> No expiry date</p>'
+                <div class="item-content">
+                    <div class="item-details">
+                        <p><strong>Quantity:</strong> ${item.quantity} ${item.unit}</p>
+                        <p><strong>Storage:</strong> ${item.storage_type}</p>
+                        <p><strong>Category:</strong> ${item.category}</p>
+                        ${item.expiration_date ? 
+                            `<p><strong>Expires:</strong> <span class="expiry-status ${expiryStatus.status}">${expiryStatus.text}</span></p>` : 
+                            '<p><strong>Expires:</strong> No expiry date</p>'
+                        }
+                        <p><strong>Added:</strong> ${new Date(item.date_added).toLocaleDateString()}</p>
+                        ${item.notes ? `<p><strong>Notes:</strong> ${item.notes}</p>` : ''}
+                    </div>
+                    ${item.tags && item.tags.length > 0 ? 
+                        `<div class="item-tags-container">
+                            ${item.tags.slice(0, 5).map(tag => `<span class="item-tag" style="background-color: ${tag.color || '#3B82F6'}">${tag.name}</span>`).join('')}
+                            ${item.tags.length > 5 ? `<span class="item-tag-overflow">+${item.tags.length - 5}</span>` : ''}
+                        </div>` : ''
                     }
-                    <p><strong>Added:</strong> ${new Date(item.date_added).toLocaleDateString()}</p>
-                    ${item.notes ? `<p><strong>Notes:</strong> ${item.notes}</p>` : ''}
                 </div>
             </div>
         `;
@@ -1365,10 +1671,19 @@ document.addEventListener('DOMContentLoaded', function() {
         const diffDays = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
         
         if (diffDays < 0) {
-            return { status: 'expired', text: `Expired ${Math.abs(diffDays)} days ago` };
+            const absDays = Math.abs(diffDays);
+            if (absDays >= 365) {
+                const years = Math.floor(absDays / 365);
+                return { status: 'expired', text: `Expired ${years}+ years ago` };
+            }
+            return { status: 'expired', text: `Expired ${absDays} days ago` };
         } else if (diffDays <= 3) {
             return { status: 'expiring_soon', text: `Expires in ${diffDays} days` };
         } else {
+            if (diffDays >= 365) {
+                const years = Math.floor(diffDays / 365);
+                return { status: 'fresh', text: `Expires in ${years}+ years` };
+            }
             return { status: 'fresh', text: `Expires in ${diffDays} days` };
         }
     }
@@ -1387,6 +1702,69 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('totalItems').textContent = totalItems;
         document.getElementById('expiredItems').textContent = expiredItems;
         document.getElementById('expiringSoonItems').textContent = expiringSoonItems;
+    }
+    
+    async function deleteAllExpiredItems() {
+        try {
+            // First get all current items to find expired ones
+            const response = await fetch('/api/pantry/items');
+            const result = await response.json();
+            
+            if (!result.success) {
+                alert('Error fetching pantry items');
+                return;
+            }
+            
+            const expiredItems = result.items.filter(item => {
+                const status = getExpiryStatus(item.expiration_date);
+                return status.status === 'expired';
+            });
+            
+            if (expiredItems.length === 0) {
+                alert('No expired items found to delete.');
+                return;
+            }
+            
+            const confirmDelete = confirm(`Are you sure you want to delete ${expiredItems.length} expired item(s)? This action cannot be undone.`);
+            
+            if (!confirmDelete) return;
+            
+            // Delete each expired item
+            let deletedCount = 0;
+            for (const item of expiredItems) {
+                const deleteResponse = await fetch(`/api/pantry/items/${item.pantry_item_id}`, {
+                    method: 'DELETE'
+                });
+                
+                const deleteResult = await deleteResponse.json();
+                if (deleteResult.success) {
+                    deletedCount++;
+                }
+            }
+            
+            if (deletedCount > 0) {
+                alert(`Successfully deleted ${deletedCount} expired item(s).`);
+                loadPantryItems(); // Refresh the display
+            } else {
+                alert('Error deleting expired items. Please try again.');
+            }
+            
+        } catch (error) {
+            console.error('Delete expired items error:', error);
+            alert('Error deleting expired items. Please try again.');
+        }
+    }
+    
+    function clearAllFilters() {
+        // Reset all filter inputs to their default values
+        document.getElementById('searchFilter').value = '';
+        document.getElementById('storageFilter').value = '';
+        document.getElementById('categoryFilter').value = '';
+        document.getElementById('tagFilter').value = '';
+        document.getElementById('expiryFilter').value = '';
+        
+        // Refresh the pantry items to show all items
+        loadPantryItems();
     }
     
     // Global functions for item actions
@@ -1426,6 +1804,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 document.getElementById('editStorageType').value = item.storage_type;
                 document.getElementById('editCategory').value = item.category;
+                
+                // Populate tags
+                editSelectedTags = [];
+                if (item.tags && item.tags.length > 0) {
+                    editSelectedTags = item.tags.map(tag => ({
+                        id: tag.id,
+                        name: tag.name,
+                        color: tag.color
+                    }));
+                }
+                updateSelectedTagsDisplay('editSelectedTags');
+                populateTagSuggestions('editTagSuggestions', 'editSelectedTags');
+                
                 document.getElementById('editExpirationDate').value = item.expiration_date || '';
                 document.getElementById('editAiPredict').checked = false; // Reset AI prediction
                 document.getElementById('editNotes').value = item.notes || '';
@@ -1461,6 +1852,284 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Error deleting item. Please try again.');
         }
     };
+
+    // Tag Management Functions
+    let allTags = [];
+    let selectedTags = [];
+    let editSelectedTags = [];
+
+    async function loadAndPopulateTagFilter() {
+        try {
+            const response = await fetch('/api/pantry/tags');
+            const result = await response.json();
+            
+            if (result.success) {
+                allTags = result.tags;
+                populateTagFilter();
+                populateTagSuggestions('tagSuggestions', 'selectedTags');
+                populateTagSuggestions('editTagSuggestions', 'editSelectedTags');
+            }
+        } catch (error) {
+            console.error('Error loading tags:', error);
+        }
+    }
+
+    function populateTagFilter() {
+        const tagSelect = document.getElementById('tagFilter');
+        const currentValue = tagSelect.value;
+        
+        tagSelect.innerHTML = '<option value="">All Tags</option>';
+        
+        allTags.forEach(tag => {
+            const option = document.createElement('option');
+            option.value = tag.tag_name;
+            option.textContent = `${tag.tag_name} (${tag.usage_count})`;
+            tagSelect.appendChild(option);
+        });
+        
+        if (currentValue) {
+            tagSelect.value = currentValue;
+        }
+    }
+
+    function populateTagSuggestions(containerId, selectedTagsId) {
+        const container = document.getElementById(containerId);
+        const selectedTagsList = selectedTagsId === 'selectedTags' ? selectedTags : editSelectedTags;
+        
+        container.innerHTML = '';
+        
+        // Check if 5-tag limit reached
+        if (selectedTagsList.length >= 5) {
+            container.innerHTML = '<p style="color: var(--warning-color); font-size: 0.8em; padding: 8px;">Maximum 5 tags reached. Remove a tag to add more.</p>';
+            return;
+        }
+        
+        if (allTags.length === 0) {
+            container.innerHTML = '<p style="color: var(--text-secondary); font-size: 0.8em; padding: 8px;">No tags created yet. Type above to create your first tag.</p>';
+            return;
+        }
+        
+        const availableTags = allTags.filter(tag => 
+            !selectedTagsList.find(selected => selected.id === tag.tag_id)
+        );
+        
+        if (availableTags.length === 0) {
+            container.innerHTML = '<p style="color: var(--text-secondary); font-size: 0.8em; padding: 8px;">All tags selected</p>';
+            return;
+        }
+        
+        availableTags.forEach(tag => {
+            const suggestion = document.createElement('div');
+            suggestion.className = 'tag-suggestion';
+            suggestion.innerHTML = `
+                <div class="tag-suggestion-info">
+                    <div class="tag-suggestion-color" style="background-color: ${tag.tag_color}"></div>
+                    <span>${tag.tag_name}</span>
+                </div>
+                <span class="tag-suggestion-usage">${tag.usage_count} uses</span>
+            `;
+            suggestion.addEventListener('click', () => addExistingTag(tag, selectedTagsId));
+            container.appendChild(suggestion);
+        });
+    }
+
+    function addExistingTag(tag, selectedTagsId) {
+        const targetList = selectedTagsId === 'selectedTags' ? selectedTags : editSelectedTags;
+        
+        // Check if already selected
+        if (targetList.find(selected => selected.id === tag.tag_id)) {
+            return;
+        }
+        
+        // Check 5-tag limit
+        if (targetList.length >= 5) {
+            alert('Maximum 5 tags allowed per item');
+            return;
+        }
+        
+        targetList.push({
+            id: tag.tag_id,
+            name: tag.tag_name,
+            color: tag.tag_color
+        });
+        updateSelectedTagsDisplay(selectedTagsId);
+        populateTagSuggestions(
+            selectedTagsId === 'selectedTags' ? 'tagSuggestions' : 'editTagSuggestions',
+            selectedTagsId
+        );
+    }
+
+    window.removeTag = function(tagId, selectedTagsId) {
+        const targetList = selectedTagsId === 'selectedTags' ? selectedTags : editSelectedTags;
+        const index = targetList.findIndex(tag => tag.id === tagId);
+        
+        if (index > -1) {
+            targetList.splice(index, 1);
+            updateSelectedTagsDisplay(selectedTagsId);
+            populateTagSuggestions(
+                selectedTagsId === 'selectedTags' ? 'tagSuggestions' : 'editTagSuggestions',
+                selectedTagsId
+            );
+        }
+    }
+
+    function updateSelectedTagsDisplay(selectedTagsId) {
+        const container = document.getElementById(selectedTagsId);
+        const targetList = selectedTagsId === 'selectedTags' ? selectedTags : editSelectedTags;
+        
+        container.innerHTML = '';
+        
+        targetList.forEach(tag => {
+            const badge = document.createElement('div');
+            badge.className = 'tag-badge';
+            badge.style.backgroundColor = tag.color;
+            badge.innerHTML = `
+                ${tag.name}
+                <button class="remove-tag" onclick="removeTag(${tag.id}, '${selectedTagsId}')" type="button">×</button>
+            `;
+            container.appendChild(badge);
+        });
+        
+        // Update button and input states based on limit
+        const inputId = selectedTagsId === 'selectedTags' ? 'tagInput' : 'editTagInput';
+        const buttonId = selectedTagsId === 'selectedTags' ? 'addTagBtn' : 'editAddTagBtn';
+        
+        const input = document.getElementById(inputId);
+        const button = document.getElementById(buttonId);
+        
+        if (targetList.length >= 5) {
+            input.disabled = true;
+            input.placeholder = 'Maximum 5 tags reached';
+            button.disabled = true;
+        } else {
+            input.disabled = false;
+            input.placeholder = 'Type to add or search tags...';
+            button.disabled = false;
+        }
+    }
+
+    function getSelectedTagIds(selectedTagsId) {
+        const targetList = selectedTagsId === 'selectedTags' ? selectedTags : editSelectedTags;
+        return targetList.map(tag => tag.id);
+    }
+
+    function resetTagSelection(selectedTagsId) {
+        if (selectedTagsId === 'selectedTags') {
+            selectedTags = [];
+            document.getElementById('tagInput').value = '';
+        } else {
+            editSelectedTags = [];
+            document.getElementById('editTagInput').value = '';
+        }
+        updateSelectedTagsDisplay(selectedTagsId);
+        populateTagSuggestions(
+            selectedTagsId === 'selectedTags' ? 'tagSuggestions' : 'editTagSuggestions',
+            selectedTagsId
+        );
+    }
+
+    async function createNewTag(tagName) {
+        try {
+            const response = await fetch('/api/pantry/tags', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    tag_name: tagName,
+                    tag_color: generateRandomColor()
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                allTags.push(result.tag);
+                return result.tag;
+            } else {
+                alert(result.message);
+                return null;
+            }
+        } catch (error) {
+            console.error('Error creating tag:', error);
+            alert('Error creating tag. Please try again.');
+            return null;
+        }
+    }
+
+    function generateRandomColor() {
+        const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#84CC16', '#F97316'];
+        return colors[Math.floor(Math.random() * colors.length)];
+    }
+
+    // Tag input event listeners
+    document.getElementById('addTagBtn').addEventListener('click', async function() {
+        const input = document.getElementById('tagInput');
+        const tagName = input.value.trim();
+        
+        if (tagName) {
+            // Check 5-tag limit
+            if (selectedTags.length >= 5) {
+                alert('Maximum 5 tags allowed per item');
+                return;
+            }
+            
+            // Check if tag already exists
+            let existingTag = allTags.find(tag => tag.tag_name.toLowerCase() === tagName.toLowerCase());
+            
+            if (!existingTag) {
+                // Create new tag
+                existingTag = await createNewTag(tagName);
+                if (!existingTag) return;
+            }
+            
+            addExistingTag(existingTag, 'selectedTags');
+            input.value = '';
+        }
+    });
+
+    document.getElementById('editAddTagBtn').addEventListener('click', async function() {
+        const input = document.getElementById('editTagInput');
+        const tagName = input.value.trim();
+        
+        if (tagName) {
+            // Check 5-tag limit
+            if (editSelectedTags.length >= 5) {
+                alert('Maximum 5 tags allowed per item');
+                return;
+            }
+            
+            // Check if tag already exists
+            let existingTag = allTags.find(tag => tag.tag_name.toLowerCase() === tagName.toLowerCase());
+            
+            if (!existingTag) {
+                // Create new tag
+                existingTag = await createNewTag(tagName);
+                if (!existingTag) return;
+            }
+            
+            addExistingTag(existingTag, 'editSelectedTags');
+            input.value = '';
+        }
+    });
+
+    // Tag input enter key support
+    document.getElementById('tagInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('addTagBtn').click();
+        }
+    });
+
+    document.getElementById('editTagInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('editAddTagBtn').click();
+        }
+    });
+
+    // Load tags when page loads
+    loadAndPopulateTagFilter();
 });
 </script>
 </body>

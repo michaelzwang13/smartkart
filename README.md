@@ -17,8 +17,6 @@
 - 📦 **Pantry + Expiration Tracking**  
   Add groceries from your shopping list to your pantry. Predict expiration dates with AI if unknown.
 
-- 🎮 **Gamified Experience**  
-  Earn XP, build streaks, unlock achievements, and visualize progress in your own virtual kitchen.
 
 - 💸 **Smart Shopping & Budgeting**  
   Automatically generate shopping lists from plans and track cost per meal and overall savings.
@@ -41,7 +39,7 @@
 - “Suggest a weekly meal plan I can prep on Sunday under 2 hours.”
 - “What can I make with chicken, spinach, and rice?”
 - “Show meals that use items expiring this week.”
-- “Track my meal prep streak and budget progress.”
+- "Track my budget progress and spending patterns."
 
 ---
 
