@@ -938,7 +938,7 @@
     <div class="pantry-filters">
         <div class="filter-group">
             <label>Search Items:</label>
-            <input type="text" id="searchFilter" placeholder="Search by item name...">
+            <input type="text" id="searchFilter" placeholder="Search by item name or notes...">
         </div>
         
         <div class="filter-group">
@@ -1472,7 +1472,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Apply client-side search filter
                 if (searchFilter) {
                     filteredItems = filteredItems.filter(item => 
-                        item.item_name.toLowerCase().includes(searchFilter)
+                        item.item_name.toLowerCase().includes(searchFilter) ||
+                        (item.notes && item.notes.toLowerCase().includes(searchFilter))
                     );
                 }
                 
