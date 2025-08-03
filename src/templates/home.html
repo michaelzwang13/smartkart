@@ -735,6 +735,10 @@
       font-size: 0.75rem;
       font-weight: 600;
       text-transform: uppercase;
+      width: 90px;
+      text-align: center;
+      display: inline-block;
+      flex-shrink: 0;
     }
     
     .meal-type-badge.breakfast {
@@ -752,18 +756,26 @@
     .meal-completion-checkbox {
       display: flex;
       align-items: center;
-      gap: var(--spacing-xs);
-      font-size: 0.875rem;
-      color: var(--text-secondary);
+      justify-content: center;
+      cursor: pointer;
     }
     
     .meal-completion-checkbox input[type="checkbox"] {
-      width: 16px;
-      height: 16px;
+      width: 20px;
+      height: 20px;
       border: 2px solid var(--border-medium);
-      border-radius: 3px;
+      border-radius: 4px;
       cursor: pointer;
       position: relative;
+      appearance: none;
+      -webkit-appearance: none;
+      background: var(--bg-primary);
+      transition: all 0.2s ease;
+    }
+    
+    .meal-completion-checkbox input[type="checkbox"]:hover {
+      border-color: var(--success-color);
+      transform: scale(1.05);
     }
     
     .meal-completion-checkbox input[type="checkbox"]:checked {
@@ -774,11 +786,17 @@
     .meal-completion-checkbox input[type="checkbox"]:checked::after {
       content: '✓';
       position: absolute;
-      top: -2px;
-      left: 2px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       font-size: 12px;
       color: white;
       font-weight: bold;
+      line-height: 1;
+    }
+    
+    .meal-completion-checkbox span {
+      display: none;
     }
     
     .meal-name {
@@ -2818,7 +2836,6 @@
           <label class="meal-completion-checkbox">
             <input type="checkbox" ${meal.is_completed ? 'checked' : ''} 
                    onchange="toggleMealCompletion(${meal.meal_id}, this.checked, this)">
-            <span>Complete</span>
           </label>
         `;
         
