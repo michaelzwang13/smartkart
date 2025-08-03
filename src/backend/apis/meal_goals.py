@@ -33,7 +33,7 @@ def get_meal_goals():
     try:
         query = """
             SELECT meal_plans_goal, meals_completed_goal, new_recipes_goal, 
-                 created_at, updated_at
+                   budget_goal, created_at, updated_at
             FROM monthly_meal_goals 
             WHERE user_id = %s AND month = %s AND year = %s
         """
