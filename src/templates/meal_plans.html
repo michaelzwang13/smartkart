@@ -1526,9 +1526,6 @@
       border-left-color: var(--warning-color);
     }
 
-    .goal-item.budget-goal {
-      border-left-color: var(--accent-color);
-    }
 
     .goal-header {
       display: flex;
@@ -1959,25 +1956,6 @@
             </div>
           </div>
 
-          <!-- Budget Goal -->
-          <div class="goal-item budget-goal">
-            <div class="goal-header">
-              <div class="goal-label">
-                <i class="fas fa-dollar-sign"></i>
-                Monthly Budget
-              </div>
-              <input type="number" class="goal-input" id="budgetGoal" min="50" max="1000" value="300" step="10">
-            </div>
-            <div class="goal-progress">
-              <div class="progress-bar">
-                <div class="progress-fill accent" id="budgetProgress" style="width: 0%"></div>
-              </div>
-            </div>
-            <div class="goal-stats">
-              <span class="current-count" id="budgetSpent">$0</span>
-              <span class="goal-target">Budget: $<span id="budgetTarget">300</span></span>
-            </div>
-          </div>
         </div>
 
         <div class="goals-actions">
@@ -2083,14 +2061,12 @@
           document.getElementById('mealPlansGoal').value = goals.meal_plans_goal;
           document.getElementById('mealsCompletedGoal').value = goals.meals_completed_goal;
           document.getElementById('newRecipesGoal').value = goals.new_recipes_goal;
-          document.getElementById('budgetGoal').value = goals.budget_goal;
         } else {
           console.error('Failed to load goals:', data.message);
           // Set default values on error
           document.getElementById('mealPlansGoal').value = 4;
           document.getElementById('mealsCompletedGoal').value = 60;
           document.getElementById('newRecipesGoal').value = 12;
-          document.getElementById('budgetGoal').value = 300;
         }
         
         updateGoalTargets();
@@ -2100,7 +2076,6 @@
         document.getElementById('mealPlansGoal').value = 4;
         document.getElementById('mealsCompletedGoal').value = 60;
         document.getElementById('newRecipesGoal').value = 12;
-        document.getElementById('budgetGoal').value = 300;
         updateGoalTargets();
       }
     }
@@ -2116,7 +2091,7 @@
           meal_plans_goal: parseInt(document.getElementById('mealPlansGoal').value),
           meals_completed_goal: parseInt(document.getElementById('mealsCompletedGoal').value),
           new_recipes_goal: parseInt(document.getElementById('newRecipesGoal').value),
-          budget_goal: parseFloat(document.getElementById('budgetGoal').value)
+          budget_goal: null
         };
         
         const response = await fetch('/api/meal-goals', {
@@ -2185,14 +2160,12 @@
           updateGoalProgress('mealPlans', progress.meal_plans_count, 'plans');
           updateGoalProgress('mealsCompleted', progress.completed_meals_count, 'meals');
           updateGoalProgress('newRecipes', progress.new_recipes_count, 'recipes');
-          updateGoalProgress('budget', progress.budget_spent, '$', true);
         } else {
           console.error('Failed to load progress:', data.message);
           // Set zero values on error
           updateGoalProgress('mealPlans', 0, 'plans');
           updateGoalProgress('mealsCompleted', 0, 'meals');
           updateGoalProgress('newRecipes', 0, 'recipes');
-          updateGoalProgress('budget', 0, '$', true);
         }
       } catch (error) {
         console.error('Error updating goals progress:', error);
@@ -2200,7 +2173,6 @@
         updateGoalProgress('mealPlans', 0, 'plans');
         updateGoalProgress('mealsCompleted', 0, 'meals');
         updateGoalProgress('newRecipes', 0, 'recipes');
-        updateGoalProgress('budget', 0, '$', true);
       }
     }
     
