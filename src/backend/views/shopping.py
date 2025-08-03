@@ -82,12 +82,11 @@ def home():
     cursor.execute(active_query, (user_ID,))
     active_trip = cursor.fetchone()
 
-    # Get count of meals prepped (recipes created)
+    # Get count of meals prepped (individual meals created)
     meals_prepped_query = """
     SELECT COUNT(*) as meals_prepped
-    FROM recipes r
-    JOIN meal_plans mp ON r.plan_id = mp.plan_id
-    WHERE mp.user_id = %s
+    FROM meals m
+    WHERE m.user_id = %s
     """
     cursor.execute(meals_prepped_query, (user_ID,))
     meals_prepped_result = cursor.fetchone()
@@ -350,7 +349,7 @@ def meal_plan_details(plan_id):
     
     try:
         # Verify plan belongs to user and get basic info
-        verify_query = "SELECT * FROM meal_plans WHERE plan_id = %s AND user_id = %s"
+        verify_query = "SELECT * FROM meal_plan_sessions WHERE session_id = %s AND user_id = %s"
         cursor.execute(verify_query, (plan_id, user_id))
         plan = cursor.fetchone()
 

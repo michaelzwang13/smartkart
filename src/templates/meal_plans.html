@@ -1153,6 +1153,7 @@
     let currentDate = new Date();
     let currentView = 'month';
     let mealPlanData = [];
+    let mealsData = [];
     
     // Load existing meal plans on page load
     document.addEventListener('DOMContentLoaded', function() {
@@ -1168,14 +1169,14 @@
     
     function initializeCalendar() {
       // Setup calendar navigation
-      document.getElementById('prevMonth').addEventListener('click', () => {
+      document.getElementById('prevMonth').addEventListener('click', async () => {
         currentDate.setMonth(currentDate.getMonth() - 1);
-        renderCalendar();
+        await loadMealsForCalendar();
       });
       
-      document.getElementById('nextMonth').addEventListener('click', () => {
+      document.getElementById('nextMonth').addEventListener('click', async () => {
         currentDate.setMonth(currentDate.getMonth() + 1);
-        renderCalendar();
+        await loadMealsForCalendar();
       });
       
       // Setup view toggle
@@ -1407,49 +1408,10 @@
     }
     
     function getMealsForDate(date) {
-      const meals = [];
       const dateStr = date.toISOString().split('T')[0];
       
-      // Search through meal plan data for meals on this date
-      mealPlanData.forEach(plan => {
-        const startDate = new Date(plan.start_date);
-        const endDate = new Date(plan.end_date);
-        
-        if (date >= startDate && date <= endDate) {
-          // Calculate which day of the plan this is
-          const dayDiff = Math.floor((date - startDate) / (1000 * 60 * 60 * 24)) + 1;
-          
-          // Add meals based on plan name and day
-          if (dayDiff >= 1 && dayDiff <= plan.total_days) {
-            // Generate meal names based on plan and day
-            const planName = plan.plan_name || 'Meal Plan';
-            const dayName = getDayName(dayDiff);
-            
-            meals.push(
-              { 
-                name: `${planName} - ${dayName} Breakfast`, 
-                type: 'breakfast',
-                planId: plan.plan_id,
-                day: dayDiff
-              },
-              { 
-                name: `${planName} - ${dayName} Lunch`, 
-                type: 'lunch',
-                planId: plan.plan_id,
-                day: dayDiff
-              },
-              { 
-                name: `${planName} - ${dayName} Dinner`, 
-                type: 'dinner',
-                planId: plan.plan_id,
-                day: dayDiff
-              }
-            );
-          }
-        }
-      });
-      
-      return meals;
+      // Return meals from the global mealsData for this date
+      return (window.mealsData || mealsData || []).filter(meal => meal.date === dateStr);
     }
     
     function getDayName(dayNumber) {
@@ -1471,9 +1433,28 @@
         return;
       }
       
-      // Directly navigate to the first meal plan details
-      if (meals.length > 0 && meals[0].planId) {
-        viewPlanDetails(meals[0].planId);
+      // Show meal details modal or navigate to meal details
+      if (meals.length > 0) {
+        // For now, show a simple alert with meal details
+        // In the future, this could open a modal with editing capabilities
+        const dateStr = date.toLocaleDateString('en-US', { 
+          weekday: 'long', 
+          month: 'long', 
+          day: 'numeric' 
+        });
+        
+        let mealList = `Meals for ${dateStr}:\\n\\n`;
+        meals.forEach(meal => {
+          const mealType = meal.type.charAt(0).toUpperCase() + meal.type.slice(1);
+          mealList += `${mealType}: ${meal.name}\\n`;
+        });
+        
+        alert(mealList);
+        
+        // If there's a session_id, navigate to the session details
+        if (meals[0].session_id) {
+          viewPlanDetails(meals[0].session_id);
+        }
       }
     }
     
@@ -1488,32 +1469,71 @@
         if (data.success && data.plans && data.plans.length > 0) {
           console.log(`Found ${data.plans.length} meal plans`);
           
-          // Store meal plan data for calendar
+          // Store meal plan data for plan management
           mealPlanData = data.plans;
           
           displayMealPlans(data.plans);
           document.getElementById('emptyState').style.display = 'none';
-          
-          // Update calendar with new data
-          if (typeof renderCalendar === 'function') {
-            renderCalendar();
-          }
         } else {
           console.log('No meal plans found or error:', data);
           mealPlanData = [];
           document.getElementById('emptyState').style.display = 'block';
+        }
+        
+        // Load meals for calendar regardless of meal plans
+        await loadMealsForCalendar();
+        
+      } catch (error) {
+        console.error('Error loading meal plans:', error);
+        mealPlanData = [];
+        document.getElementById('emptyState').style.display = 'block';
+        await loadMealsForCalendar();
+      }
+    }
+
+    async function loadMealsForCalendar() {
+      try {
+        // Get date range for current calendar view
+        const startDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+        const endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+        
+        // Extend range to cover full weeks
+        const calendarStart = new Date(startDate);
+        calendarStart.setDate(startDate.getDate() - startDate.getDay());
+        const calendarEnd = new Date(endDate);
+        calendarEnd.setDate(endDate.getDate() + (6 - endDate.getDay()));
+        
+        const startDateStr = calendarStart.toISOString().split('T')[0];
+        const endDateStr = calendarEnd.toISOString().split('T')[0];
+        
+        console.log('Loading meals for calendar:', startDateStr, 'to', endDateStr);
+        
+        const response = await fetch(`/api/meals?start_date=${startDateStr}&end_date=${endDateStr}`);
+        const data = await response.json();
+        
+        if (data.success) {
+          console.log(`Found ${data.meals.length} meals for calendar`);
           
-          // Update calendar to show empty state
+          // Store meals data globally for calendar
+          window.mealsData = data.meals || [];
+          mealsData = data.meals || [];
+          
+          // Update calendar with new meal data
+          if (typeof renderCalendar === 'function') {
+            renderCalendar();
+          }
+        } else {
+          console.log('No meals found or error:', data);
+          window.mealsData = [];
+          mealsData = [];
           if (typeof renderCalendar === 'function') {
             renderCalendar();
           }
         }
       } catch (error) {
-        console.error('Error loading meal plans:', error);
-        mealPlanData = [];
-        document.getElementById('emptyState').style.display = 'block';
-        
-        // Update calendar to show empty state
+        console.error('Error loading meals for calendar:', error);
+        window.mealsData = [];
+        mealsData = [];
         if (typeof renderCalendar === 'function') {
           renderCalendar();
         }
@@ -1609,12 +1629,14 @@
         
         if (result.success) {
           // Show success message and reload plans
-          alert('Meal plan generated successfully!');
-          loadMealPlans(); // This will also update the calendar
+          alert(`Meal plan generated successfully! Created ${result.created_meals.length} meals.`);
           
-          // Optionally navigate to the new plan
-          if (result.meal_plan.plan_id) {
-            viewPlanDetails(result.meal_plan.plan_id);
+          // Reload both meal plans and calendar meals
+          await loadMealPlans();
+          
+          // Optionally navigate to the new session
+          if (result.session_id) {
+            viewPlanDetails(result.session_id);
           }
         } else {
           alert('Error generating meal plan: ' + result.message);
