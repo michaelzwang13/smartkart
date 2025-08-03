@@ -1589,6 +1589,22 @@
 
 </body>
 
+<script>
+// Pass server data to JavaScript
+window.SHOPPING_TRIP_CONFIG = {
+    allocatedBudget: JSON.parse('{{ allocated_budget | default(1000) | tojson }}'),
+    remainingBudget: JSON.parse('{{ remaining | default(1000) | tojson }}'),
+    cartSessionExists: JSON.parse('{{ cart_session | default(false) | tojson }}'),
+    cartId: JSON.parse('{{ cart_session.cart_ID if cart_session else null }}'),
+    urls: {
+        getCartItems: "{{ url_for('shopping_trip.get_cart_items') }}",
+        searchItem: "{{ url_for('shopping_trip.searchitem') }}",
+        addItem: "{{ url_for('shopping_trip.add_item') }}",
+        predict: "{{ url_for('shopping_trip.predict') }}",
+        learn: "{{ url_for('shopping_trip.learn') }}"
+    }
+};
+</script>
 <script src="{{ url_for('static', filename='js/shopping_trip.js') }}"></script>
 
 </html>

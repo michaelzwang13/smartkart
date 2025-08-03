@@ -1,11 +1,8 @@
-// Template variables
-const ALLOCATED_BUDGET = JSON.parse(
-  "{{ allocated_budget | default(1000) | tojson }}"
-);
-const REMAINING_BUDGET = JSON.parse("{{ remaining | default(1000) | tojson }}");
-const CART_SESSION_EXISTS = JSON.parse(
-  "{{ cart_session | default(false) | tojson }}"
-);
+// Get configuration from global object set by template
+const config = window.SHOPPING_TRIP_CONFIG || {};
+const ALLOCATED_BUDGET = config.allocatedBudget || 1000;
+const REMAINING_BUDGET = config.remainingBudget || 1000;
+const CART_SESSION_EXISTS = config.cartSessionExists || false;
 
 // Removed barcode scanner for testing UPC input
 
@@ -35,7 +32,7 @@ document.addEventListener("DOMContentLoaded", function () {
 async function loadCartItems() {
   try {
     const response = await fetch(
-      "{{ url_for('shopping_trip.get_cart_items') }}",
+      config.urls?.getCartItems || '/api/shopping-trip/get-cart-items',
       {
         method: "GET",
         headers: { "Content-Type": "application/json" },
@@ -49,8 +46,8 @@ async function loadCartItems() {
 
     // Update budget if available
     if (data.total_items !== undefined) {
-      const defaultBudget = JSON.parse("{{ allocated_budget or 1000 }}");
-      const defaultRemaining = JSON.parse("{{ remaining or 1000 }}");
+      const defaultBudget = ALLOCATED_BUDGET;
+      const defaultRemaining = REMAINING_BUDGET;
       updateBudgetOverview(
         data.allocated_budget || defaultBudget,
         data.total_spent || 0,
@@ -182,7 +179,7 @@ async function handleFormSubmit(event) {
 
     // 1) Search for item by UPC using Nutritionix API
     const searchResponse = await fetch(
-      `{{ url_for('shopping_trip.searchitem') }}?upc=${encodeURIComponent(
+      `${config.urls?.searchItem || '/api/shopping-trip/searchitem'}?upc=${encodeURIComponent(
         itemName
       )}`
     );
@@ -262,7 +259,7 @@ async function handleFormSubmit(event) {
     }
 
     const addItemResponse = await fetch(
-      "{{ url_for('shopping_trip.add_item') }}",
+      config.urls?.addItem || '/api/shopping-trip/add-item',
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -284,7 +281,7 @@ async function handleFormSubmit(event) {
         (sum, item) => sum + item.quantity,
         0
       );
-      const allocatedBudget = JSON.parse("{{ allocated_budget or 1000 }}");
+      const allocatedBudget = ALLOCATED_BUDGET;
       updateBudgetOverview(
         allocatedBudget,
         totalSpent,
@@ -304,7 +301,7 @@ async function handleFormSubmit(event) {
     if (carbs > 0 || sugar > 0 || sodium > 0 || fat > 0) {
       try {
         const predictResponse = await fetch(
-          `{{ url_for('shopping_trip.predict') }}?carbs=${carbs}&sugar=${sugar}&sodium=${sodium}&fat=${fat}`
+          `${config.urls?.predict || '/api/shopping-trip/predict'}?carbs=${carbs}&sugar=${sugar}&sodium=${sodium}&fat=${fat}`
         );
         const predictData = await predictResponse.json();
 
@@ -386,7 +383,7 @@ async function handleImpulseResponse(wasImpulse, carbs, sugar, sodium, fat) {
   // Send feedback to ML model
   const label = wasImpulse ? 1 : 0;
   fetch(
-    `{{ url_for('shopping_trip.learn') }}?carbs=${carbs}&sugar=${sugar}&sodium=${sodium}&fat=${fat}&label=${label}`
+    `${config.urls?.learn || '/api/shopping-trip/learn'}?carbs=${carbs}&sugar=${sugar}&sodium=${sodium}&fat=${fat}&label=${label}`
   ).catch((error) => console.error("ML feedback failed:", error));
 
   if (wasImpulse) {
@@ -410,7 +407,7 @@ async function handleImpulseResponse(wasImpulse, carbs, sugar, sodium, fat) {
           (sum, item) => sum + item.quantity,
           0
         );
-        const allocatedBudget = JSON.parse("{{ allocated_budget or 1000 }}");
+        const allocatedBudget = ALLOCATED_BUDGET;
         updateBudgetOverview(
           allocatedBudget,
           totalSpent,
@@ -678,11 +675,8 @@ function setupShoppingListEventListeners() {
   }
 
   // Get cart ID from session
-  if (
-    CART_SESSION_EXISTS &&
-    "{{ cart_session.cart_ID if cart_session else '' }}"
-  ) {
-    currentCartId = "{{ cart_session.cart_ID if cart_session else '' }}";
+  if (CART_SESSION_EXISTS && config.cartId) {
+    currentCartId = config.cartId;
   }
 
   // Debug log to help troubleshoot
