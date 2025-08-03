@@ -256,3 +256,108 @@ CREATE TABLE monthly_meal_goals (
     INDEX idx_user_goals (user_id),
     INDEX idx_month_year (month, year)
 );
+
+-- Create recipe_templates table for storing reusable recipe templates
+CREATE TABLE recipe_templates (
+    template_id INT AUTO_INCREMENT,
+    recipe_name VARCHAR(200) NOT NULL,
+    description TEXT NULL,
+    meal_type ENUM('breakfast', 'lunch', 'dinner', 'snack') NOT NULL,
+    prep_time INT NULL, -- minutes
+    cook_time INT NULL, -- minutes
+    servings INT DEFAULT 1,
+    estimated_cost DECIMAL(8,2) NULL,
+    difficulty ENUM('easy', 'medium', 'hard') DEFAULT 'medium',
+    calories_per_serving INT NULL,
+    instructions TEXT NOT NULL,
+    cuisine_type VARCHAR(50) NULL, -- Italian, Mexican, Asian, etc.
+    dietary_tags TEXT NULL, -- JSON array of dietary tags (vegetarian, gluten-free, etc.)
+    notes TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (template_id),
+    INDEX idx_recipe_name (recipe_name),
+    INDEX idx_meal_type (meal_type),
+    INDEX idx_cuisine_type (cuisine_type),
+    INDEX idx_difficulty (difficulty)
+);
+
+-- Create template_ingredients table for storing ingredients per recipe template
+CREATE TABLE template_ingredients (
+    ingredient_id INT AUTO_INCREMENT,
+    template_id INT NOT NULL,
+    ingredient_name VARCHAR(100) NOT NULL,
+    quantity DECIMAL(10,2) NOT NULL,
+    unit VARCHAR(20) NOT NULL, -- cups, tsp, lbs, oz, etc.
+    notes VARCHAR(200) NULL, -- "diced", "optional", etc.
+    is_pantry_item BOOLEAN DEFAULT FALSE, -- if typically available in user's pantry
+    estimated_cost DECIMAL(6,2) NULL,
+    PRIMARY KEY (ingredient_id),
+    FOREIGN KEY (template_id) REFERENCES recipe_templates(template_id) ON DELETE CASCADE,
+    INDEX idx_template_ingredients (template_id),
+    INDEX idx_ingredient_name (ingredient_name)
+);
+
+-- Create meal_plan_sessions table for storing meal planning sessions
+CREATE TABLE meal_plan_sessions (
+    session_id INT AUTO_INCREMENT,
+    user_id VARCHAR(50) NOT NULL,
+    session_name VARCHAR(100) NOT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    total_days INT NOT NULL,
+    dietary_preference VARCHAR(50) DEFAULT 'none', -- vegetarian, vegan, keto, paleo, etc.
+    max_cooking_time INT NULL, -- minutes per day
+    generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status ENUM('active', 'completed', 'archived') DEFAULT 'active',
+    ai_model_used VARCHAR(50) DEFAULT 'gemini-1.5-flash-latest',
+    generation_prompt TEXT NULL, -- store the prompt used for generation
+    PRIMARY KEY (session_id),
+    FOREIGN KEY (user_id) REFERENCES user_account(user_ID),
+    INDEX idx_user_sessions (user_id),
+    INDEX idx_session_dates (start_date, end_date),
+    INDEX idx_session_status (status)
+);
+
+-- Create meals table for storing individual meal instances
+CREATE TABLE meals (
+    meal_id INT AUTO_INCREMENT,
+    user_id VARCHAR(50) NOT NULL,
+    meal_date DATE NOT NULL,
+    meal_type ENUM('breakfast', 'lunch', 'dinner', 'snack') NOT NULL,
+    recipe_template_id INT NULL, -- reference to recipe template (if using template)
+    session_id INT NULL, -- reference to meal plan session (if part of plan)
+    custom_recipe_name VARCHAR(200) NULL, -- if not using template
+    custom_instructions TEXT NULL, -- if not using template
+    is_completed BOOLEAN DEFAULT FALSE,
+    completion_date TIMESTAMP NULL,
+    notes TEXT NULL,
+    is_locked BOOLEAN DEFAULT FALSE, -- prevents AI from overwriting
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (meal_id),
+    FOREIGN KEY (user_id) REFERENCES user_account(user_ID),
+    FOREIGN KEY (recipe_template_id) REFERENCES recipe_templates(template_id) ON DELETE SET NULL,
+    FOREIGN KEY (session_id) REFERENCES meal_plan_sessions(session_id) ON DELETE SET NULL,
+    INDEX idx_user_meals (user_id),
+    INDEX idx_meal_date (meal_date),
+    INDEX idx_meal_type (meal_type),
+    INDEX idx_session_meals (session_id),
+    INDEX idx_template_meals (recipe_template_id),
+    UNIQUE KEY unique_user_meal_slot (user_id, meal_date, meal_type)
+);
+
+-- Create custom_ingredients table for storing custom ingredients per meal
+CREATE TABLE custom_ingredients (
+    ingredient_id INT AUTO_INCREMENT,
+    meal_id INT NOT NULL,
+    ingredient_name VARCHAR(100) NOT NULL,
+    quantity DECIMAL(10,2) NOT NULL,
+    unit VARCHAR(20) NOT NULL, -- cups, tsp, lbs, oz, etc.
+    notes VARCHAR(200) NULL, -- "diced", "optional", etc.
+    estimated_cost DECIMAL(6,2) NULL,
+    PRIMARY KEY (ingredient_id),
+    FOREIGN KEY (meal_id) REFERENCES meals(meal_id) ON DELETE CASCADE,
+    INDEX idx_meal_ingredients (meal_id),
+    INDEX idx_ingredient_name (ingredient_name)
+);
