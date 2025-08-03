@@ -819,6 +819,7 @@ def update_pantry_item(item_id):
     expiration_date = data.get("expiration_date")
     use_ai_prediction = data.get("ai_predict_expiry", False)
     notes = data.get("notes", "")
+    tag_ids = data.get("tag_ids", [])  # List of tag IDs to assign
 
     if not item_name:
         return jsonify({"success": False, "message": "Item name is required"})
@@ -879,13 +880,63 @@ def update_pantry_item(item_id):
             ),
         )
 
+        # Handle tag updates
+        # First, get current tags to update usage counts
+        current_tags_query = """
+            SELECT tag_id FROM pantry_item_tags 
+            WHERE pantry_item_id = %s
+        """
+        cursor.execute(current_tags_query, (item_id,))
+        current_tag_ids = [row['tag_id'] for row in cursor.fetchall()]
+        
+        # Remove all current tags
+        cursor.execute("DELETE FROM pantry_item_tags WHERE pantry_item_id = %s", (item_id,))
+        
+        # Update usage counts for removed tags
+        for old_tag_id in current_tag_ids:
+            cursor.execute("UPDATE pantry_tags SET usage_count = GREATEST(usage_count - 1, 0) WHERE tag_id = %s", (old_tag_id,))
+        
+        # Add new tags if provided
+        if tag_ids:
+            # Verify tags belong to user
+            placeholders = ','.join(['%s'] * len(tag_ids))
+            tag_verify_query = f"""
+                SELECT tag_id FROM pantry_tags 
+                WHERE tag_id IN ({placeholders}) AND user_id = %s
+            """
+            cursor.execute(tag_verify_query, tag_ids + [user_id])
+            valid_tags = [row['tag_id'] for row in cursor.fetchall()]
+            
+            # Add valid tags to item
+            for tag_id in valid_tags:
+                try:
+                    cursor.execute(
+                        "INSERT INTO pantry_item_tags (pantry_item_id, tag_id) VALUES (%s, %s)",
+                        (item_id, tag_id)
+                    )
+                    cursor.execute(
+                        "UPDATE pantry_tags SET usage_count = usage_count + 1 WHERE tag_id = %s",
+                        (tag_id,)
+                    )
+                except:
+                    continue  # Skip duplicates (shouldn't happen since we deleted all first)
+
         db.commit()
 
-        # Return the updated item
-        cursor.execute(
-            "SELECT * FROM pantry_items WHERE pantry_item_id = %s", (item_id,)
-        )
+        # Return the updated item with tags
+        cursor.execute("SELECT * FROM pantry_items WHERE pantry_item_id = %s", (item_id,))
         updated_item = cursor.fetchone()
+        
+        # Get tags for the updated item
+        tags_query = """
+            SELECT pt.tag_name, pt.tag_color
+            FROM pantry_item_tags pit
+            JOIN pantry_tags pt ON pit.tag_id = pt.tag_id
+            WHERE pit.pantry_item_id = %s
+        """
+        cursor.execute(tags_query, (item_id,))
+        item_tags = cursor.fetchall()
+        updated_item['tags'] = [{'name': tag['tag_name'], 'color': tag['tag_color']} for tag in item_tags]
 
         return jsonify(
             {
@@ -928,7 +979,19 @@ def delete_pantry_item(item_id):
                 {"success": False, "message": "Item not found or access denied"}
             )
 
-        # Delete the item
+        # Get tags associated with this item to update usage counts
+        tags_query = """
+            SELECT tag_id FROM pantry_item_tags 
+            WHERE pantry_item_id = %s
+        """
+        cursor.execute(tags_query, (item_id,))
+        tag_ids = [row['tag_id'] for row in cursor.fetchall()]
+        
+        # Update usage counts for all tags before deleting
+        for tag_id in tag_ids:
+            cursor.execute("UPDATE pantry_tags SET usage_count = GREATEST(usage_count - 1, 0) WHERE tag_id = %s", (tag_id,))
+
+        # Delete the item (this will also delete associated tags due to CASCADE)
         delete_query = (
             "DELETE FROM pantry_items WHERE pantry_item_id = %s AND user_id = %s"
         )
