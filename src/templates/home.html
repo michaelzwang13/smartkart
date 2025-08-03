@@ -2320,16 +2320,16 @@
             // Check if this is the center card (active card) - this should stop movement
             if (index === currentSlide) {
               cardDirection = 'center';
-              console.log('Hovering over center card - should stop movement');
+            //   console.log('Hovering over center card - should stop movement');
             } else {
               // Determine if this card is to the left or right of center based on card position
               const cardCenterX = cardRect.left + cardRect.width / 2;
               if (cardCenterX < centerX) {
                 cardDirection = 'left';
-                console.log('Hovering over left card - should move left');
+                // console.log('Hovering over left card - should move left');
               } else if (cardCenterX > centerX) {
                 cardDirection = 'right';
-                console.log('Hovering over right card - should move right');
+                // console.log('Hovering over right card - should move right');
               }
             }
           }
@@ -3031,7 +3031,7 @@
           </div>
           <label class="meal-completion-checkbox">
             <input type="checkbox" ${meal.is_completed ? 'checked' : ''} 
-                   onchange="toggleMealCompletion(${meal.meal_id}, this.checked, this)">
+                   onchange="toggleMealCompletion(${meal.meal_id}, this.checked, this, '${meal.date}')">
           </label>
         `;
         
@@ -3047,7 +3047,20 @@
       return meal.name || `Custom ${meal.type}`;
     }
     
-    async function toggleMealCompletion(mealId, isCompleted, checkbox) {
+    async function toggleMealCompletion(mealId, isCompleted, checkbox, mealDate = null) {
+      // Prevent completing future meals
+      if (mealDate) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const checkDate = new Date(mealDate);
+        checkDate.setHours(0, 0, 0, 0);
+        
+        if (checkDate > today) {
+          alert('You can only complete meals for today or past dates.');
+          checkbox.checked = !isCompleted;
+          return;
+        }
+      }
       try {
         const response = await fetch(`/api/meals/${mealId}`, {
           method: 'PUT',
@@ -3068,6 +3081,11 @@
             mealItem.classList.add('completed');
           } else {
             mealItem.classList.remove('completed');
+          }
+          
+          // Update the monthly progress wheel
+          if (typeof loadMonthlyProgress === 'function') {
+            loadMonthlyProgress();
           }
         } else {
           // Revert checkbox on error

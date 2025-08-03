@@ -704,6 +704,18 @@
       font-weight: bold;
     }
     
+    .meal-checkbox:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+    
+    .meal-checkbox:disabled + span {
+      opacity: 0.6;
+      color: var(--text-muted);
+    }
+    
     .meal-name-text {
       flex: 1;
       min-width: 0;
@@ -2378,12 +2390,19 @@
             ? getDishName(meals[0]) 
             : `${getDishName(meals[0])} +${meals.length - 1} more`;
           
+          // Check if meal is in the future
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const mealDate = new Date(date);
+          mealDate.setHours(0, 0, 0, 0);
+          const isFuture = mealDate > today;
+          
           mealSlot.innerHTML = `
             <div class="calendar-meal-type">${type}</div>
             <div class="calendar-meal-name">${dishName}</div>
             <div class="meal-completion">
-              <input type="checkbox" class="meal-checkbox" ${meals[0].is_completed ? 'checked' : ''} onclick="event.stopPropagation(); toggleMealCompletion(${meals[0].meal_id}, this.checked)">
-              <span style="font-size: 0.6rem; opacity: 0.8;">Complete</span>
+              <input type="checkbox" class="meal-checkbox" ${meals[0].is_completed ? 'checked' : ''} ${isFuture ? 'disabled' : ''} onclick="event.stopPropagation(); toggleMealCompletion(${meals[0].meal_id}, this.checked, '${date.toISOString().split('T')[0]}')">
+              <span style="font-size: 0.6rem; opacity: 0.8;">${isFuture ? 'Future' : 'Complete'}</span>
             </div>
           `;
           
@@ -2948,7 +2967,24 @@
       // This could open an edit modal or navigate to an edit page
     }
 
-    async function toggleMealCompletion(mealId, isCompleted) {
+    async function toggleMealCompletion(mealId, isCompleted, mealDate = null) {
+      // Prevent completing future meals
+      if (mealDate) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const checkDate = new Date(mealDate);
+        checkDate.setHours(0, 0, 0, 0);
+        
+        if (checkDate > today) {
+          alert('You can only complete meals for today or past dates.');
+          // Revert checkbox
+          const checkbox = document.querySelector(`input[onclick*="${mealId}"]`);
+          if (checkbox) {
+            checkbox.checked = !isCompleted;
+          }
+          return;
+        }
+      }
       try {
         const response = await fetch(`/api/meals/${mealId}`, {
           method: 'PUT',
@@ -2973,6 +3009,11 @@
           
           // Refresh calendar view to show updated completion status
           renderCalendar();
+          
+          // Update goals progress if we're on the goals section
+          if (typeof updateGoalsProgress === 'function') {
+            updateGoalsProgress();
+          }
         } else {
           alert('Failed to update meal completion: ' + data.message);
           // Revert checkbox state on error
