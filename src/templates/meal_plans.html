@@ -1509,8 +1509,13 @@
 
     <!-- Generate New Plan Section -->
     <section class="generate-section">
-      <h2 class="section-title">Generate Weekly Plan</h2>
+      <h2 class="section-title">Generate Meal Plan</h2>
       <form class="generate-form" id="generateForm">
+        <div class="form-group">
+          <label for="start_date" class="form-label">Start Date</label>
+          <input type="date" id="start_date" name="start_date" class="form-input" required min="">
+        </div>
+        
         <div class="form-group">
           <label for="days" class="form-label">Number of Days</label>
           <select id="days" name="days" class="form-select">
@@ -1554,7 +1559,7 @@
       <button type="button" class="btn-generate" id="generateBtn">
         <div class="spinner" id="spinner"></div>
         <i class="fas fa-magic" id="generateIcon"></i>
-        <span id="generateText">Generate Weekly Plan</span>
+        <span id="generateText">Generate Meal Plan</span>
       </button>
     </section>
 
@@ -1638,6 +1643,13 @@
     document.addEventListener('DOMContentLoaded', function() {
       initializeDropdowns();
       handleDropdownResize();
+      
+      // Set default start date to today and prevent past dates
+      const today = new Date();
+      const todayString = today.toISOString().split('T')[0];
+      const startDateInput = document.getElementById('start_date');
+      startDateInput.value = todayString;
+      startDateInput.min = todayString;
       
       loadMealPlans();
       initializeCalendar();
@@ -2097,7 +2109,21 @@
       
       try {
         const formData = new FormData(document.getElementById('generateForm'));
+        
+        // Validate required fields
+        const startDate = formData.get('start_date');
+        if (!startDate) {
+          alert('Please select a start date for your meal plan.');
+          // Reset button state
+          btn.disabled = false;
+          spinner.style.display = 'none';
+          icon.style.display = 'inline';
+          text.textContent = 'Generate Meal Plan';
+          return;
+        }
+        
         const data = {
+          start_date: startDate,
           days: parseInt(formData.get('days')),
           dietary_preference: formData.get('dietary_preference'),
           budget: formData.get('budget') ? parseFloat(formData.get('budget')) : null,
