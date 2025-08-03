@@ -507,7 +507,7 @@
     /* Stats Cards */
     .stats-section {
       margin-bottom: var(--spacing-2xl);
-      animation: fadeInUp 0.8s ease 0.4s both;
+      animation: fadeInUp 0.8s ease 0.5s both;
     }
     
     .section-title {
@@ -618,7 +618,7 @@
     /* Today's Meals Section */
     .todays-meals-section {
       margin-bottom: var(--spacing-2xl);
-      animation: fadeInUp 0.8s ease 0.5s both;
+      animation: fadeInUp 0.8s ease 0.4s both;
     }
     
     .meals-card {
@@ -664,9 +664,9 @@
     }
     
     .meals-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: var(--spacing-lg);
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-md);
       padding: var(--spacing-xl);
     }
     
@@ -677,6 +677,10 @@
       border-left: 4px solid var(--primary-color);
       transition: all 0.3s ease;
       position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 80px;
     }
     
     .meal-item:hover {
@@ -707,8 +711,20 @@
     .meal-header {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      margin-bottom: var(--spacing-sm);
+      gap: var(--spacing-md);
+    }
+    
+    .meal-content {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      gap: var(--spacing-xs);
+    }
+    
+    .meal-main-info {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
     }
     
     .meal-type-badge {
@@ -769,9 +785,9 @@
       font-size: 1.125rem;
       font-weight: 600;
       color: var(--text-primary);
-      margin-bottom: var(--spacing-xs);
       cursor: pointer;
       transition: color 0.2s ease;
+      margin: 0;
     }
     
     .meal-name:hover {
@@ -1753,48 +1769,6 @@
         </div>
       </section>
 
-      <!-- Stats Section -->
-      <section class="stats-section">
-        <h2 class="section-title">Your Preppr Insights</h2>
-        <div class="stats-grid">
-          <div class="stat-card primary">
-            <div class="stat-icon">
-              <i class="fas fa-shopping-bag" aria-hidden="true"></i>
-            </div>
-            <div class="stat-value" id="totalTrips">
-              {% if cart_history %}{{ cart_history|length }}{% else %}0{% endif %}
-            </div>
-            <div class="stat-label">Shopping Trips</div>
-          </div>
-          
-          <div class="stat-card success">
-            <div class="stat-icon">
-              <i class="fas fa-dollar-sign" aria-hidden="true"></i>
-            </div>
-            <div class="stat-value" id="totalSpent">
-              ${% if cart_history %}{{ "%.2f"|format(cart_history|map(attribute='total_spent')|list|sum) }}{% else %}0.00{% endif %}
-            </div>
-            <div class="stat-label">Total Spent</div>
-          </div>
-          
-          <div class="stat-card warning">
-            <div class="stat-icon">
-              <i class="fas fa-piggy-bank" aria-hidden="true"></i>
-            </div>
-            <div class="stat-value" id="moneySaved">$127.50</div>
-            <div class="stat-label">Money Saved</div>
-          </div>
-          
-          <div class="stat-card accent">
-            <div class="stat-icon">
-              <i class="fas fa-utensils" aria-hidden="true"></i>
-            </div>
-            <div class="stat-value" id="mealsPrepped">{{ meals_prepped|default(0) }}</div>
-            <div class="stat-label">Meals Prepped</div>
-          </div>
-        </div>
-      </section>
-
       <!-- Today's Meals Section -->
       <section class="todays-meals-section">
         <div class="meals-card">
@@ -1833,6 +1807,48 @@
             <div id="todaysMealsGrid" class="meals-grid" style="display: none;">
               <!-- Meals will be populated here by JavaScript -->
             </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Stats Section -->
+      <section class="stats-section">
+        <h2 class="section-title">Your Preppr Insights</h2>
+        <div class="stats-grid">
+          <div class="stat-card primary">
+            <div class="stat-icon">
+              <i class="fas fa-shopping-bag" aria-hidden="true"></i>
+            </div>
+            <div class="stat-value" id="totalTrips">
+              {% if cart_history %}{{ cart_history|length }}{% else %}0{% endif %}
+            </div>
+            <div class="stat-label">Shopping Trips</div>
+          </div>
+          
+          <div class="stat-card success">
+            <div class="stat-icon">
+              <i class="fas fa-dollar-sign" aria-hidden="true"></i>
+            </div>
+            <div class="stat-value" id="totalSpent">
+              ${% if cart_history %}{{ "%.2f"|format(cart_history|map(attribute='total_spent')|list|sum) }}{% else %}0.00{% endif %}
+            </div>
+            <div class="stat-label">Total Spent</div>
+          </div>
+          
+          <div class="stat-card warning">
+            <div class="stat-icon">
+              <i class="fas fa-piggy-bank" aria-hidden="true"></i>
+            </div>
+            <div class="stat-value" id="moneySaved">$127.50</div>
+            <div class="stat-label">Money Saved</div>
+          </div>
+          
+          <div class="stat-card accent">
+            <div class="stat-icon">
+              <i class="fas fa-utensils" aria-hidden="true"></i>
+            </div>
+            <div class="stat-value" id="mealsPrepped">{{ meals_prepped|default(0) }}</div>
+            <div class="stat-label">Meals Prepped</div>
           </div>
         </div>
       </section>
@@ -2788,18 +2804,22 @@
         mealItem.innerHTML = `
           <div class="meal-header">
             <span class="meal-type-badge ${meal.type}">${meal.type}</span>
-            <label class="meal-completion-checkbox">
-              <input type="checkbox" ${meal.is_completed ? 'checked' : ''} 
-                     onchange="toggleMealCompletion(${meal.meal_id}, this.checked, this)">
-              <span>Complete</span>
-            </label>
+            <div class="meal-content">
+              <div class="meal-main-info">
+                <div class="meal-name" onclick="showMealDetails(${meal.meal_id})">${dishName}</div>
+              </div>
+              <div class="meal-info">
+                ${totalTime > 0 ? `<span><i class="fas fa-clock"></i> ${totalTime} min</span>` : ''}
+                ${meal.servings ? `<span><i class="fas fa-users"></i> ${meal.servings} servings</span>` : ''}
+                ${meal.difficulty ? `<span><i class="fas fa-chart-line"></i> ${meal.difficulty}</span>` : ''}
+              </div>
+            </div>
           </div>
-          <div class="meal-name" onclick="showMealDetails(${meal.meal_id})">${dishName}</div>
-          <div class="meal-info">
-            ${totalTime > 0 ? `<span><i class="fas fa-clock"></i> ${totalTime} min</span>` : ''}
-            ${meal.servings ? `<span><i class="fas fa-users"></i> ${meal.servings} servings</span>` : ''}
-            ${meal.difficulty ? `<span><i class="fas fa-chart-line"></i> ${meal.difficulty}</span>` : ''}
-          </div>
+          <label class="meal-completion-checkbox">
+            <input type="checkbox" ${meal.is_completed ? 'checked' : ''} 
+                   onchange="toggleMealCompletion(${meal.meal_id}, this.checked, this)">
+            <span>Complete</span>
+          </label>
         `;
         
         grid.appendChild(mealItem);
