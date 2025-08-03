@@ -2102,8 +2102,7 @@
           year: currentYear,
           meal_plans_goal: parseInt(document.getElementById('mealPlansGoal').value),
           meals_completed_goal: parseInt(document.getElementById('mealsCompletedGoal').value),
-          new_recipes_goal: parseInt(document.getElementById('newRecipesGoal').value),
-          budget_goal: null
+          new_recipes_goal: parseInt(document.getElementById('newRecipesGoal').value)
         };
         
         const response = await fetch('/api/meal-goals', {
@@ -2143,7 +2142,6 @@
       document.getElementById('mealPlansGoal').value = 4;
       document.getElementById('mealsCompletedGoal').value = 60;
       document.getElementById('newRecipesGoal').value = 12;
-      document.getElementById('budgetGoal').value = 300;
       
       updateGoalTargets();
       updateGoalsProgress();
@@ -2153,7 +2151,6 @@
       document.getElementById('mealPlansTarget').textContent = document.getElementById('mealPlansGoal').value;
       document.getElementById('mealsCompletedTarget').textContent = document.getElementById('mealsCompletedGoal').value;
       document.getElementById('newRecipesTarget').textContent = document.getElementById('newRecipesGoal').value;
-      document.getElementById('budgetTarget').textContent = document.getElementById('budgetGoal').value;
     }
     
     async function updateGoalsProgress() {
@@ -2199,10 +2196,6 @@
       const currentText = isBudget ? `$${current}` : `${current} ${unit}`;
       document.getElementById(`${goalType}Count`).textContent = currentText;
       
-      // For budget, update the label to show "spent" instead of count
-      if (isBudget) {
-        document.getElementById('budgetSpent').textContent = currentText;
-      }
     }
     
     function setupGoalsEventListeners() {
@@ -2210,7 +2203,6 @@
       document.getElementById('mealPlansGoal').addEventListener('input', updateGoalTargets);
       document.getElementById('mealsCompletedGoal').addEventListener('input', updateGoalTargets);
       document.getElementById('newRecipesGoal').addEventListener('input', updateGoalTargets);
-      document.getElementById('budgetGoal').addEventListener('input', updateGoalTargets);
       
       // Button listeners
       document.getElementById('saveGoalsBtn').addEventListener('click', saveGoals);

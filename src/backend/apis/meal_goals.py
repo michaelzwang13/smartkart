@@ -33,7 +33,7 @@ def get_meal_goals():
     try:
         query = """
             SELECT meal_plans_goal, meals_completed_goal, new_recipes_goal, 
-                   budget_goal, created_at, updated_at
+                   created_at, updated_at
             FROM monthly_meal_goals 
             WHERE user_id = %s AND month = %s AND year = %s
         """
@@ -47,7 +47,6 @@ def get_meal_goals():
                     "meal_plans_goal": goals["meal_plans_goal"],
                     "meals_completed_goal": goals["meals_completed_goal"],
                     "new_recipes_goal": goals["new_recipes_goal"],
-                    "budget_goal": float(goals["budget_goal"]),
                     "month": month,
                     "year": year,
                     "created_at": goals["created_at"].isoformat() if goals["created_at"] else None,
@@ -62,7 +61,6 @@ def get_meal_goals():
                     "meal_plans_goal": 4,
                     "meals_completed_goal": 60,
                     "new_recipes_goal": 12,
-                    "budget_goal": 300.00,
                     "month": month,
                     "year": year,
                     "created_at": None,
@@ -86,7 +84,7 @@ def save_meal_goals():
     data = request.get_json()
 
     # Validate required fields
-    required_fields = ["month", "year", "meal_plans_goal", "meals_completed_goal", "new_recipes_goal", "budget_goal"]
+    required_fields = ["month", "year", "meal_plans_goal", "meals_completed_goal", "new_recipes_goal"]
     for field in required_fields:
         if field not in data:
             return jsonify({"success": False, "message": f"Missing required field: {field}"})
@@ -97,7 +95,6 @@ def save_meal_goals():
         meal_plans_goal = int(data["meal_plans_goal"])
         meals_completed_goal = int(data["meals_completed_goal"])
         new_recipes_goal = int(data["new_recipes_goal"])
-        budget_goal = float(data["budget_goal"])
 
         # Validate ranges
         if not (1 <= month <= 12):
@@ -110,8 +107,6 @@ def save_meal_goals():
             return jsonify({"success": False, "message": "Meals completed goal must be between 10 and 200"})
         if not (1 <= new_recipes_goal <= 50):
             return jsonify({"success": False, "message": "New recipes goal must be between 1 and 50"})
-        if not (50.00 <= budget_goal <= 1000.00):
-            return jsonify({"success": False, "message": "Budget goal must be between $50 and $1000"})
 
     except (ValueError, TypeError):
         return jsonify({"success": False, "message": "Invalid data types for goal values"})
@@ -123,19 +118,18 @@ def save_meal_goals():
         # Use INSERT ... ON DUPLICATE KEY UPDATE for upsert functionality
         upsert_query = """
             INSERT INTO monthly_meal_goals 
-            (user_id, month, year, meal_plans_goal, meals_completed_goal, new_recipes_goal, budget_goal)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            (user_id, month, year, meal_plans_goal, meals_completed_goal, new_recipes_goal)
+            VALUES (%s, %s, %s, %s, %s, %s)
             ON DUPLICATE KEY UPDATE
                 meal_plans_goal = VALUES(meal_plans_goal),
                 meals_completed_goal = VALUES(meals_completed_goal),
                 new_recipes_goal = VALUES(new_recipes_goal),
-                budget_goal = VALUES(budget_goal),
                 updated_at = CURRENT_TIMESTAMP
         """
         
         cursor.execute(upsert_query, (
             user_id, month, year, meal_plans_goal, 
-            meals_completed_goal, new_recipes_goal, budget_goal
+            meals_completed_goal, new_recipes_goal
         ))
         
         db.commit()
@@ -147,7 +141,6 @@ def save_meal_goals():
                 "meal_plans_goal": meal_plans_goal,
                 "meals_completed_goal": meals_completed_goal,
                 "new_recipes_goal": new_recipes_goal,
-                "budget_goal": budget_goal,
                 "month": month,
                 "year": year
             }
@@ -225,19 +218,6 @@ def get_goals_progress():
         new_recipes_result = cursor.fetchone()
         new_recipes_count = new_recipes_result["unique_recipes"] if new_recipes_result else 0
 
-        # For budget, get total spent from shopping carts this month
-        budget_spent_query = """
-            SELECT COALESCE(SUM(ci.price * ci.quantity), 0) as total_spent
-            FROM shopping_cart sc
-            JOIN cart_item ci ON sc.cart_ID = ci.cart_ID
-            WHERE sc.user_ID = %s 
-            AND sc.status = 'purchased'
-            AND sc.created_at >= %s 
-            AND sc.created_at < %s
-        """
-        cursor.execute(budget_spent_query, (user_id, start_date, end_date))
-        budget_result = cursor.fetchone()
-        budget_spent = float(budget_result["total_spent"]) if budget_result else 0.0
 
         return jsonify({
             "success": True,
@@ -245,7 +225,6 @@ def get_goals_progress():
                 "meal_plans_count": meal_plans_count,
                 "completed_meals_count": completed_meals_count,
                 "new_recipes_count": new_recipes_count,
-                "budget_spent": budget_spent,
                 "month": month,
                 "year": year
             }
