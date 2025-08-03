@@ -61,7 +61,7 @@ def create_app():
     app.register_blueprint(shopping.shopping_bp)
     
     # Register new refactored blueprints
-    from src.backend.apis import shopping_trip, shopping_list, shopping_list_integration, budget, pantry, meals, meal_plan_compat
+    from src.backend.apis import shopping_trip, shopping_list, shopping_list_integration, budget, pantry, meals, meal_plan_compat, meal_goals
     app.register_blueprint(shopping_trip.shopping_trip_bp)
     app.register_blueprint(shopping_list.shopping_list_bp)
     app.register_blueprint(shopping_list_integration.shopping_list_integration_bp)
@@ -69,6 +69,7 @@ def create_app():
     app.register_blueprint(pantry.pantry_bp)
     app.register_blueprint(meals.meals_bp)  # New individual meals API
     app.register_blueprint(meal_plan_compat.meal_plan_compat_bp)  # Compatibility layer
+    app.register_blueprint(meal_goals.meal_goals_bp)  # Monthly meal goals API
     
     
     logger.info("Blueprints registered successfully")

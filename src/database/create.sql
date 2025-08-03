@@ -336,3 +336,22 @@ CREATE TABLE pantry_item_tags (
     INDEX idx_item_tags (pantry_item_id),
     INDEX idx_tag_items (tag_id)
 );
+
+-- Create monthly meal goals table
+CREATE TABLE monthly_meal_goals (
+    goal_id INT AUTO_INCREMENT,
+    user_id VARCHAR(50) NOT NULL,
+    month INT NOT NULL CHECK (month >= 1 AND month <= 12),
+    year INT NOT NULL CHECK (year >= 2020 AND year <= 2030),
+    meal_plans_goal INT DEFAULT 4 CHECK (meal_plans_goal >= 1 AND meal_plans_goal <= 20),
+    meals_completed_goal INT DEFAULT 60 CHECK (meals_completed_goal >= 10 AND meals_completed_goal <= 200),
+    new_recipes_goal INT DEFAULT 12 CHECK (new_recipes_goal >= 1 AND new_recipes_goal <= 50),
+    budget_goal DECIMAL(10,2) DEFAULT 300.00 CHECK (budget_goal >= 50.00 AND budget_goal <= 1000.00),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (goal_id),
+    FOREIGN KEY (user_id) REFERENCES user_account(user_ID) ON DELETE CASCADE,
+    UNIQUE KEY unique_user_month (user_id, month, year),
+    INDEX idx_user_goals (user_id),
+    INDEX idx_month_year (month, year)
+);

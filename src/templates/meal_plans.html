@@ -1449,6 +1449,242 @@
         justify-content: center;
       }
     }
+
+    /* Monthly Goals Section */
+    .monthly-goals-section {
+      margin-top: var(--spacing-2xl);
+    }
+
+    .goals-card {
+      background: var(--bg-primary);
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-xl);
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--border-light);
+    }
+
+    .goals-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--spacing-lg);
+      padding-bottom: var(--spacing-md);
+      border-bottom: 2px solid var(--border-light);
+    }
+
+    .goals-title {
+      font-size: 1.875rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+
+    .goals-icon {
+      color: var(--primary-color);
+      font-size: 1.5rem;
+    }
+
+    .goals-month {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      background: var(--bg-tertiary);
+      padding: var(--spacing-xs) var(--spacing-md);
+      border-radius: var(--radius-lg);
+      font-weight: 500;
+    }
+
+    .goals-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: var(--spacing-lg);
+    }
+
+    .goal-item {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-lg);
+      border-left: 4px solid var(--primary-color);
+      transition: all 0.3s ease;
+    }
+
+    .goal-item:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .goal-item.meal-plans {
+      border-left-color: var(--primary-color);
+    }
+
+    .goal-item.meals-completed {
+      border-left-color: var(--success-color);
+    }
+
+    .goal-item.new-recipes {
+      border-left-color: var(--warning-color);
+    }
+
+    .goal-item.budget-goal {
+      border-left-color: var(--accent-color);
+    }
+
+    .goal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--spacing-md);
+    }
+
+    .goal-label {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+    }
+
+    .goal-label i {
+      color: var(--primary-color);
+      font-size: 0.875rem;
+    }
+
+    .goal-input {
+      width: 80px;
+      padding: var(--spacing-xs) var(--spacing-sm);
+      border: 2px solid var(--border-light);
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      font-family: var(--font-family);
+      text-align: center;
+      transition: border-color 0.3s ease;
+    }
+
+    .goal-input:focus {
+      outline: none;
+      border-color: var(--primary-color);
+    }
+
+    .goal-progress {
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--primary-gradient);
+      border-radius: var(--radius-sm);
+      transition: width 0.3s ease;
+    }
+
+    .progress-fill.success {
+      background: var(--success-gradient);
+    }
+
+    .progress-fill.warning {
+      background: var(--warning-gradient);
+    }
+
+    .progress-fill.accent {
+      background: var(--accent-gradient);
+    }
+
+    .goal-stats {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-top: var(--spacing-xs);
+    }
+
+    .current-count {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .goal-target {
+      color: var(--text-muted);
+    }
+
+    .goals-actions {
+      margin-top: var(--spacing-xl);
+      display: flex;
+      gap: var(--spacing-md);
+      justify-content: center;
+    }
+
+    .btn-save-goals {
+      background: var(--primary-gradient);
+      color: var(--text-white);
+      padding: var(--spacing-sm) var(--spacing-xl);
+      border: none;
+      border-radius: var(--radius-lg);
+      font-size: 1rem;
+      font-weight: 600;
+      font-family: var(--font-family);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+
+    .btn-save-goals:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .btn-reset-goals {
+      background: var(--bg-primary);
+      color: var(--text-secondary);
+      padding: var(--spacing-sm) var(--spacing-lg);
+      border: 2px solid var(--border-medium);
+      border-radius: var(--radius-lg);
+      font-size: 1rem;
+      font-weight: 500;
+      font-family: var(--font-family);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn-reset-goals:hover {
+      background: var(--bg-secondary);
+      border-color: var(--primary-color);
+      transform: translateY(-2px);
+    }
+
+    /* Mobile responsive for goals */
+    @media (max-width: 768px) {
+      .goals-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .goals-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-sm);
+      }
+
+      .goals-actions {
+        flex-direction: column;
+      }
+
+      .btn-save-goals,
+      .btn-reset-goals {
+        width: 100%;
+        justify-content: center;
+      }
+    }
   </style>
 </head>
 
@@ -1648,6 +1884,113 @@
         </p>
       </div>
     </section>
+
+    <!-- Monthly Goals Section -->
+    <section class="monthly-goals-section">
+      <div class="goals-card">
+        <div class="goals-header">
+          <h2 class="goals-title">
+            <i class="fas fa-target goals-icon"></i>
+            Monthly Meal Planning Goals
+          </h2>
+          <div class="goals-month" id="currentMonth">
+            <!-- Will be populated by JavaScript -->
+          </div>
+        </div>
+
+        <div class="goals-grid">
+          <!-- Meal Plans Generated Goal -->
+          <div class="goal-item meal-plans">
+            <div class="goal-header">
+              <div class="goal-label">
+                <i class="fas fa-calendar-alt"></i>
+                Meal Plans Generated
+              </div>
+              <input type="number" class="goal-input" id="mealPlansGoal" min="1" max="20" value="4">
+            </div>
+            <div class="goal-progress">
+              <div class="progress-bar">
+                <div class="progress-fill" id="mealPlansProgress" style="width: 0%"></div>
+              </div>
+            </div>
+            <div class="goal-stats">
+              <span class="current-count" id="mealPlansCount">0 plans</span>
+              <span class="goal-target">Goal: <span id="mealPlansTarget">4</span></span>
+            </div>
+          </div>
+
+          <!-- Meals Completed Goal -->
+          <div class="goal-item meals-completed">
+            <div class="goal-header">
+              <div class="goal-label">
+                <i class="fas fa-check-circle"></i>
+                Meals Completed
+              </div>
+              <input type="number" class="goal-input" id="mealsCompletedGoal" min="10" max="200" value="60">
+            </div>
+            <div class="goal-progress">
+              <div class="progress-bar">
+                <div class="progress-fill success" id="mealsCompletedProgress" style="width: 0%"></div>
+              </div>
+            </div>
+            <div class="goal-stats">
+              <span class="current-count" id="mealsCompletedCount">0 meals</span>
+              <span class="goal-target">Goal: <span id="mealsCompletedTarget">60</span></span>
+            </div>
+          </div>
+
+          <!-- New Recipes Tried Goal -->
+          <div class="goal-item new-recipes">
+            <div class="goal-header">
+              <div class="goal-label">
+                <i class="fas fa-utensils"></i>
+                New Recipes Tried
+              </div>
+              <input type="number" class="goal-input" id="newRecipesGoal" min="1" max="50" value="12">
+            </div>
+            <div class="goal-progress">
+              <div class="progress-bar">
+                <div class="progress-fill warning" id="newRecipesProgress" style="width: 0%"></div>
+              </div>
+            </div>
+            <div class="goal-stats">
+              <span class="current-count" id="newRecipesCount">0 recipes</span>
+              <span class="goal-target">Goal: <span id="newRecipesTarget">12</span></span>
+            </div>
+          </div>
+
+          <!-- Budget Goal -->
+          <div class="goal-item budget-goal">
+            <div class="goal-header">
+              <div class="goal-label">
+                <i class="fas fa-dollar-sign"></i>
+                Monthly Budget
+              </div>
+              <input type="number" class="goal-input" id="budgetGoal" min="50" max="1000" value="300" step="10">
+            </div>
+            <div class="goal-progress">
+              <div class="progress-bar">
+                <div class="progress-fill accent" id="budgetProgress" style="width: 0%"></div>
+              </div>
+            </div>
+            <div class="goal-stats">
+              <span class="current-count" id="budgetSpent">$0</span>
+              <span class="goal-target">Budget: $<span id="budgetTarget">300</span></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="goals-actions">
+          <button class="btn-save-goals" id="saveGoalsBtn">
+            <i class="fas fa-save"></i>
+            Save Goals
+          </button>
+          <button class="btn-reset-goals" id="resetGoalsBtn">
+            Reset to Defaults
+          </button>
+        </div>
+      </div>
+    </section>
   </main>
 
   <script>
@@ -1706,6 +2049,190 @@
     let mealsData = [];
     
     // Load existing meal plans on page load
+    // Goals functionality
+    function initializeGoals() {
+      // Set current month
+      const currentDate = new Date();
+      const monthNames = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+      ];
+      document.getElementById('currentMonth').textContent = 
+        `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+      
+      // Load saved goals from localStorage
+      loadGoals();
+      
+      // Update progress displays
+      updateGoalsProgress();
+      
+      // Setup event listeners
+      setupGoalsEventListeners();
+    }
+    
+    async function loadGoals() {
+      try {
+        const currentMonth = new Date().getMonth() + 1;
+        const currentYear = new Date().getFullYear();
+        
+        const response = await fetch(`/api/meal-goals?month=${currentMonth}&year=${currentYear}`);
+        const data = await response.json();
+        
+        if (data.success) {
+          const goals = data.goals;
+          document.getElementById('mealPlansGoal').value = goals.meal_plans_goal;
+          document.getElementById('mealsCompletedGoal').value = goals.meals_completed_goal;
+          document.getElementById('newRecipesGoal').value = goals.new_recipes_goal;
+          document.getElementById('budgetGoal').value = goals.budget_goal;
+        } else {
+          console.error('Failed to load goals:', data.message);
+          // Set default values on error
+          document.getElementById('mealPlansGoal').value = 4;
+          document.getElementById('mealsCompletedGoal').value = 60;
+          document.getElementById('newRecipesGoal').value = 12;
+          document.getElementById('budgetGoal').value = 300;
+        }
+        
+        updateGoalTargets();
+      } catch (error) {
+        console.error('Error loading goals:', error);
+        // Set default values on error
+        document.getElementById('mealPlansGoal').value = 4;
+        document.getElementById('mealsCompletedGoal').value = 60;
+        document.getElementById('newRecipesGoal').value = 12;
+        document.getElementById('budgetGoal').value = 300;
+        updateGoalTargets();
+      }
+    }
+    
+    async function saveGoals() {
+      try {
+        const currentMonth = new Date().getMonth() + 1;
+        const currentYear = new Date().getFullYear();
+        
+        const goalsData = {
+          month: currentMonth,
+          year: currentYear,
+          meal_plans_goal: parseInt(document.getElementById('mealPlansGoal').value),
+          meals_completed_goal: parseInt(document.getElementById('mealsCompletedGoal').value),
+          new_recipes_goal: parseInt(document.getElementById('newRecipesGoal').value),
+          budget_goal: parseFloat(document.getElementById('budgetGoal').value)
+        };
+        
+        const response = await fetch('/api/meal-goals', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(goalsData)
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          updateGoalTargets();
+          updateGoalsProgress();
+          
+          // Show success message
+          const saveBtn = document.getElementById('saveGoalsBtn');
+          const originalText = saveBtn.innerHTML;
+          saveBtn.innerHTML = '<i class="fas fa-check"></i> Saved!';
+          saveBtn.style.background = 'var(--success-gradient)';
+          
+          setTimeout(() => {
+            saveBtn.innerHTML = originalText;
+            saveBtn.style.background = 'var(--primary-gradient)';
+          }, 2000);
+        } else {
+          alert('Failed to save goals: ' + data.message);
+        }
+      } catch (error) {
+        console.error('Error saving goals:', error);
+        alert('Failed to save goals. Please try again.');
+      }
+    }
+    
+    function resetGoals() {
+      document.getElementById('mealPlansGoal').value = 4;
+      document.getElementById('mealsCompletedGoal').value = 60;
+      document.getElementById('newRecipesGoal').value = 12;
+      document.getElementById('budgetGoal').value = 300;
+      
+      updateGoalTargets();
+      updateGoalsProgress();
+    }
+    
+    function updateGoalTargets() {
+      document.getElementById('mealPlansTarget').textContent = document.getElementById('mealPlansGoal').value;
+      document.getElementById('mealsCompletedTarget').textContent = document.getElementById('mealsCompletedGoal').value;
+      document.getElementById('newRecipesTarget').textContent = document.getElementById('newRecipesGoal').value;
+      document.getElementById('budgetTarget').textContent = document.getElementById('budgetGoal').value;
+    }
+    
+    async function updateGoalsProgress() {
+      try {
+        const currentMonth = new Date().getMonth() + 1;
+        const currentYear = new Date().getFullYear();
+        
+        // Get progress data from the API
+        const response = await fetch(`/api/meal-goals/progress?month=${currentMonth}&year=${currentYear}`);
+        const data = await response.json();
+        
+        if (data.success) {
+          const progress = data.progress;
+          
+          // Update displays with real data from backend
+          updateGoalProgress('mealPlans', progress.meal_plans_count, 'plans');
+          updateGoalProgress('mealsCompleted', progress.completed_meals_count, 'meals');
+          updateGoalProgress('newRecipes', progress.new_recipes_count, 'recipes');
+          updateGoalProgress('budget', progress.budget_spent, '$', true);
+        } else {
+          console.error('Failed to load progress:', data.message);
+          // Set zero values on error
+          updateGoalProgress('mealPlans', 0, 'plans');
+          updateGoalProgress('mealsCompleted', 0, 'meals');
+          updateGoalProgress('newRecipes', 0, 'recipes');
+          updateGoalProgress('budget', 0, '$', true);
+        }
+      } catch (error) {
+        console.error('Error updating goals progress:', error);
+        // Set zero values on error
+        updateGoalProgress('mealPlans', 0, 'plans');
+        updateGoalProgress('mealsCompleted', 0, 'meals');
+        updateGoalProgress('newRecipes', 0, 'recipes');
+        updateGoalProgress('budget', 0, '$', true);
+      }
+    }
+    
+    function updateGoalProgress(goalType, current, unit, isBudget = false) {
+      const target = parseInt(document.getElementById(`${goalType}Goal`).value);
+      const percentage = Math.min((current / target) * 100, 100);
+      
+      // Update progress bar
+      document.getElementById(`${goalType}Progress`).style.width = `${percentage}%`;
+      
+      // Update current count
+      const currentText = isBudget ? `$${current}` : `${current} ${unit}`;
+      document.getElementById(`${goalType}Count`).textContent = currentText;
+      
+      // For budget, update the label to show "spent" instead of count
+      if (isBudget) {
+        document.getElementById('budgetSpent').textContent = currentText;
+      }
+    }
+    
+    function setupGoalsEventListeners() {
+      // Input change listeners
+      document.getElementById('mealPlansGoal').addEventListener('input', updateGoalTargets);
+      document.getElementById('mealsCompletedGoal').addEventListener('input', updateGoalTargets);
+      document.getElementById('newRecipesGoal').addEventListener('input', updateGoalTargets);
+      document.getElementById('budgetGoal').addEventListener('input', updateGoalTargets);
+      
+      // Button listeners
+      document.getElementById('saveGoalsBtn').addEventListener('click', saveGoals);
+      document.getElementById('resetGoalsBtn').addEventListener('click', resetGoals);
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
       initializeDropdowns();
       handleDropdownResize();
@@ -1719,6 +2246,7 @@
       
       loadMealPlans();
       initializeCalendar();
+      initializeGoals();
       
       // Setup generate button
       document.getElementById('generateBtn').addEventListener('click', generateMealPlan);
