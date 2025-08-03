@@ -462,11 +462,12 @@
       color: var(--text-secondary);
     }
 
-    .item-tags {
+    .item-tags-container {
       display: flex;
-      flex-wrap: wrap;
+      flex-direction: column;
       gap: 4px;
-      margin-top: 4px;
+      min-width: 100px;
+      max-width: 150px;
     }
 
     .item-tag {
@@ -476,6 +477,23 @@
       font-size: 0.7em;
       font-weight: 500;
       color: white;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+
+    .item-tag-overflow {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 12px;
+      font-size: 0.7em;
+      font-weight: 500;
+      color: var(--text-secondary);
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-light);
+      text-align: center;
     }
 
     .pantry-stats {
@@ -621,9 +639,17 @@
       color: var(--text-primary);
     }
 
+    .item-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 15px;
+    }
+
     .item-details {
       font-size: 0.9em;
       color: var(--text-secondary);
+      flex: 1;
     }
 
     .item-details p {
@@ -1603,21 +1629,24 @@ document.addEventListener('DOMContentLoaded', function() {
                         </button>
                     </div>
                 </div>
-                <div class="item-details">
-                    <p><strong>Quantity:</strong> ${item.quantity} ${item.unit}</p>
-                    <p><strong>Storage:</strong> ${item.storage_type}</p>
-                    <p><strong>Category:</strong> ${item.category}</p>
+                <div class="item-content">
+                    <div class="item-details">
+                        <p><strong>Quantity:</strong> ${item.quantity} ${item.unit}</p>
+                        <p><strong>Storage:</strong> ${item.storage_type}</p>
+                        <p><strong>Category:</strong> ${item.category}</p>
+                        ${item.expiration_date ? 
+                            `<p><strong>Expires:</strong> <span class="expiry-status ${expiryStatus.status}">${expiryStatus.text}</span></p>` : 
+                            '<p><strong>Expires:</strong> No expiry date</p>'
+                        }
+                        <p><strong>Added:</strong> ${new Date(item.date_added).toLocaleDateString()}</p>
+                        ${item.notes ? `<p><strong>Notes:</strong> ${item.notes}</p>` : ''}
+                    </div>
                     ${item.tags && item.tags.length > 0 ? 
-                        `<div class="item-tags">
-                            ${item.tags.map(tag => `<span class="item-tag" style="background-color: ${tag.color || '#3B82F6'}">${tag.name}</span>`).join('')}
+                        `<div class="item-tags-container">
+                            ${item.tags.slice(0, 5).map(tag => `<span class="item-tag" style="background-color: ${tag.color || '#3B82F6'}">${tag.name}</span>`).join('')}
+                            ${item.tags.length > 5 ? `<span class="item-tag-overflow">+${item.tags.length - 5}</span>` : ''}
                         </div>` : ''
                     }
-                    ${item.expiration_date ? 
-                        `<p><strong>Expires:</strong> <span class="expiry-status ${expiryStatus.status}">${expiryStatus.text}</span></p>` : 
-                        '<p><strong>Expires:</strong> No expiry date</p>'
-                    }
-                    <p><strong>Added:</strong> ${new Date(item.date_added).toLocaleDateString()}</p>
-                    ${item.notes ? `<p><strong>Notes:</strong> ${item.notes}</p>` : ''}
                 </div>
             </div>
         `;
@@ -1846,6 +1875,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         container.innerHTML = '';
         
+        // Check if 5-tag limit reached
+        if (selectedTagsList.length >= 5) {
+            container.innerHTML = '<p style="color: var(--warning-color); font-size: 0.8em; padding: 8px;">Maximum 5 tags reached. Remove a tag to add more.</p>';
+            return;
+        }
+        
         if (allTags.length === 0) {
             container.innerHTML = '<p style="color: var(--text-secondary); font-size: 0.8em; padding: 8px;">No tags created yet. Type above to create your first tag.</p>';
             return;
@@ -1878,18 +1913,27 @@ document.addEventListener('DOMContentLoaded', function() {
     function addExistingTag(tag, selectedTagsId) {
         const targetList = selectedTagsId === 'selectedTags' ? selectedTags : editSelectedTags;
         
-        if (!targetList.find(selected => selected.id === tag.tag_id)) {
-            targetList.push({
-                id: tag.tag_id,
-                name: tag.tag_name,
-                color: tag.tag_color
-            });
-            updateSelectedTagsDisplay(selectedTagsId);
-            populateTagSuggestions(
-                selectedTagsId === 'selectedTags' ? 'tagSuggestions' : 'editTagSuggestions',
-                selectedTagsId
-            );
+        // Check if already selected
+        if (targetList.find(selected => selected.id === tag.tag_id)) {
+            return;
         }
+        
+        // Check 5-tag limit
+        if (targetList.length >= 5) {
+            alert('Maximum 5 tags allowed per item');
+            return;
+        }
+        
+        targetList.push({
+            id: tag.tag_id,
+            name: tag.tag_name,
+            color: tag.tag_color
+        });
+        updateSelectedTagsDisplay(selectedTagsId);
+        populateTagSuggestions(
+            selectedTagsId === 'selectedTags' ? 'tagSuggestions' : 'editTagSuggestions',
+            selectedTagsId
+        );
     }
 
     window.removeTag = function(tagId, selectedTagsId) {
@@ -1922,6 +1966,23 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
             container.appendChild(badge);
         });
+        
+        // Update button and input states based on limit
+        const inputId = selectedTagsId === 'selectedTags' ? 'tagInput' : 'editTagInput';
+        const buttonId = selectedTagsId === 'selectedTags' ? 'addTagBtn' : 'editAddTagBtn';
+        
+        const input = document.getElementById(inputId);
+        const button = document.getElementById(buttonId);
+        
+        if (targetList.length >= 5) {
+            input.disabled = true;
+            input.placeholder = 'Maximum 5 tags reached';
+            button.disabled = true;
+        } else {
+            input.disabled = false;
+            input.placeholder = 'Type to add or search tags...';
+            button.disabled = false;
+        }
     }
 
     function getSelectedTagIds(selectedTagsId) {
@@ -1984,6 +2045,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const tagName = input.value.trim();
         
         if (tagName) {
+            // Check 5-tag limit
+            if (selectedTags.length >= 5) {
+                alert('Maximum 5 tags allowed per item');
+                return;
+            }
+            
             // Check if tag already exists
             let existingTag = allTags.find(tag => tag.tag_name.toLowerCase() === tagName.toLowerCase());
             
@@ -2003,6 +2070,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const tagName = input.value.trim();
         
         if (tagName) {
+            // Check 5-tag limit
+            if (editSelectedTags.length >= 5) {
+                alert('Maximum 5 tags allowed per item');
+                return;
+            }
+            
             // Check if tag already exists
             let existingTag = allTags.find(tag => tag.tag_name.toLowerCase() === tagName.toLowerCase());
             
