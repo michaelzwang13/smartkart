@@ -720,11 +720,128 @@ function createPlanCard(plan) {
     return card;
 }
 
+function checkForOverlappingPlans(startDate, days) {
+    if (!mealPlanData || mealPlanData.length === 0) {
+        return { hasOverlap: false, overlappingPlans: [] };
+    }
+    
+    const newStartDate = new Date(startDate);
+    const newEndDate = new Date(newStartDate);
+    newEndDate.setDate(newEndDate.getDate() + days - 1);
+    
+    const overlappingPlans = [];
+    
+    // Check each existing meal plan for overlap
+    for (const plan of mealPlanData) {
+        if (!plan.start_date || !plan.end_date) continue;
+        
+        const existingStartDate = new Date(plan.start_date);
+        const existingEndDate = new Date(plan.end_date);
+        
+        // Check if date ranges overlap
+        if (newStartDate <= existingEndDate && existingStartDate <= newEndDate) {
+            overlappingPlans.push({
+                id: plan.id,
+                start_date: plan.start_date,
+                end_date: plan.end_date,
+                title: plan.title || `Meal Plan ${plan.id}`
+            });
+        }
+    }
+    
+    return { 
+        hasOverlap: overlappingPlans.length > 0, 
+        overlappingPlans: overlappingPlans 
+    };
+}
+
+function showOverlapWarning(overlappingPlans) {
+    const modal = document.getElementById('overlapWarningModal');
+    const detailsContainer = document.getElementById('overlapDetails');
+    
+    // Clear previous details
+    detailsContainer.innerHTML = '';
+    
+    if (overlappingPlans.length > 0) {
+        detailsContainer.innerHTML = `
+            <h4 style="margin-bottom: var(--spacing-sm); color: var(--warning-color);">
+                <i class="fas fa-calendar-alt" style="margin-right: var(--spacing-xs);"></i>
+                Overlapping Plans:
+            </h4>
+        `;
+        
+        overlappingPlans.forEach(plan => {
+            const startDate = new Date(plan.start_date).toLocaleDateString();
+            const endDate = new Date(plan.end_date).toLocaleDateString();
+            
+            const overlapItem = document.createElement('div');
+            overlapItem.className = 'overlap-item';
+            overlapItem.innerHTML = `
+                <span class="overlap-date">${startDate} - ${endDate}</span>
+                <span class="overlap-plan">${plan.title}</span>
+            `;
+            detailsContainer.appendChild(overlapItem);
+        });
+    }
+    
+    modal.style.display = 'flex';
+}
+
+function closeOverlapWarning() {
+    document.getElementById('overlapWarningModal').style.display = 'none';
+}
+
+let pendingMealPlanGeneration = null;
+
+function confirmOverride() {
+    closeOverlapWarning();
+    if (pendingMealPlanGeneration) {
+        proceedWithMealPlanGeneration();
+    }
+}
+
 async function generateMealPlan() {
+    const formData = new FormData(document.getElementById('generateForm'));
+    
+    // Validate required fields
+    const startDate = formData.get('start_date');
+    if (!startDate) {
+        alert('Please select a start date for your meal plan.');
+        return;
+    }
+
+    const days = parseInt(formData.get('days'));
+    
+    // Store the form data for potential later use
+    pendingMealPlanGeneration = {
+        start_date: startDate,
+        days: days,
+        dietary_preference: formData.get('dietary_preference'),
+        budget: formData.get('budget') ? parseFloat(formData.get('budget')) : null,
+        cooking_time: parseInt(formData.get('cooking_time'))
+    };
+    
+    // Check for overlapping meal plans
+    const overlapResult = checkForOverlappingPlans(startDate, days);
+    if (overlapResult.hasOverlap) {
+        showOverlapWarning(overlapResult.overlappingPlans);
+        return; // Wait for user confirmation
+    }
+    
+    // No overlap, proceed directly
+    await proceedWithMealPlanGeneration();
+}
+
+async function proceedWithMealPlanGeneration() {
     const btn = document.getElementById('generateBtn');
     const spinner = document.getElementById('spinner');
     const icon = document.getElementById('generateIcon');
     const text = document.getElementById('generateText');
+    
+    if (!pendingMealPlanGeneration) {
+        console.error('No pending meal plan generation data');
+        return;
+    }
     
     // Show loading state
     btn.disabled = true;
@@ -733,27 +850,7 @@ async function generateMealPlan() {
     text.textContent = 'Generating...';
     
     try {
-    const formData = new FormData(document.getElementById('generateForm'));
-    
-    // Validate required fields
-    const startDate = formData.get('start_date');
-    if (!startDate) {
-        alert('Please select a start date for your meal plan.');
-        // Reset button state
-        btn.disabled = false;
-        spinner.style.display = 'none';
-        icon.style.display = 'inline';
-        text.textContent = 'Generate Meal Plan';
-        return;
-    }
-    
-    const data = {
-        start_date: startDate,
-        days: parseInt(formData.get('days')),
-        dietary_preference: formData.get('dietary_preference'),
-        budget: formData.get('budget') ? parseFloat(formData.get('budget')) : null,
-        cooking_time: parseInt(formData.get('cooking_time'))
-    };
+    const data = pendingMealPlanGeneration;
     
     const response = await fetch('/api/generate-meal-plan', {
         method: 'POST',
@@ -787,7 +884,10 @@ async function generateMealPlan() {
     btn.disabled = false;
     spinner.style.display = 'none';
     icon.style.display = 'block';
-    text.textContent = 'Generate Weekly Plan';
+    text.textContent = 'Generate Meal Plan';
+    
+    // Clear pending data
+    pendingMealPlanGeneration = null;
     }
 }
 

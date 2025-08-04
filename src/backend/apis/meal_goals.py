@@ -185,8 +185,8 @@ def get_goals_progress():
             SELECT COUNT(*) as plan_count
             FROM meal_plan_sessions
             WHERE user_id = %s 
-            AND created_at >= %s 
-            AND created_at < %s
+            AND generated_at >= %s 
+            AND generated_at < %s
         """
         cursor.execute(meal_plans_query, (user_id, start_date, end_date))
         meal_plans_result = cursor.fetchone()

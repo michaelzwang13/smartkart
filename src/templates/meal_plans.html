@@ -391,6 +391,119 @@
     .budget-input {
       padding-left: 2.5rem !important;
     }
+
+    /* Warning Modal Styles */
+    .warning-modal {
+      max-width: 500px;
+      border: 2px solid var(--warning-color);
+    }
+
+    .warning-header {
+      background: linear-gradient(135deg, #fef3c7 0%, #fbbf24 100%);
+      color: var(--text-primary);
+      border-bottom: 2px solid var(--warning-color);
+    }
+
+    .warning-header .modal-title {
+      color: var(--warning-color);
+      font-weight: 700;
+    }
+
+    .warning-content {
+      display: flex;
+      gap: var(--spacing-lg);
+      margin-bottom: var(--spacing-xl);
+    }
+
+    .warning-icon {
+      flex-shrink: 0;
+    }
+
+    .warning-icon i {
+      font-size: 3rem;
+      color: var(--warning-color);
+      animation: pulse 2s infinite;
+    }
+
+    .warning-text p {
+      margin-bottom: var(--spacing-md);
+      line-height: 1.6;
+    }
+
+    .overlap-details {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-md);
+      margin-top: var(--spacing-md);
+      border-left: 4px solid var(--warning-color);
+    }
+
+    .overlap-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--spacing-xs);
+      font-size: 0.875rem;
+    }
+
+    .overlap-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .overlap-date {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .overlap-plan {
+      color: var(--text-secondary);
+    }
+
+    .warning-actions {
+      display: flex;
+      gap: var(--spacing-md);
+      justify-content: flex-end;
+    }
+
+    .btn-cancel-warning {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border: 2px solid var(--border-medium);
+      padding: var(--spacing-sm) var(--spacing-lg);
+      border-radius: var(--radius-md);
+      font-family: var(--font-family);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+    }
+
+    .btn-cancel-warning:hover {
+      background: var(--bg-primary);
+      border-color: var(--text-secondary);
+    }
+
+    .btn-confirm-override {
+      background: var(--warning-gradient);
+      color: var(--text-white);
+      border: none;
+      padding: var(--spacing-sm) var(--spacing-lg);
+      border-radius: var(--radius-md);
+      font-family: var(--font-family);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+    }
+
+    .btn-confirm-override:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
     
     .btn-generate {
       background: var(--primary-gradient);
@@ -2056,6 +2169,43 @@
     </section>
   </main>
 
+  <!-- Overlap Warning Modal -->
+  <div id="overlapWarningModal" class="modal-overlay" style="display: none;">
+    <div class="modal-card warning-modal">
+      <div class="modal-header warning-header">
+        <h3 class="modal-title">
+          <i class="fas fa-exclamation-triangle"></i>
+          Meal Plan Overlap Warning
+        </h3>
+        <button class="modal-close" onclick="closeOverlapWarning()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="warning-content">
+          <div class="warning-icon">
+            <i class="fas fa-calendar-times"></i>
+          </div>
+          <div class="warning-text">
+            <p><strong>You already have existing meal plans that overlap with the selected date range.</strong></p>
+            <p>Generating a new meal plan will <strong>override your current plans</strong> for those dates.</p>
+            <div class="overlap-details" id="overlapDetails">
+              <!-- Will be populated with specific overlap info -->
+            </div>
+          </div>
+        </div>
+        <div class="warning-actions">
+          <button class="btn-cancel-warning" onclick="closeOverlapWarning()">
+            <i class="fas fa-times"></i>
+            Cancel
+          </button>
+          <button class="btn-confirm-override" onclick="confirmOverride()">
+            <i class="fas fa-check"></i>
+            Continue & Override
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 <script>
 // Pass server data to JavaScript
 window.MEAL_PLANS_CONFIG = {
@@ -2073,6 +2223,16 @@ document.addEventListener('DOMContentLoaded', function() {
         daysRange.addEventListener('input', function() {
             const value = parseInt(this.value);
             daysValue.textContent = value;
+        });
+    }
+    
+    // Handle modal click outside to close
+    const overlapModal = document.getElementById('overlapWarningModal');
+    if (overlapModal) {
+        overlapModal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeOverlapWarning();
+            }
         });
     }
 });
