@@ -320,6 +320,77 @@
       outline: none;
       border-color: var(--primary-color);
     }
+
+    /* Range Input Styles */
+    .form-range {
+      width: 100%;
+      height: 6px;
+      border-radius: var(--radius-md);
+      background: var(--bg-tertiary);
+      outline: none;
+      -webkit-appearance: none;
+      margin: var(--spacing-sm) 0;
+    }
+
+    .form-range::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--primary-gradient);
+      cursor: pointer;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.3s ease;
+    }
+
+    .form-range::-webkit-slider-thumb:hover {
+      transform: scale(1.1);
+      box-shadow: var(--shadow-md);
+    }
+
+    .form-range::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--primary-gradient);
+      cursor: pointer;
+      border: none;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.3s ease;
+    }
+
+    .form-range::-moz-range-thumb:hover {
+      transform: scale(1.1);
+      box-shadow: var(--shadow-md);
+    }
+
+    .range-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-top: var(--spacing-xs);
+    }
+
+    /* Budget Input Wrapper */
+    .budget-input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .budget-symbol {
+      position: absolute;
+      left: var(--spacing-md);
+      color: var(--text-secondary);
+      font-weight: 600;
+      z-index: 1;
+    }
+
+    .budget-input {
+      padding-left: 2.5rem !important;
+    }
     
     .btn-generate {
       background: var(--primary-gradient);
@@ -1828,13 +1899,12 @@
         </div>
         
         <div class="form-group">
-          <label for="days" class="form-label">Number of Days</label>
-          <select id="days" name="days" class="form-select">
-            <option value="3">3 Days</option>
-            <option value="5">5 Days</option>
-            <option value="7" selected>7 Days (1 Week)</option>
-            <option value="14">14 Days (2 Weeks)</option>
-          </select>
+          <label for="days" class="form-label">Number of Days: <span id="daysValue">7</span></label>
+          <input type="range" id="days" name="days" class="form-range" min="1" max="14" value="7" step="1">
+          <div class="range-labels">
+            <span>1 day</span>
+            <span>14 days</span>
+          </div>
         </div>
         
         <div class="form-group">
@@ -1853,7 +1923,10 @@
         
         <div class="form-group">
           <label for="budget" class="form-label">Budget (Optional)</label>
-          <input type="number" id="budget" name="budget" class="form-input" placeholder="$50" min="10" max="1000" step="5">
+          <div class="budget-input-wrapper">
+            <span class="budget-symbol">$</span>
+            <input type="number" id="budget" name="budget" class="form-input budget-input" placeholder="50" min="10" max="1000" step="5">
+          </div>
         </div>
         
         <div class="form-group">
@@ -1990,6 +2063,19 @@ window.MEAL_PLANS_CONFIG = {
         mealPlanDetails: "{{ url_for('shopping.meal_plan_details', plan_id=0) }}"
     }
 };
+
+// Handle range input for number of days
+document.addEventListener('DOMContentLoaded', function() {
+    const daysRange = document.getElementById('days');
+    const daysValue = document.getElementById('daysValue');
+    
+    if (daysRange && daysValue) {
+        daysRange.addEventListener('input', function() {
+            const value = parseInt(this.value);
+            daysValue.textContent = value;
+        });
+    }
+});
 </script>
 <script src="{{ url_for('static', filename='js/meal_plans.js') }}"></script>
 
