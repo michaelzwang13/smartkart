@@ -287,18 +287,43 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 function initializeCalendar() {
-  // Setup calendar navigation
+  // Setup calendar navigation with limits
   document.getElementById("prevMonth").addEventListener("click", async () => {
-    currentDate.setMonth(currentDate.getMonth() - 1);
-    clearMealPlanPreview(); // Clear preview when changing months
-    await loadMealsForCalendar();
+    const today = new Date();
+    const twelveMonthsAgo = new Date(today);
+    twelveMonthsAgo.setMonth(today.getMonth() - 12);
+    
+    // Check if we can go back one more month
+    const potentialDate = new Date(currentDate);
+    potentialDate.setMonth(currentDate.getMonth() - 1);
+    
+    if (potentialDate >= twelveMonthsAgo) {
+      currentDate.setMonth(currentDate.getMonth() - 1);
+      clearMealPlanPreview(); // Clear preview when changing months
+      await loadMealsForCalendar();
+      updateNavigationButtons();
+    }
   });
 
   document.getElementById("nextMonth").addEventListener("click", async () => {
-    currentDate.setMonth(currentDate.getMonth() + 1);
-    clearMealPlanPreview(); // Clear preview when changing months
-    await loadMealsForCalendar();
+    const today = new Date();
+    const twoMonthsFromNow = new Date(today);
+    twoMonthsFromNow.setMonth(today.getMonth() + 2);
+    
+    // Check if we can go forward one more month
+    const potentialDate = new Date(currentDate);
+    potentialDate.setMonth(currentDate.getMonth() + 1);
+    
+    if (potentialDate <= twoMonthsFromNow) {
+      currentDate.setMonth(currentDate.getMonth() + 1);
+      clearMealPlanPreview(); // Clear preview when changing months
+      await loadMealsForCalendar();
+      updateNavigationButtons();
+    }
   });
+
+  // Initial button state update
+  updateNavigationButtons();
 
   // Setup view toggle
   document.querySelectorAll(".calendar-view-btn").forEach((btn) => {
@@ -314,6 +339,51 @@ function initializeCalendar() {
   });
 
   renderCalendar();
+}
+
+function updateNavigationButtons() {
+  const today = new Date();
+  const twelveMonthsAgo = new Date(today);
+  twelveMonthsAgo.setMonth(today.getMonth() - 12);
+  const twoMonthsFromNow = new Date(today);
+  twoMonthsFromNow.setMonth(today.getMonth() + 2);
+  
+  const prevButton = document.getElementById("prevMonth");
+  const nextButton = document.getElementById("nextMonth");
+  
+  // Check if we can go back one more month
+  const potentialPrevDate = new Date(currentDate);
+  potentialPrevDate.setMonth(currentDate.getMonth() - 1);
+  
+  // Check if we can go forward one more month
+  const potentialNextDate = new Date(currentDate);
+  potentialNextDate.setMonth(currentDate.getMonth() + 1);
+  
+  // Disable/enable previous button
+  if (potentialPrevDate < twelveMonthsAgo) {
+    prevButton.disabled = true;
+    prevButton.style.opacity = '0.4';
+    prevButton.style.cursor = 'not-allowed';
+    prevButton.title = 'Cannot go back more than 12 months';
+  } else {
+    prevButton.disabled = false;
+    prevButton.style.opacity = '1';
+    prevButton.style.cursor = 'pointer';
+    prevButton.title = 'Previous month';
+  }
+  
+  // Disable/enable next button
+  if (potentialNextDate > twoMonthsFromNow) {
+    nextButton.disabled = true;
+    nextButton.style.opacity = '0.4';
+    nextButton.style.cursor = 'not-allowed';
+    nextButton.title = 'Cannot go forward more than 2 months';
+  } else {
+    nextButton.disabled = false;
+    nextButton.style.opacity = '1';
+    nextButton.style.cursor = 'pointer';
+    nextButton.title = 'Next month';
+  }
 }
 
 function updateCalendarTitle() {
@@ -364,6 +434,9 @@ function renderCalendar() {
   } else {
     renderWeekView(calendarGrid);
   }
+  
+  // Update navigation button states after rendering
+  updateNavigationButtons();
 }
 
 function renderMonthView(container) {

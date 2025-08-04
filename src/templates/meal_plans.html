@@ -480,9 +480,16 @@
       transition: all 0.3s ease;
     }
     
-    .calendar-nav-btn:hover {
+    .calendar-nav-btn:hover:not(:disabled) {
       background: var(--primary-color);
       color: var(--text-white);
+    }
+    
+    .calendar-nav-btn:disabled {
+      opacity: 0.4 !important;
+      cursor: not-allowed !important;
+      background: var(--bg-tertiary) !important;
+      color: var(--text-muted) !important;
     }
     
     .calendar-month-year {
