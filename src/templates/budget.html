@@ -12,6 +12,9 @@
   
   <!-- Font Awesome for icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Base CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
   
   <!-- Chart.js for data visualization -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -67,209 +70,6 @@
       --font-family: 'Quicksand', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
     
-    /* Reset and base styles */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
-    html {
-      scroll-behavior: smooth;
-    }
-    
-    body {
-      font-family: var(--font-family);
-      color: var(--text-primary);
-      line-height: 1.6;
-      background: var(--bg-secondary);
-      overflow-x: hidden;
-    }
-    
-    /* Header and Navigation */
-    .header {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 1000;
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(20px);
-      border-bottom: 1px solid var(--border-light);
-      transition: all 0.3s ease;
-    }
-    
-    .nav-container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 var(--spacing-lg);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      height: 80px;
-    }
-    
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-sm);
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: var(--primary-color);
-      text-decoration: none;
-      transition: transform 0.3s ease;
-    }
-    
-    .logo:hover {
-      transform: scale(1.05);
-    }
-    
-    .logo-icon {
-      width: 40px;
-      height: 40px;
-      background: var(--primary-gradient);
-      border-radius: var(--radius-lg);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: 1.2rem;
-    }
-    
-    .nav-links {
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-lg);
-      list-style: none;
-    }
-    
-    .nav-link {
-      color: var(--text-primary);
-      text-decoration: none;
-      font-weight: 500;
-      position: relative;
-      transition: color 0.3s ease;
-      padding: var(--spacing-sm) var(--spacing-md);
-      border-radius: var(--radius-md);
-    }
-    
-    .nav-link:hover {
-      color: var(--primary-color);
-      background: rgba(102, 126, 234, 0.1);
-    }
-    
-    .nav-link.logout {
-      background: var(--error-color);
-      color: var(--text-white);
-    }
-    
-    .nav-link.logout:hover {
-      background: #dc2626;
-      color: var(--text-white);
-    }
-
-    /* Dropdown Styles */
-    .nav-dropdown {
-      position: relative;
-    }
-
-    .dropdown-toggle {
-      display: flex;
-      align-items: center;
-      cursor: pointer;
-    }
-
-    .dropdown-arrow {
-      transition: transform 0.3s ease;
-    }
-
-    .nav-dropdown:hover .dropdown-arrow {
-      transform: rotate(180deg);
-    }
-
-    .dropdown-menu {
-      position: absolute;
-      top: calc(100% + 6px);
-      left: 50%;
-      transform: translateX(-50%) translateY(-8px);
-      background: var(--bg-primary);
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius-md);
-      box-shadow: var(--shadow-lg);
-      min-width: 160px;
-      opacity: 0;
-      visibility: hidden;
-      transition: all 0.2s ease;
-      z-index: 1000;
-      list-style: none;
-      padding: var(--spacing-xs) 0;
-      margin: 0;
-    }
-
-    .dropdown-menu::before {
-      content: '';
-      position: absolute;
-      top: -4px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 8px;
-      height: 8px;
-      background: var(--bg-primary);
-      border: 1px solid var(--border-light);
-      border-bottom: none;
-      border-right: none;
-      transform: translateX(-50%) rotate(45deg);
-    }
-
-    .nav-dropdown:hover .dropdown-menu {
-      opacity: 1;
-      visibility: visible;
-      transform: translateX(-50%) translateY(0);
-    }
-
-    .dropdown-link {
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-sm);
-      padding: var(--spacing-sm) var(--spacing-md);
-      color: var(--text-primary);
-      text-decoration: none;
-      font-weight: 500;
-      transition: all 0.2s ease;
-      border: none;
-      background: none;
-      font-size: 0.9rem;
-    }
-
-    .dropdown-link:hover {
-      background: var(--bg-secondary);
-      color: var(--primary-color);
-    }
-
-    .dropdown-link.logout {
-      color: var(--error-color);
-    }
-
-    .dropdown-link.logout:hover {
-      background: rgba(239, 68, 68, 0.1);
-      color: var(--error-color);
-    }
-
-    .dropdown-link i {
-      font-size: 0.85rem;
-      width: 14px;
-      text-align: center;
-    }
-
-    /* Add subtle separators in dropdown */
-    .dropdown-menu li:not(:last-child) {
-      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-    }
-
-    .dropdown-menu li:last-child .dropdown-link {
-      border-bottom: none;
-    }
-
     /* Mobile Menu Button */
     .mobile-menu-btn {
       display: none;
@@ -287,39 +87,10 @@
       background: var(--bg-secondary);
       color: var(--primary-color);
     }
-    
-    /* Main Content */
-    .main-content {
-      min-height: 100vh;
-      padding: 100px var(--spacing-lg) var(--spacing-xl);
-    }
-    
+        
     .budget-container {
       max-width: 1400px;
       margin: 0 auto;
-    }
-    
-    /* Page Header */
-    .page-header {
-      margin-bottom: var(--spacing-2xl);
-      text-align: center;
-      animation: fadeInUp 0.8s ease;
-    }
-    
-    .page-title {
-      font-size: clamp(2rem, 4vw, 3rem);
-      font-weight: 700;
-      background: var(--primary-gradient);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: var(--spacing-sm);
-    }
-    
-    .page-subtitle {
-      font-size: 1.125rem;
-      color: var(--text-secondary);
-      margin-bottom: var(--spacing-lg);
     }
     
     /* Quick Stats Cards */
