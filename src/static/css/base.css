@@ -8,10 +8,11 @@
     --error-gradient: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
     
     --primary-color: #10b981;
-    --secondary-color: #764ba2;
-    --accent-color: #4facfe;
+    --secondary-color: #059669;
+    --accent-color: #34d399;
     --success-color: #10b981;
     --warning-color: #f59e0b;
+    --info-color: #3b82f6;
     --error-color: #ef4444;
     
     --text-primary: #1f2937;
