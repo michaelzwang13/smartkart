@@ -379,3 +379,24 @@ CREATE TABLE session_batch_prep (
     INDEX idx_session_prep (session_id),
     INDEX idx_step_order (step_order)
 );
+
+-- Create session_shopping_lists table for storing consolidated shopping lists per meal plan session
+CREATE TABLE session_shopping_lists (
+    shopping_item_id INT AUTO_INCREMENT,
+    session_id INT NOT NULL,
+    ingredient_name VARCHAR(100) NOT NULL,
+    total_quantity DECIMAL(10,2) NOT NULL, -- consolidated quantity needed
+    unit VARCHAR(20) NOT NULL, -- cups, tsp, lbs, oz, etc.
+    estimated_cost DECIMAL(8,2) NULL, -- estimated total cost for this ingredient
+    category VARCHAR(50) DEFAULT 'Other', -- Produce, Meat, Dairy, etc. (from categorize_ingredient function)
+    meals_using TEXT NULL, -- JSON array of meal_ids that use this ingredient
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (shopping_item_id),
+    FOREIGN KEY (session_id) REFERENCES meal_plan_sessions(session_id) ON DELETE CASCADE,
+    INDEX idx_session_shopping (session_id),
+    INDEX idx_shopping_category (category),
+    INDEX idx_ingredient_shopping (ingredient_name),
+    -- Prevent duplicate ingredients per session (consolidate quantities instead)
+    UNIQUE KEY unique_session_ingredient (session_id, ingredient_name, unit)
+);
