@@ -159,7 +159,7 @@ body {
 
 .nav-link:hover {
     color: var(--primary-color);
-    background: rgba(102, 126, 234, 0.1);
+    transform: translateY(-1px);
 }
 
 .nav-link.logout {
