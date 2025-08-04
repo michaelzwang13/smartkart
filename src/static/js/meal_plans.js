@@ -1261,6 +1261,9 @@ function showEmptyDayPopup(date) {
     day: "numeric",
   });
 
+  // Store the selected date globally for use when navigating
+  window.selectedEmptyDate = date.toISOString().split("T")[0];
+
   const popupHTML = `
     <div id="emptyDayPopup" class="modal-overlay">
         <div class="modal-content empty-day-popup">
@@ -1351,6 +1354,18 @@ function closeEmptyDayPopupAndNavigate() {
         behavior: "smooth",
         block: "start",
       });
+
+      // Set the start date to the selected empty date
+      if (window.selectedEmptyDate) {
+        const startDateInput = document.getElementById("start_date");
+        if (startDateInput) {
+          startDateInput.value = window.selectedEmptyDate;
+          
+          // Trigger calendar preview update
+          const event = new Event('change');
+          startDateInput.dispatchEvent(event);
+        }
+      }
 
       // Optional: Focus on the form for better UX
       setTimeout(() => {
