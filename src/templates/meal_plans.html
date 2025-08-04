@@ -1983,6 +1983,14 @@
     </section>
   </main>
 
+<script>
+// Pass server data to JavaScript
+window.MEAL_PLANS_CONFIG = {
+    urls: {
+        mealPlanDetails: "{{ url_for('shopping.meal_plan_details', plan_id=0) }}"
+    }
+};
+</script>
 <script src="{{ url_for('static', filename='js/meal_plans.js') }}"></script>
 
 </body>
