@@ -108,32 +108,39 @@ function displayPlanInfo(plan) {
   const endDate = new Date(plan.end_date).toLocaleDateString();
 
   document.getElementById("planInfo").innerHTML = `
-    <div class="plan-meta">
-        <div class="meta-item">
-        <i class="fas fa-calendar-alt meta-icon"></i>
-        <span>${startDate} - ${endDate}</span>
+    <div class="plan-header-content">
+        <div class="plan-meta">
+            <div class="meta-item">
+            <i class="fas fa-calendar-alt meta-icon"></i>
+            <span>${startDate} - ${endDate}</span>
+            </div>
+            <div class="meta-item">
+            <i class="fas fa-clock meta-icon"></i>
+            <span>${plan.total_days} days</span>
+            </div>
+            <div class="meta-item">
+            <i class="fas fa-leaf meta-icon"></i>
+            <span>${plan.dietary_preference || "No restrictions"}</span>
+            </div>
+            <div class="meta-item">
+            <i class="fas fa-dollar-sign meta-icon"></i>
+            <span>${
+              plan.budget_limit ? "$" + plan.budget_limit : "No budget limit"
+            }</span>
+            </div>
+            <div class="meta-item">
+            <i class="fas fa-fire meta-icon"></i>
+            <span>Max ${plan.max_cooking_time} min/day</span>
+            </div>
+            <div class="meta-item">
+            <i class="fas fa-robot meta-icon"></i>
+            <span>Generated with ${plan.ai_model_used || "AI"}</span>
+            </div>
         </div>
-        <div class="meta-item">
-        <i class="fas fa-clock meta-icon"></i>
-        <span>${plan.total_days} days</span>
-        </div>
-        <div class="meta-item">
-        <i class="fas fa-leaf meta-icon"></i>
-        <span>${plan.dietary_preference || "No restrictions"}</span>
-        </div>
-        <div class="meta-item">
-        <i class="fas fa-dollar-sign meta-icon"></i>
-        <span>${
-          plan.budget_limit ? "$" + plan.budget_limit : "No budget limit"
-        }</span>
-        </div>
-        <div class="meta-item">
-        <i class="fas fa-fire meta-icon"></i>
-        <span>Max ${plan.max_cooking_time} min/day</span>
-        </div>
-        <div class="meta-item">
-        <i class="fas fa-robot meta-icon"></i>
-        <span>Generated with ${plan.ai_model_used || "AI"}</span>
+        <div class="plan-actions">
+            <button class="btn btn-danger" id="deletePlanBtn" onclick="showDeleteConfirmation()">
+                <i class="fas fa-trash"></i> Delete Meal Plan
+            </button>
         </div>
     </div>
     `;
@@ -321,4 +328,130 @@ function getDayName(dayNum) {
   const targetDate = new Date(today);
   targetDate.setDate(today.getDate() + dayNum - 1);
   return targetDate.toLocaleDateString("en-US", { weekday: "long" });
+}
+
+function showDeleteConfirmation() {
+  const modalHTML = `
+    <div id="deleteConfirmationModal" class="modal-overlay">
+        <div class="modal-content delete-confirmation-modal">
+        <div class="modal-header">
+            <div class="delete-warning-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h3>Delete Meal Plan</h3>
+        </div>
+        <div class="modal-body">
+            <p class="delete-warning-text">
+                Are you sure you want to delete this meal plan? This action cannot be undone.
+            </p>
+            <p class="delete-consequences">
+                <strong>This will permanently remove:</strong>
+            </p>
+            <ul class="delete-consequences-list">
+                <li>All meals in this plan</li>
+                <li>Recipe details and instructions</li>
+                <li>Shopping lists and prep steps</li>
+                <li>Progress tracking data</li>
+            </ul>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeDeleteConfirmation()">
+                <i class="fas fa-times"></i> Cancel
+            </button>
+            <button class="btn btn-danger" onclick="deleteMealPlan()" id="confirmDeleteBtn">
+                <i class="fas fa-trash"></i> Delete Permanently
+            </button>
+        </div>
+        </div>
+    </div>
+    `;
+
+  document.body.insertAdjacentHTML("beforeend", modalHTML);
+
+  // Show modal with animation
+  setTimeout(() => {
+    document.getElementById("deleteConfirmationModal").classList.add("show");
+  }, 10);
+
+  // Close modal when clicking outside
+  const modal = document.getElementById("deleteConfirmationModal");
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) {
+      closeDeleteConfirmation();
+    }
+  });
+
+  // Close modal with Escape key
+  document.addEventListener("keydown", handleDeleteEscape);
+}
+
+function handleDeleteEscape(e) {
+  if (e.key === "Escape") {
+    const modal = document.getElementById("deleteConfirmationModal");
+    if (modal) {
+      closeDeleteConfirmation();
+      document.removeEventListener("keydown", handleDeleteEscape);
+    }
+  }
+}
+
+function closeDeleteConfirmation() {
+  const modal = document.getElementById("deleteConfirmationModal");
+  if (modal) {
+    modal.classList.remove("show");
+    document.removeEventListener("keydown", handleDeleteEscape);
+    setTimeout(() => {
+      modal.remove();
+    }, 300);
+  }
+}
+
+async function deleteMealPlan() {
+  const confirmBtn = document.getElementById("confirmDeleteBtn");
+
+  // Show loading state
+  const originalContent = confirmBtn.innerHTML;
+  confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
+  confirmBtn.disabled = true;
+
+  try {
+    const response = await fetch(`/api/meal-plans/${planId}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      // Show success message briefly
+      confirmBtn.innerHTML = '<i class="fas fa-check"></i> Deleted!';
+      confirmBtn.style.background = "var(--success-gradient)";
+
+      // Close modal and redirect after short delay
+      setTimeout(() => {
+        closeDeleteConfirmation();
+        // Redirect to meal plans page
+        window.location.href = config.urls?.meal_plans || "/meal-plans";
+      }, 1500);
+    } else {
+      throw new Error(data.message || "Failed to delete meal plan");
+    }
+  } catch (error) {
+    console.error("Error deleting meal plan:", error);
+
+    // Show error state
+    confirmBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Error';
+    confirmBtn.style.background = "var(--error-gradient)";
+
+    // Reset button after delay
+    setTimeout(() => {
+      confirmBtn.innerHTML = originalContent;
+      confirmBtn.style.background = "var(--error-gradient)";
+      confirmBtn.disabled = false;
+    }, 2000);
+
+    alert("Failed to delete meal plan: " + error.message);
+  }
 }

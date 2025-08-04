@@ -117,15 +117,6 @@ def get_meal_plan_details(plan_id):
                     cursor.execute(ingredients_query, (template['template_id'],))
                     ingredients.extend(cursor.fetchall())
 
-            # Get custom ingredients
-            custom_ingredients_query = """
-                SELECT ingredient_name, quantity, unit, notes as ingredient_notes
-                FROM meal_custom_ingredients 
-                WHERE meal_id = %s
-            """
-            cursor.execute(custom_ingredients_query, (meal['meal_id'],))
-            ingredients.extend(cursor.fetchall())
-
             # Format as old recipe structure
             recipe_entry = {
                 "recipe_id": meal['meal_id'],  # Use meal_id as recipe_id for compatibility
@@ -204,6 +195,61 @@ def get_meal_plan_details(plan_id):
 
     except Exception as e:
         return jsonify({"success": False, "message": f"Failed to get meal plan: {str(e)}"})
+    finally:
+        cursor.close()
+
+
+@meal_plan_compat_bp.route("/meal-plans/<int:plan_id>", methods=["DELETE"])
+def delete_meal_plan(plan_id):
+    """Delete a meal plan and all associated data"""
+    if "user_ID" not in session:
+        return jsonify({"success": False, "message": "Not authenticated"})
+
+    user_id = session["user_ID"]
+    db = get_db()
+    cursor = db.cursor()
+    
+    try:
+        # First verify the meal plan belongs to the current user
+        cursor.execute("""
+            SELECT session_id FROM meal_plan_sessions 
+            WHERE session_id = %s AND user_id = %s
+        """, (plan_id, user_id))
+        
+        if not cursor.fetchone():
+            return jsonify({"success": False, "message": "Meal plan not found or access denied"})
+        
+        # Delete in order to respect foreign key constraints
+        # 1. Delete custom ingredients for meals in this session
+        cursor.execute("""
+            DELETE rt FROM recipe_templates rt
+            INNER JOIN meals m ON rt.template_id = m.recipe_template_id
+            WHERE m.session_id = %s
+        """, (plan_id,))
+        
+        # 2. Delete meals in this session
+        cursor.execute("""
+            DELETE FROM meals WHERE session_id = %s
+        """, (plan_id,))
+        
+        # 3. Delete meal plan session
+        cursor.execute("""
+            DELETE FROM meal_plan_sessions WHERE session_id = %s
+        """, (plan_id,))
+        
+        db.commit()
+        
+        return jsonify({
+            "success": True, 
+            "message": "Meal plan deleted successfully"
+        })
+
+    except Exception as e:
+        db.rollback()
+        return jsonify({
+            "success": False, 
+            "message": f"Failed to delete meal plan: {str(e)}"
+        })
     finally:
         cursor.close()
 

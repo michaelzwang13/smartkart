@@ -113,7 +113,7 @@ CREATE TABLE shopping_list_cart_mapping (
     UNIQUE KEY unique_cart_list_item (cart_id, list_item_id)
 );
 
--- Create user_meal_preferences table for storing user preferences
+-- Create user_meal_preferences table for storing user preferences (NOT IMPLEMENTED YET)
 CREATE TABLE user_meal_preferences (
     user_id VARCHAR(50) PRIMARY KEY,
     dietary_restrictions TEXT NULL, -- JSON array of restrictions
@@ -345,21 +345,6 @@ CREATE TABLE meals (
     INDEX idx_session_meals (session_id),
     INDEX idx_template_meals (recipe_template_id),
     UNIQUE KEY unique_user_meal_slot (user_id, meal_date, meal_type)
-);
-
--- Create custom_ingredients table for storing custom ingredients per meal
-CREATE TABLE custom_ingredients (
-    ingredient_id INT AUTO_INCREMENT,
-    meal_id INT NOT NULL,
-    ingredient_name VARCHAR(100) NOT NULL,
-    quantity DECIMAL(10,2) NOT NULL,
-    unit VARCHAR(20) NOT NULL, -- cups, tsp, lbs, oz, etc.
-    notes VARCHAR(200) NULL, -- "diced", "optional", etc.
-    estimated_cost DECIMAL(6,2) NULL,
-    PRIMARY KEY (ingredient_id),
-    FOREIGN KEY (meal_id) REFERENCES meals(meal_id) ON DELETE CASCADE,
-    INDEX idx_meal_ingredients (meal_id),
-    INDEX idx_ingredient_name (ingredient_name)
 );
 
 -- Create session_batch_prep table for storing batch preparation steps per meal plan session

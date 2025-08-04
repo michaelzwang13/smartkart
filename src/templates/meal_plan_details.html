@@ -95,11 +95,16 @@
       box-shadow: var(--shadow-md);
     }
     
+    .plan-header-content {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-lg);
+    }
+    
     .plan-meta {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: var(--spacing-lg);
-      margin-bottom: var(--spacing-lg);
     }
     
     .meta-item {
@@ -110,6 +115,43 @@
     
     .meta-icon {
       color: var(--primary-color);
+    }
+    
+    .plan-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: var(--spacing-md);
+    }
+    
+    .btn {
+      padding: var(--spacing-sm) var(--spacing-lg);
+      border: none;
+      border-radius: var(--radius-md);
+      font-family: var(--font-family);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--spacing-sm);
+      font-size: 0.875rem;
+    }
+    
+    .btn-danger {
+      background: var(--error-gradient);
+      color: var(--text-white);
+      box-shadow: var(--shadow-sm);
+    }
+    
+    .btn-danger:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+    }
+    
+    .btn-danger:active {
+      transform: translateY(0);
     }
     
     /* Loading state */
@@ -348,6 +390,117 @@
     .item-cost {
       color: var(--primary-color);
       font-weight: 500;
+    }
+    
+    /* Modal Styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+    
+    .modal-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+    
+    .modal-content {
+      background: var(--bg-primary);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-xl);
+      max-width: 500px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      transform: translateY(30px) scale(0.95);
+      transition: all 0.3s ease;
+    }
+    
+    .modal-overlay.show .modal-content {
+      transform: translateY(0) scale(1);
+    }
+    
+    .delete-confirmation-modal .modal-header {
+      padding: var(--spacing-xl);
+      text-align: center;
+      border-bottom: 1px solid var(--border-light);
+    }
+    
+    .delete-warning-icon {
+      width: 60px;
+      height: 60px;
+      background: var(--error-gradient);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto var(--spacing-md);
+      color: var(--text-white);
+      font-size: 1.5rem;
+    }
+    
+    .delete-confirmation-modal h3 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 0;
+    }
+    
+    .delete-confirmation-modal .modal-body {
+      padding: var(--spacing-lg) var(--spacing-xl);
+    }
+    
+    .delete-warning-text {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      margin-bottom: var(--spacing-lg);
+      text-align: center;
+    }
+    
+    .delete-consequences {
+      font-size: 0.875rem;
+      color: var(--text-primary);
+      margin: var(--spacing-md) 0 var(--spacing-sm);
+    }
+    
+    .delete-consequences-list {
+      margin: 0 0 var(--spacing-lg);
+      padding-left: var(--spacing-lg);
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+    
+    .delete-consequences-list li {
+      margin-bottom: var(--spacing-xs);
+    }
+    
+    .modal-actions {
+      padding: var(--spacing-lg) var(--spacing-xl) var(--spacing-xl);
+      display: flex;
+      gap: var(--spacing-md);
+      justify-content: flex-end;
+      border-top: 1px solid var(--border-light);
+    }
+    
+    .btn-secondary {
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-medium);
+    }
+    
+    .btn-secondary:hover {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
     }
     
     /* Responsive design */
