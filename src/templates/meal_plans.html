@@ -393,6 +393,76 @@
       padding-left: 2.5rem !important;
     }
 
+    /* Meal Plan Preview Styles */
+    .meal-plan-preview {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(52, 211, 153, 0.15) 100%) !important;
+      border: 2px solid var(--primary-color) !important;
+      position: relative;
+      animation: previewPulse 2s ease-in-out infinite;
+    }
+
+    .meal-plan-preview::before {
+      content: '';
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      width: 8px;
+      height: 8px;
+      background: var(--primary-gradient);
+      border-radius: 50%;
+      box-shadow: 0 0 4px rgba(16, 185, 129, 0.5);
+    }
+
+    .preview-start {
+      border-top-left-radius: var(--radius-lg) !important;
+      border-bottom-left-radius: var(--radius-lg) !important;
+    }
+
+    .preview-end {
+      border-top-right-radius: var(--radius-lg) !important;
+      border-bottom-right-radius: var(--radius-lg) !important;
+    }
+
+    .preview-start::after {
+      content: 'START';
+      position: absolute;
+      bottom: 2px;
+      left: 2px;
+      font-size: 0.6rem;
+      font-weight: 700;
+      color: var(--primary-color);
+      text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+    }
+
+    .preview-end::after {
+      content: 'END';
+      position: absolute;
+      bottom: 2px;
+      right: 2px;
+      font-size: 0.6rem;
+      font-weight: 700;
+      color: var(--primary-color);
+      text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+    }
+
+    @keyframes previewPulse {
+      0%, 100% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+      }
+      50% {
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+      }
+    }
+
+    /* Enhanced calendar cell styles for better preview visibility */
+    .calendar-cell {
+      transition: all 0.3s ease;
+    }
+
+    .calendar-cell:hover:not(.meal-plan-preview) {
+      transform: scale(1.02);
+    }
+
     
     .btn-generate {
       background: var(--primary-gradient);
@@ -2058,29 +2128,13 @@
     </section>
   </main>
 
-
-<script>
-// Pass server data to JavaScript
-window.MEAL_PLANS_CONFIG = {
-    urls: {
-        mealPlanDetails: "{{ url_for('shopping.meal_plan_details', plan_id=0) }}"
-    }
-};
-
-// Handle range input for number of days
-document.addEventListener('DOMContentLoaded', function() {
-    const daysRange = document.getElementById('days');
-    const daysValue = document.getElementById('daysValue');
-    
-    if (daysRange && daysValue) {
-        daysRange.addEventListener('input', function() {
-            const value = parseInt(this.value);
-            daysValue.textContent = value;
-        });
-    }
-});
-</script>
 <script src="{{ url_for('static', filename='js/meal_plans.js') }}"></script>
+<script>
+  // Initialize form handlers after the page loads
+  document.addEventListener('DOMContentLoaded', function() {
+    initializeFormHandlers();
+  });
+</script>
 
 </body>
 </html>
