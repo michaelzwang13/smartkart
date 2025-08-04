@@ -1,4 +1,6 @@
-const planId = JSON.parse('{{ plan_id }}');
+// Get configuration from global object set by template
+const config = window.MEAL_PLAN_DETAILS_CONFIG || {};
+const planId = config.planId || 0;
 
 // Initialize dropdown functionality
 function initializeDropdowns() {

@@ -740,6 +740,12 @@
     </div>
   </main>
 
+<script>
+// Pass server data to JavaScript
+window.MEAL_PLAN_DETAILS_CONFIG = {
+    planId: JSON.parse('{{ plan_id }}')
+};
+</script>
 <script src="{{ url_for('static', filename='js/meal_plan_details.js') }}"></script>
 
 </body>
