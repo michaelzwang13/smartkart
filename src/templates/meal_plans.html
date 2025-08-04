@@ -395,10 +395,11 @@
 
     /* Meal Plan Preview Styles */
     .meal-plan-preview {
-      background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(52, 211, 153, 0.15) 100%) !important;
-      border: 2px solid var(--primary-color) !important;
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.15) 100%) !important;
+      border: 2px solid #ef4444 !important;
       position: relative;
       animation: previewPulse 2s ease-in-out infinite;
+      color: #dc2626 !important;
     }
 
     .meal-plan-preview::before {
@@ -2129,12 +2130,6 @@
   </main>
 
 <script src="{{ url_for('static', filename='js/meal_plans.js') }}"></script>
-<script>
-  // Initialize form handlers after the page loads
-  document.addEventListener('DOMContentLoaded', function() {
-    initializeFormHandlers();
-  });
-</script>
 
 </body>
 </html>

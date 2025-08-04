@@ -272,6 +272,9 @@ document.addEventListener("DOMContentLoaded", function () {
   initializeCalendar();
   initializeGoals();
 
+  // Initialize form handlers for slider and calendar preview
+  initializeFormHandlers();
+
   // Setup generate button
   document
     .getElementById("generateBtn")
