@@ -926,9 +926,7 @@ async function generateMealPlan() {
 
 function viewPlanDetails(planId) {
   // Navigate to plan details page
-  const config = window.MEAL_PLANS_CONFIG || {};
-  const baseUrl = config.urls?.mealPlanDetails || "/meal-plan-details/0";
-  window.location.href = baseUrl.replace("0", planId);
+  window.location.href = `/meal-plans/${planId}`;
 }
 
 function showMealSelectionModal(date, meals) {
