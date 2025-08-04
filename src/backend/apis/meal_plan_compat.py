@@ -31,7 +31,7 @@ def get_meal_plans():
                    generated_at, status
             FROM meal_plan_sessions 
             WHERE user_id = %s
-            ORDER BY generated_at DESC
+            ORDER BY ABS(DATEDIFF(start_date, CURDATE())), start_date ASC
         """
         cursor.execute(query, (user_id,))
         plans = cursor.fetchall()
