@@ -21,25 +21,7 @@
   <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@2.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
   
-  <style>
-    /* Mobile Menu Button */
-    .mobile-menu-btn {
-      display: none;
-      background: none;
-      border: none;
-      font-size: 1.25rem;
-      color: var(--text-primary);
-      cursor: pointer;
-      padding: var(--spacing-sm);
-      border-radius: var(--radius-md);
-      transition: all 0.2s ease;
-    }
-
-    .mobile-menu-btn:hover {
-      background: var(--bg-secondary);
-      color: var(--primary-color);
-    }
-        
+  <style>   
     .budget-container {
       max-width: 1400px;
       margin: 0 auto;
@@ -776,6 +758,11 @@
       </div>
     </div>
   </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>&copy; 2025 Preppr. All rights reserved. Prep smarter. Save time. Eat better.</p>
+  </footer>
 
 <script src="{{ url_for('static', filename='js/budget.js') }}"></script>
 

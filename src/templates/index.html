@@ -436,46 +436,7 @@
       box-shadow: var(--shadow-xl);
     }
     
-    /* Footer */
-    .footer {
-      background: var(--text-primary);
-      color: var(--text-white);
-      padding: var(--spacing-xl) var(--spacing-lg);
-      text-align: center;
-    }
-    
-    .footer-container {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-    
-    .footer p {
-      color: rgba(255, 255, 255, 0.7);
-      margin: 0;
-    }
-    
-    /* Mobile Menu */
-    .mobile-menu-btn {
-      display: none;
-      background: none;
-      border: none;
-      font-size: 1.5rem;
-      color: var(--text-primary);
-      cursor: pointer;
-    }
-    
     /* Animations */
-    @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(30px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-    
     @keyframes fadeInRight {
       from {
         opacity: 0;
@@ -796,9 +757,7 @@
 
   <!-- Footer -->
   <footer class="footer">
-    <div class="footer-container">
-      <p>&copy; 2025 Preppr. All rights reserved. Prep smarter. Save time. Eat better.</p>
-    </div>
+    <p>&copy; 2025 Preppr. All rights reserved. Prep smarter. Save time. Eat better.</p>
   </footer>
 
 <script src="{{ url_for('static', filename='js/index.js') }}"></script>
