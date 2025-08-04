@@ -361,3 +361,21 @@ CREATE TABLE custom_ingredients (
     INDEX idx_meal_ingredients (meal_id),
     INDEX idx_ingredient_name (ingredient_name)
 );
+
+-- Create session_batch_prep table for storing batch preparation steps per meal plan session
+CREATE TABLE session_batch_prep (
+    prep_step_id INT AUTO_INCREMENT,
+    session_id INT NOT NULL,
+    prep_session_name VARCHAR(100) NOT NULL DEFAULT 'Prep Session',
+    step_order INT DEFAULT 1,
+    description TEXT NOT NULL,
+    estimated_time INT NULL, -- estimated time in minutes for this prep step
+    equipment_needed TEXT NULL, -- equipment required for this prep step
+    tips TEXT NULL, -- helpful tips for this prep step
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (prep_step_id),
+    FOREIGN KEY (session_id) REFERENCES meal_plan_sessions(session_id) ON DELETE CASCADE,
+    INDEX idx_session_prep (session_id),
+    INDEX idx_step_order (step_order)
+);
