@@ -808,8 +808,6 @@ function highlightMealPlanDates(startDate, days) {
   // Clear any existing preview highlights
   clearMealPlanPreview();
 
-  console.log("DEBUGGGG");
-
   const startDateObj = new Date(startDate);
 
   // Highlight each day in the range
@@ -819,8 +817,6 @@ function highlightMealPlanDates(startDate, days) {
 
     const dateStr = currentDate.toISOString().split("T")[0];
     const calendarCell = document.querySelector(`[data-date="${dateStr}"]`);
-
-    console.log(`calendar cell ${calendarCell}`);
 
     if (calendarCell) {
       calendarCell.classList.add("meal-plan-preview");
@@ -839,7 +835,6 @@ function highlightMealPlanDates(startDate, days) {
 
 function clearMealPlanPreview() {
   // Remove all preview classes from calendar cells
-  console.log("WHAT IN THE WODL");
   const previewCells = document.querySelectorAll(".meal-plan-preview");
   previewCells.forEach((cell) => {
     cell.classList.remove(
@@ -1378,9 +1373,6 @@ function initializeFormHandlers() {
     const startDate = startDateInput?.value;
     const days = parseInt(daysRange?.value || 7);
 
-    console.log(`start date: ${startDate}`);
-    console.log(`days: ${days}`);
-
     if (startDate && days) {
       highlightMealPlanDates(startDate, days);
     } else {
@@ -1391,7 +1383,6 @@ function initializeFormHandlers() {
   if (daysRange && daysValue) {
     daysRange.addEventListener("input", function () {
       const value = parseInt(this.value);
-      console.log(`slider changed to ${value}`)
       daysValue.textContent = value;
       updateCalendarPreview();
     });
