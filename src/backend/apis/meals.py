@@ -29,8 +29,8 @@ def generate_meal_plan():
 
     try:
         days = int(days)
-        if days < 1 or days > 14:
-            return jsonify({"success": False, "message": "Days must be between 1 and 14"})
+        if days < 1 or days > 7:
+            return jsonify({"success": False, "message": "Days must be between 1 and 7"})
     except (ValueError, TypeError):
         return jsonify({"success": False, "message": "Invalid number of days"})
 
