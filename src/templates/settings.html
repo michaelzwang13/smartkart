@@ -17,19 +17,6 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
   
   <style>
-    .main-content::before {
-      content: '';
-      position: absolute;
-      top: -50%;
-      right: -50%;
-      width: 100%;
-      height: 200%;
-      background: var(--accent-gradient);
-      opacity: 0.05;
-      transform: rotate(15deg);
-      z-index: 0;
-    }
-    
     .settings-container {
       position: relative;
       z-index: 1;
@@ -273,203 +260,205 @@
   </style>
 </head>
 <body class="font-sans text-slate-800 leading-relaxed bg-slate-50">
-  <!-- Header -->
-  <header class="header">
-    <div class="nav-container">
-      <a href="{{ url_for('shopping.home') }}" class="logo">
-        <img src="{{ url_for('static', filename='images/preppr-logo.png') }}" alt="Preppr Logo" style="width: 40px; height: 40px; border-radius: var(--radius-lg);">
-        Preppr
-      </a>
-      
-      <nav>
-        <ul class="nav-links">
-          <li><a href="{{ url_for('shopping.home') }}" class="nav-link">Home</a></li>
-          <li><a href="{{ url_for('auth.logout') }}" class="nav-link">Logout</a></li>
-        </ul>
-      </nav>
-    </div>
-  </header>
-
-  <!-- Main Content -->
-  <main class="main-content">
-    <div class="settings-container">
-      <div class="settings-header">
-        <div class="settings-icon">
-          <i class="fas fa-cog" aria-hidden="true"></i>
+  <div class="page-wrapper" style="min-height: 100vh; display: flex; flex-direction: column;">
+    <!-- Header -->
+    <header class="header">
+        <div class="nav-container">
+        <a href="{{ url_for('shopping.home') }}" class="logo">
+            <img src="{{ url_for('static', filename='images/preppr-logo.png') }}" alt="Preppr Logo" style="width: 40px; height: 40px; border-radius: var(--radius-lg);">
+            Preppr
+        </a>
+        
+        <nav>
+            <ul class="nav-links">
+            <li><a href="{{ url_for('shopping.home') }}" class="nav-link">Home</a></li>
+            <li><a href="{{ url_for('auth.logout') }}" class="nav-link">Logout</a></li>
+            </ul>
+        </nav>
         </div>
-        <h1 class="settings-title">Account Settings</h1>
-      </div>
+    </header>
 
-      {% if success %}
-      <div class="message success">
-        <i class="fas fa-check-circle" aria-hidden="true"></i>
-        {{ success }}
-      </div>
-      {% endif %}
-
-      {% if error %}
-      <div class="message error">
-        <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
-        {{ error }}
-      </div>
-      {% endif %}
-
-      <!-- Personal Information -->
-      <div class="settings-card">
-        <div class="card-header">
-          <h2 class="card-title">
-            <i class="fas fa-user" aria-hidden="true"></i>
-            Personal Information
-          </h2>
-          <p class="card-description">Update your name and contact information</p>
+    <!-- Main Content -->
+    <main class="main-content" style="flex: 1;">
+        <div class="settings-container">
+        <div class="settings-header">
+            <div class="settings-icon">
+            <i class="fas fa-cog" aria-hidden="true"></i>
+            </div>
+            <h1 class="settings-title">Account Settings</h1>
         </div>
-        <div class="card-body">
-          <form action="{{ url_for('auth.settings') }}" method="POST" id="personalInfoForm">
-            <input type="hidden" name="form_type" value="personal_info">
-            
-            <div class="form-row">
-              <div class="form-group">
-                <label for="first_name" class="form-label">First Name</label>
+
+        {% if success %}
+        <div class="message success">
+            <i class="fas fa-check-circle" aria-hidden="true"></i>
+            {{ success }}
+        </div>
+        {% endif %}
+
+        {% if error %}
+        <div class="message error">
+            <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <!-- Personal Information -->
+        <div class="settings-card">
+            <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-user" aria-hidden="true"></i>
+                Personal Information
+            </h2>
+            <p class="card-description">Update your name and contact information</p>
+            </div>
+            <div class="card-body">
+            <form action="{{ url_for('auth.settings') }}" method="POST" id="personalInfoForm">
+                <input type="hidden" name="form_type" value="personal_info">
+                
+                <div class="form-row">
+                <div class="form-group">
+                    <label for="first_name" class="form-label">First Name</label>
+                    <div class="form-input-container">
+                    <input 
+                        type="text" 
+                        id="first_name" 
+                        name="first_name" 
+                        class="form-input"
+                        value="{{ user.first_name or '' }}"
+                        placeholder="Enter your first name"
+                        required
+                        autocomplete="given-name"
+                    />
+                    <i class="fas fa-user form-input-icon" aria-hidden="true"></i>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="last_name" class="form-label">Last Name</label>
+                    <div class="form-input-container">
+                    <input 
+                        type="text" 
+                        id="last_name" 
+                        name="last_name" 
+                        class="form-input"
+                        value="{{ user.last_name or '' }}"
+                        placeholder="Enter your last name"
+                        required
+                        autocomplete="family-name"
+                    />
+                    <i class="fas fa-user form-input-icon" aria-hidden="true"></i>
+                    </div>
+                </div>
+                </div>
+
+                <div class="form-group">
+                <label for="email" class="form-label">Email Address</label>
                 <div class="form-input-container">
-                  <input 
-                    type="text" 
-                    id="first_name" 
-                    name="first_name" 
+                    <input 
+                    type="email" 
+                    id="email" 
+                    name="email" 
                     class="form-input"
-                    value="{{ user.first_name or '' }}"
-                    placeholder="Enter your first name"
+                    value="{{ user.email }}"
+                    placeholder="Enter your email address"
                     required
-                    autocomplete="given-name"
-                  />
-                  <i class="fas fa-user form-input-icon" aria-hidden="true"></i>
+                    autocomplete="email"
+                    />
+                    <i class="fas fa-envelope form-input-icon" aria-hidden="true"></i>
                 </div>
-              </div>
+                </div>
 
-              <div class="form-group">
-                <label for="last_name" class="form-label">Last Name</label>
+                <div class="btn-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save" aria-hidden="true"></i>
+                    Save Changes
+                </button>
+                </div>
+            </form>
+            </div>
+        </div>
+
+        <!-- Account Settings -->
+        <div class="settings-card">
+            <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-user-cog" aria-hidden="true"></i>
+                Account Settings
+            </h2>
+            <p class="card-description">Change your username and password</p>
+            </div>
+            <div class="card-body">
+            <form action="{{ url_for('auth.settings') }}" method="POST" id="accountForm">
+                <input type="hidden" name="form_type" value="account_settings">
+                
+                <div class="form-group">
+                <label for="username" class="form-label">Username</label>
                 <div class="form-input-container">
-                  <input 
+                    <input 
                     type="text" 
-                    id="last_name" 
-                    name="last_name" 
+                    id="username" 
+                    name="username" 
                     class="form-input"
-                    value="{{ user.last_name or '' }}"
-                    placeholder="Enter your last name"
+                    value="{{ user.user_ID }}"
+                    placeholder="Choose a username"
                     required
-                    autocomplete="family-name"
-                  />
-                  <i class="fas fa-user form-input-icon" aria-hidden="true"></i>
+                    autocomplete="username"
+                    minlength="3"
+                    />
+                    <i class="fas fa-user form-input-icon" aria-hidden="true"></i>
                 </div>
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label for="email" class="form-label">Email Address</label>
-              <div class="form-input-container">
-                <input 
-                  type="email" 
-                  id="email" 
-                  name="email" 
-                  class="form-input"
-                  value="{{ user.email }}"
-                  placeholder="Enter your email address"
-                  required
-                  autocomplete="email"
-                />
-                <i class="fas fa-envelope form-input-icon" aria-hidden="true"></i>
-              </div>
-            </div>
-
-            <div class="btn-actions">
-              <button type="submit" class="btn btn-primary">
-                <i class="fas fa-save" aria-hidden="true"></i>
-                Save Changes
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      <!-- Account Settings -->
-      <div class="settings-card">
-        <div class="card-header">
-          <h2 class="card-title">
-            <i class="fas fa-user-cog" aria-hidden="true"></i>
-            Account Settings
-          </h2>
-          <p class="card-description">Change your username and password</p>
-        </div>
-        <div class="card-body">
-          <form action="{{ url_for('auth.settings') }}" method="POST" id="accountForm">
-            <input type="hidden" name="form_type" value="account_settings">
-            
-            <div class="form-group">
-              <label for="username" class="form-label">Username</label>
-              <div class="form-input-container">
-                <input 
-                  type="text" 
-                  id="username" 
-                  name="username" 
-                  class="form-input"
-                  value="{{ user.user_ID }}"
-                  placeholder="Choose a username"
-                  required
-                  autocomplete="username"
-                  minlength="3"
-                />
-                <i class="fas fa-user form-input-icon" aria-hidden="true"></i>
-              </div>
-            </div>
-
-            <div class="form-row">
-              <div class="form-group">
-                <label for="current_password" class="form-label">Current Password</label>
-                <div class="form-input-container">
-                  <input 
-                    type="password" 
-                    id="current_password" 
-                    name="current_password" 
-                    class="form-input"
-                    placeholder="Enter current password"
-                    autocomplete="current-password"
-                  />
-                  <i class="fas fa-lock form-input-icon" aria-hidden="true"></i>
                 </div>
-              </div>
 
-              <div class="form-group">
-                <label for="new_password" class="form-label">New Password</label>
-                <div class="form-input-container">
-                  <input 
-                    type="password" 
-                    id="new_password" 
-                    name="new_password" 
-                    class="form-input"
-                    placeholder="Enter new password"
-                    autocomplete="new-password"
-                    minlength="6"
-                  />
-                  <i class="fas fa-lock form-input-icon" aria-hidden="true"></i>
+                <div class="form-row">
+                <div class="form-group">
+                    <label for="current_password" class="form-label">Current Password</label>
+                    <div class="form-input-container">
+                    <input 
+                        type="password" 
+                        id="current_password" 
+                        name="current_password" 
+                        class="form-input"
+                        placeholder="Enter current password"
+                        autocomplete="current-password"
+                    />
+                    <i class="fas fa-lock form-input-icon" aria-hidden="true"></i>
+                    </div>
                 </div>
-              </div>
-            </div>
 
-            <div class="btn-actions">
-              <button type="submit" class="btn btn-primary">
-                <i class="fas fa-save" aria-hidden="true"></i>
-                Update Account
-              </button>
+                <div class="form-group">
+                    <label for="new_password" class="form-label">New Password</label>
+                    <div class="form-input-container">
+                    <input 
+                        type="password" 
+                        id="new_password" 
+                        name="new_password" 
+                        class="form-input"
+                        placeholder="Enter new password"
+                        autocomplete="new-password"
+                        minlength="6"
+                    />
+                    <i class="fas fa-lock form-input-icon" aria-hidden="true"></i>
+                    </div>
+                </div>
+                </div>
+
+                <div class="btn-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save" aria-hidden="true"></i>
+                    Update Account
+                </button>
+                </div>
+            </form>
             </div>
-          </form>
         </div>
-      </div>
-    </div>
-  </main>
+        </div>
+    </main>
 
-  <!-- Footer -->
-  <footer class="footer">
-    <p>&copy; 2025 Preppr. All rights reserved. Prep smarter. Save time. Eat better.</p>
-  </footer>
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; 2025 Preppr. All rights reserved. Prep smarter. Save time. Eat better.</p>
+    </footer>
+  </div>
 
 </body>
 

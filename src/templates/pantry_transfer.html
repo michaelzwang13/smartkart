@@ -228,186 +228,188 @@
   </style>
 </head>
 <body>
-  <!-- Header -->
-  <header class="header">
-    <div class="nav-container">
-      <a href="{{ url_for('shopping.home') }}" class="logo">
-        <img src="{{ url_for('static', filename='images/preppr-logo.png') }}" alt="Preppr Logo" style="width: 40px; height: 40px; border-radius: var(--radius-lg);">
-        Preppr
-      </a>
-      
-      <nav>
-        <ul class="nav-links">
-          <li><a href="{{ url_for('shopping.home') }}" class="nav-link">
-            <i class="fas fa-home" style="margin-right: 6px; font-size: 0.85em;"></i>Home
-          </a></li>
-          <li class="nav-dropdown">
-            <a href="#" class="nav-link dropdown-toggle">
-              <i class="fas fa-shopping-cart" style="margin-right: 6px; font-size: 0.85em;"></i>Shopping
-              <i class="fas fa-chevron-down dropdown-arrow" style="margin-left: 6px; font-size: 0.7em;"></i>
-            </a>
-            <ul class="dropdown-menu">
-              <li><a href="{{ url_for('shopping.shopping_trip') }}" class="dropdown-link">
-                <i class="fas fa-cart-plus"></i>New Trip
-              </a></li>
-              <li><a href="{{ url_for('shopping.shopping_lists') }}" class="dropdown-link">
-                <i class="fas fa-list-ul"></i>Lists
-              </a></li>
-            </ul>
-          </li>
-          <li><a href="{{ url_for('shopping.budget') }}" class="nav-link">
-            <i class="fas fa-chart-line" style="margin-right: 6px; font-size: 0.85em;"></i>Budget & Analytics
-          </a></li>
-          <li class="nav-dropdown">
-            <a href="#" class="nav-link dropdown-toggle" style="color: var(--primary-color);">
-              <i class="fas fa-utensils" style="margin-right: 6px; font-size: 0.85em;"></i>Kitchen
-              <i class="fas fa-chevron-down dropdown-arrow" style="margin-left: 6px; font-size: 0.7em;"></i>
-            </a>
-            <ul class="dropdown-menu">
-              <li><a href="{{ url_for('shopping.pantry') }}" class="dropdown-link">
-                <i class="fas fa-warehouse"></i>My Pantry
-              </a></li>
-              <li><a href="{{ url_for('shopping.meal_plans') }}" class="dropdown-link">
-                <i class="fas fa-calendar-alt"></i>Meal Plans
-              </a></li>
-            </ul>
-          </li>
-          <li class="nav-dropdown">
-            <a href="#" class="nav-link dropdown-toggle">
-              <i class="fas fa-user" style="margin-right: 6px; font-size: 0.85em;"></i>Account
-              <i class="fas fa-chevron-down dropdown-arrow" style="margin-left: 6px; font-size: 0.7em;"></i>
-            </a>
-            <ul class="dropdown-menu">
-              <li><a href="{{ url_for('auth.settings') }}" class="dropdown-link">
-                <i class="fas fa-cog"></i>Settings
-              </a></li>
-              <li><a href="{{ url_for('auth.logout') }}" class="dropdown-link logout">
-                <i class="fas fa-sign-out-alt"></i>Logout
-              </a></li>
-            </ul>
-          </li>
-        </ul>
+  <div class="page-wrapper" style="min-height: 100vh; display: flex; flex-direction: column;">
+    <!-- Header -->
+    <header class="header">
+        <div class="nav-container">
+        <a href="{{ url_for('shopping.home') }}" class="logo">
+            <img src="{{ url_for('static', filename='images/preppr-logo.png') }}" alt="Preppr Logo" style="width: 40px; height: 40px; border-radius: var(--radius-lg);">
+            Preppr
+        </a>
         
-        <button class="mobile-menu-btn" aria-label="Toggle mobile menu">
-          <i class="fas fa-bars"></i>
-        </button>
-      </nav>
-    </div>
-  </header>
+        <nav>
+            <ul class="nav-links">
+            <li><a href="{{ url_for('shopping.home') }}" class="nav-link">
+                <i class="fas fa-home" style="margin-right: 6px; font-size: 0.85em;"></i>Home
+            </a></li>
+            <li class="nav-dropdown">
+                <a href="#" class="nav-link dropdown-toggle">
+                <i class="fas fa-shopping-cart" style="margin-right: 6px; font-size: 0.85em;"></i>Shopping
+                <i class="fas fa-chevron-down dropdown-arrow" style="margin-left: 6px; font-size: 0.7em;"></i>
+                </a>
+                <ul class="dropdown-menu">
+                <li><a href="{{ url_for('shopping.shopping_trip') }}" class="dropdown-link">
+                    <i class="fas fa-cart-plus"></i>New Trip
+                </a></li>
+                <li><a href="{{ url_for('shopping.shopping_lists') }}" class="dropdown-link">
+                    <i class="fas fa-list-ul"></i>Lists
+                </a></li>
+                </ul>
+            </li>
+            <li><a href="{{ url_for('shopping.budget') }}" class="nav-link">
+                <i class="fas fa-chart-line" style="margin-right: 6px; font-size: 0.85em;"></i>Budget & Analytics
+            </a></li>
+            <li class="nav-dropdown">
+                <a href="#" class="nav-link dropdown-toggle" style="color: var(--primary-color);">
+                <i class="fas fa-utensils" style="margin-right: 6px; font-size: 0.85em;"></i>Kitchen
+                <i class="fas fa-chevron-down dropdown-arrow" style="margin-left: 6px; font-size: 0.7em;"></i>
+                </a>
+                <ul class="dropdown-menu">
+                <li><a href="{{ url_for('shopping.pantry') }}" class="dropdown-link">
+                    <i class="fas fa-warehouse"></i>My Pantry
+                </a></li>
+                <li><a href="{{ url_for('shopping.meal_plans') }}" class="dropdown-link">
+                    <i class="fas fa-calendar-alt"></i>Meal Plans
+                </a></li>
+                </ul>
+            </li>
+            <li class="nav-dropdown">
+                <a href="#" class="nav-link dropdown-toggle">
+                <i class="fas fa-user" style="margin-right: 6px; font-size: 0.85em;"></i>Account
+                <i class="fas fa-chevron-down dropdown-arrow" style="margin-left: 6px; font-size: 0.7em;"></i>
+                </a>
+                <ul class="dropdown-menu">
+                <li><a href="{{ url_for('auth.settings') }}" class="dropdown-link">
+                    <i class="fas fa-cog"></i>Settings
+                </a></li>
+                <li><a href="{{ url_for('auth.logout') }}" class="dropdown-link logout">
+                    <i class="fas fa-sign-out-alt"></i>Logout
+                </a></li>
+                </ul>
+            </li>
+            </ul>
+            
+            <button class="mobile-menu-btn" aria-label="Toggle mobile menu">
+            <i class="fas fa-bars"></i>
+            </button>
+        </nav>
+        </div>
+    </header>
 
-  <div class="container">
-    <h2>Add Items to Pantry</h2>
-    <p>Shopping trip completed! Add your purchased items to your pantry for tracking.</p>
-    
-    <div class="transfer-summary">
-        <h3>Shopping Trip Summary</h3>
-        <p><strong>Store:</strong> {{ cart.store_name }}</p>
-        <p><strong>Date:</strong> {{ cart.created_at.strftime('%B %d, %Y') }}</p>
-        <p><strong>Items:</strong> {{ items|length }}</p>
-    </div>
+    <div class="container" style="flex: 1;">
+        <h2>Add Items to Pantry</h2>
+        <p>Shopping trip completed! Add your purchased items to your pantry for tracking.</p>
+        
+        <div class="transfer-summary">
+            <h3>Shopping Trip Summary</h3>
+            <p><strong>Store:</strong> {{ cart.store_name }}</p>
+            <p><strong>Date:</strong> {{ cart.created_at.strftime('%B %d, %Y') }}</p>
+            <p><strong>Items:</strong> {{ items|length }}</p>
+        </div>
 
-    <form id="pantryTransferForm">
-        <div class="items-container">
-            {% for item in items %}
-            <div class="transfer-item" data-item-id="{{ item.item_ID }}">
-                <div class="item-info">
-                    <h4>{{ item.item_name }}</h4>
-                    <p>Purchased: {{ item.quantity }} {{ item.unit or 'pcs' }}</p>
-                </div>
-                
-                <div class="pantry-controls">
-                    <label>
-                        <input type="checkbox" name="include_item" value="{{ item.item_ID }}" checked>
-                        Add to pantry
-                    </label>
+        <form id="pantryTransferForm">
+            <div class="items-container">
+                {% for item in items %}
+                <div class="transfer-item" data-item-id="{{ item.item_ID }}">
+                    <div class="item-info">
+                        <h4>{{ item.item_name }}</h4>
+                        <p>Purchased: {{ item.quantity }} {{ item.unit or 'pcs' }}</p>
+                    </div>
                     
-                    <div class="pantry-details">
-                        <div class="form-group">
-                            <label>Quantity:</label>
-                            <input type="number" step="0.01" name="quantity_{{ item.item_ID }}" 
-                                   value="{{ item.quantity }}" min="0.01" required>
-                        </div>
+                    <div class="pantry-controls">
+                        <label>
+                            <input type="checkbox" name="include_item" value="{{ item.item_ID }}" checked>
+                            Add to pantry
+                        </label>
                         
-                        <div class="form-group">
-                            <label>Unit:</label>
-                            <select name="unit_{{ item.item_ID }}">
-                                <option value="pcs" {{ 'selected' if item.unit == 'pcs' else '' }}>pieces</option>
-                                <option value="g" {{ 'selected' if item.unit == 'g' else '' }}>grams</option>
-                                <option value="kg" {{ 'selected' if item.unit == 'kg' else '' }}>kilograms</option>
-                                <option value="ml" {{ 'selected' if item.unit == 'ml' else '' }}>milliliters</option>
-                                <option value="l" {{ 'selected' if item.unit == 'l' else '' }}>liters</option>
-                                <option value="oz" {{ 'selected' if item.unit == 'oz' else '' }}>ounces</option>
-                                <option value="lbs" {{ 'selected' if item.unit == 'lbs' else '' }}>pounds</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>Storage:</label>
-                            <select name="storage_{{ item.item_ID }}">
-                                <option value="pantry">Pantry</option>
-                                <option value="fridge">Refrigerator</option>
-                                <option value="freezer">Freezer</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>Category:</label>
-                            <select name="category_{{ item.item_ID }}">
-                                <option value="Other">Other</option>
-                                <option value="Produce">Produce</option>
-                                <option value="Meat">Meat</option>
-                                <option value="Dairy">Dairy</option>
-                                <option value="Grains">Grains</option>
-                                <option value="Canned Goods">Canned Goods</option>
-                                <option value="Frozen Foods">Frozen Foods</option>
-                                <option value="Beverages">Beverages</option>
-                                <option value="Snacks">Snacks</option>
-                                <option value="Condiments">Condiments</option>
-                                <option value="Spices">Spices</option>
-                                <option value="Bread">Bread</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>Expiration Date:</label>
-                            <input type="date" name="expiry_{{ item.item_ID }}">
-                            <label class="ai-predict">
-                                <input type="checkbox" name="ai_predict_{{ item.item_ID }}">
-                                Use AI prediction
-                            </label>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>Notes (optional):</label>
-                            <textarea name="notes_{{ item.item_ID }}" rows="2"></textarea>
+                        <div class="pantry-details">
+                            <div class="form-group">
+                                <label>Quantity:</label>
+                                <input type="number" step="0.01" name="quantity_{{ item.item_ID }}" 
+                                    value="{{ item.quantity }}" min="0.01" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Unit:</label>
+                                <select name="unit_{{ item.item_ID }}">
+                                    <option value="pcs" {{ 'selected' if item.unit == 'pcs' else '' }}>pieces</option>
+                                    <option value="g" {{ 'selected' if item.unit == 'g' else '' }}>grams</option>
+                                    <option value="kg" {{ 'selected' if item.unit == 'kg' else '' }}>kilograms</option>
+                                    <option value="ml" {{ 'selected' if item.unit == 'ml' else '' }}>milliliters</option>
+                                    <option value="l" {{ 'selected' if item.unit == 'l' else '' }}>liters</option>
+                                    <option value="oz" {{ 'selected' if item.unit == 'oz' else '' }}>ounces</option>
+                                    <option value="lbs" {{ 'selected' if item.unit == 'lbs' else '' }}>pounds</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Storage:</label>
+                                <select name="storage_{{ item.item_ID }}">
+                                    <option value="pantry">Pantry</option>
+                                    <option value="fridge">Refrigerator</option>
+                                    <option value="freezer">Freezer</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Category:</label>
+                                <select name="category_{{ item.item_ID }}">
+                                    <option value="Other">Other</option>
+                                    <option value="Produce">Produce</option>
+                                    <option value="Meat">Meat</option>
+                                    <option value="Dairy">Dairy</option>
+                                    <option value="Grains">Grains</option>
+                                    <option value="Canned Goods">Canned Goods</option>
+                                    <option value="Frozen Foods">Frozen Foods</option>
+                                    <option value="Beverages">Beverages</option>
+                                    <option value="Snacks">Snacks</option>
+                                    <option value="Condiments">Condiments</option>
+                                    <option value="Spices">Spices</option>
+                                    <option value="Bread">Bread</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Expiration Date:</label>
+                                <input type="date" name="expiry_{{ item.item_ID }}">
+                                <label class="ai-predict">
+                                    <input type="checkbox" name="ai_predict_{{ item.item_ID }}">
+                                    Use AI prediction
+                                </label>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Notes (optional):</label>
+                                <textarea name="notes_{{ item.item_ID }}" rows="2"></textarea>
+                            </div>
                         </div>
                     </div>
                 </div>
+                {% endfor %}
             </div>
-            {% endfor %}
-        </div>
-        
-        <div class="form-actions">
-            <button type="button" id="selectAllBtn">Select All</button>
-            <button type="button" id="selectNoneBtn">Select None</button>
-            <button type="submit" id="transferBtn">Add Selected to Pantry</button>
-            <a href="{{ url_for('shopping.home') }}" class="btn-secondary">Skip for Now</a>
-        </div>
-    </form>
-  </div>
-
-  <div id="loadingModal" class="modal" style="display: none;">
-    <div class="modal-content">
-        <h3>Processing...</h3>
-        <p>Adding items to your pantry. Please wait.</p>
-        <div class="loading-spinner"></div>
+            
+            <div class="form-actions">
+                <button type="button" id="selectAllBtn">Select All</button>
+                <button type="button" id="selectNoneBtn">Select None</button>
+                <button type="submit" id="transferBtn">Add Selected to Pantry</button>
+                <a href="{{ url_for('shopping.home') }}" class="btn-secondary">Skip for Now</a>
+            </div>
+        </form>
     </div>
-  </div>
 
-  <!-- Footer -->
-  <footer class="footer">
-    <p>&copy; 2025 Preppr. All rights reserved. Prep smarter. Save time. Eat better.</p>
-  </footer>
+    <div id="loadingModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3>Processing...</h3>
+            <p>Adding items to your pantry. Please wait.</p>
+            <div class="loading-spinner"></div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; 2025 Preppr. All rights reserved. Prep smarter. Save time. Eat better.</p>
+    </footer>
+  </div>
 
 <script>
 // Pass server data to JavaScript
