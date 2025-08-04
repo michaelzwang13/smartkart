@@ -32,7 +32,7 @@ document.addEventListener("DOMContentLoaded", function () {
 async function loadCartItems() {
   try {
     const response = await fetch(
-      config.urls?.getCartItems || '/api/shopping-trip/get-cart-items',
+      config.urls?.getCartItems || "/api/shopping-trip/get-cart-items",
       {
         method: "GET",
         headers: { "Content-Type": "application/json" },
@@ -179,9 +179,9 @@ async function handleFormSubmit(event) {
 
     // 1) Search for item by UPC using Nutritionix API
     const searchResponse = await fetch(
-      `${config.urls?.searchItem || '/api/shopping-trip/searchitem'}?upc=${encodeURIComponent(
-        itemName
-      )}`
+      `${
+        config.urls?.searchItem || "/api/shopping-trip/searchitem"
+      }?upc=${encodeURIComponent(itemName)}`
     );
     const searchData = await searchResponse.json();
 
@@ -259,7 +259,7 @@ async function handleFormSubmit(event) {
     }
 
     const addItemResponse = await fetch(
-      config.urls?.addItem || '/api/shopping-trip/add-item',
+      config.urls?.addItem || "/api/shopping-trip/add-item",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -301,7 +301,9 @@ async function handleFormSubmit(event) {
     if (carbs > 0 || sugar > 0 || sodium > 0 || fat > 0) {
       try {
         const predictResponse = await fetch(
-          `${config.urls?.predict || '/api/shopping-trip/predict'}?carbs=${carbs}&sugar=${sugar}&sodium=${sodium}&fat=${fat}`
+          `${
+            config.urls?.predict || "/api/shopping-trip/predict"
+          }?carbs=${carbs}&sugar=${sugar}&sodium=${sodium}&fat=${fat}`
         );
         const predictData = await predictResponse.json();
 
@@ -383,7 +385,9 @@ async function handleImpulseResponse(wasImpulse, carbs, sugar, sodium, fat) {
   // Send feedback to ML model
   const label = wasImpulse ? 1 : 0;
   fetch(
-    `${config.urls?.learn || '/api/shopping-trip/learn'}?carbs=${carbs}&sugar=${sugar}&sodium=${sodium}&fat=${fat}&label=${label}`
+    `${
+      config.urls?.learn || "/api/shopping-trip/learn"
+    }?carbs=${carbs}&sugar=${sugar}&sodium=${sodium}&fat=${fat}&label=${label}`
   ).catch((error) => console.error("ML feedback failed:", error));
 
   if (wasImpulse) {

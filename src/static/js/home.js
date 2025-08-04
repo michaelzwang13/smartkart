@@ -941,7 +941,7 @@ async function showMealDetails(mealId) {
     if (data.success) {
       // For now, just navigate to meal plans page
       // In the future, this could open a modal with meal details
-      window.location.href = config.urls?.mealPlans || '/meal-plans';
+      window.location.href = config.urls?.mealPlans || "/meal-plans";
     } else {
       alert("Failed to load meal details: " + data.message);
     }

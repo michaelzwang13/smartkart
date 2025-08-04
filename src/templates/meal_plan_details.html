@@ -1,700 +1,776 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Meal Plan Details - Preppr</title>
-  
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  
-  <!-- Base CSS -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Meal Plan Details - Preppr</title>
 
-  <!-- Font Awesome for icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
-  <style>
-    /* Header */
-    .header {
-      background: var(--bg-primary);
-      border-bottom: 1px solid var(--border-light);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-    
-    .nav-link.active {
-      color: var(--text-white);
-    }
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
 
-    /* Mobile Menu Button */
-    .mobile-menu-btn {
-      display: none;
-      background: none;
-      border: none;
-      font-size: 1.25rem;
-      color: var(--text-primary);
-      cursor: pointer;
-      padding: var(--spacing-sm);
-      border-radius: var(--radius-md);
-      transition: all 0.2s ease;
-    }
+    <!-- Base CSS -->
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/base.css') }}"
+    />
 
-    .mobile-menu-btn:hover {
-      background: var(--bg-secondary);
-      color: var(--primary-color);
-    }
-    
-    /* Main content */
-    .main-content {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: var(--spacing-xl);
-    }
-    
-    .page-header {
-      margin-bottom: var(--spacing-2xl);
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-lg);
-    }
-    
-    .back-btn {
-      background: var(--bg-primary);
-      color: var(--text-primary);
-      padding: var(--spacing-sm) var(--spacing-md);
-      border: 2px solid var(--border-light);
-      border-radius: var(--radius-md);
-      text-decoration: none;
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-xs);
-      transition: all 0.3s ease;
-    }
-    
-    .back-btn:hover {
-      background: var(--bg-tertiary);
-      color: var(--primary-color);
-    }
-    
-    .page-title {
-      font-size: 2.5rem;
-      font-weight: 700;
-      color: var(--text-primary);
-    }
-    
-    /* Plan info */
-    .plan-info {
-      background: var(--bg-primary);
-      border-radius: var(--radius-xl);
-      padding: var(--spacing-xl);
-      margin-bottom: var(--spacing-2xl);
-      box-shadow: var(--shadow-md);
-    }
-    
-    .plan-header-content {
-      display: flex;
-      flex-direction: column;
-      gap: var(--spacing-lg);
-    }
-    
-    .plan-meta {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: var(--spacing-lg);
-    }
-    
-    .meta-item {
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-sm);
-    }
-    
-    .meta-icon {
-      color: var(--primary-color);
-    }
-    
-    .plan-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: var(--spacing-md);
-    }
-    
-    .btn {
-      padding: var(--spacing-sm) var(--spacing-lg);
-      border: none;
-      border-radius: var(--radius-md);
-      font-family: var(--font-family);
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: var(--spacing-sm);
-      font-size: 0.875rem;
-    }
-    
-    .btn-danger {
-      background: var(--error-gradient);
-      color: var(--text-white);
-      box-shadow: var(--shadow-sm);
-    }
-    
-    .btn-danger:hover {
-      transform: translateY(-1px);
-      box-shadow: var(--shadow-md);
-    }
-    
-    .btn-danger:active {
-      transform: translateY(0);
-    }
-    
-    /* Loading state */
-    .loading {
-      text-align: center;
-      padding: var(--spacing-2xl);
-    }
-    
-    .spinner {
-      width: 40px;
-      height: 40px;
-      border: 3px solid var(--border-light);
-      border-top: 3px solid var(--primary-color);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin: 0 auto var(--spacing-lg);
-    }
-    
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    
-    /* Days grid */
-    .days-grid {
-      display: grid;
-      gap: var(--spacing-xl);
-    }
-    
-    .day-card {
-      background: var(--bg-primary);
-      border-radius: var(--radius-xl);
-      padding: var(--spacing-xl);
-      box-shadow: var(--shadow-md);
-    }
-    
-    .day-header {
-      border-bottom: 2px solid var(--border-light);
-      padding-bottom: var(--spacing-md);
-      margin-bottom: var(--spacing-lg);
-    }
-    
-    .day-title {
-      font-size: 1.5rem;
-      font-weight: 600;
-      color: var(--text-primary);
-    }
-    
-    .meals-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: var(--spacing-lg);
-    }
-    
-    .meal-card {
-      background: var(--bg-secondary);
-      border-radius: var(--radius-lg);
-      padding: var(--spacing-lg);
-      border-left: 4px solid var(--primary-color);
-    }
-    
-    .meal-header {
-      display: flex;
-      justify-content: between;
-      align-items: start;
-      margin-bottom: var(--spacing-md);
-    }
-    
-    .meal-type {
-      font-size: 0.875rem;
-      font-weight: 500;
-      color: var(--primary-color);
-      text-transform: uppercase;
-      margin-bottom: var(--spacing-xs);
-    }
-    
-    .meal-name {
-      font-size: 1.125rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: var(--spacing-sm);
-    }
-    
-    .meal-meta {
-      display: flex;
-      gap: var(--spacing-md);
-      margin-bottom: var(--spacing-md);
-      font-size: 0.875rem;
-      color: var(--text-secondary);
-    }
-    
-    .meal-description {
-      color: var(--text-secondary);
-      margin-bottom: var(--spacing-md);
-    }
-    
-    .ingredients-section {
-      margin-bottom: var(--spacing-lg);
-    }
-    
-    .section-label {
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: var(--spacing-sm);
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-xs);
-    }
-    
-    .ingredients-list {
-      list-style: none;
-      padding-left: var(--spacing-md);
-    }
-    
-    .ingredient-item {
-      padding: var(--spacing-xs) 0;
-      color: var(--text-secondary);
-    }
-    
-    .instructions-section {
-      background: var(--bg-tertiary);
-      border-radius: var(--radius-md);
-      padding: var(--spacing-md);
-    }
-    
-    .instructions {
-      white-space: pre-wrap;
-      color: var(--text-secondary);
-      line-height: 1.6;
-    }
-    
-    /* Batch prep section */
-    .batch-prep {
-      background: var(--bg-primary);
-      border-radius: var(--radius-xl);
-      padding: var(--spacing-xl);
-      margin-top: var(--spacing-2xl);
-      box-shadow: var(--shadow-md);
-    }
-    
-    .section-title {
-      font-size: 1.875rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: var(--spacing-lg);
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-sm);
-    }
-    
-    .prep-steps {
-      display: grid;
-      gap: var(--spacing-lg);
-    }
-    
-    .prep-step {
-      background: var(--bg-secondary);
-      border-radius: var(--radius-lg);
-      padding: var(--spacing-lg);
-      border-left: 4px solid var(--accent-color);
-    }
-    
-    .step-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: var(--spacing-md);
-    }
-    
-    .step-name {
-      font-weight: 600;
-      color: var(--text-primary);
-    }
-    
-    .step-time {
-      background: var(--accent-color);
-      color: var(--text-white);
-      padding: var(--spacing-xs) var(--spacing-sm);
-      border-radius: var(--radius-md);
-      font-size: 0.875rem;
-      font-weight: 500;
-    }
-    
-    .step-description {
-      color: var(--text-secondary);
-      margin-bottom: var(--spacing-sm);
-    }
-    
-    .step-tips {
-      font-style: italic;
-      color: var(--text-muted);
-      font-size: 0.875rem;
-    }
-    
-    /* Shopping list section */
-    .shopping-list {
-      background: var(--bg-primary);
-      border-radius: var(--radius-xl);
-      padding: var(--spacing-xl);
-      margin-top: var(--spacing-2xl);
-      box-shadow: var(--shadow-md);
-    }
-    
-    .shopping-categories {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: var(--spacing-lg);
-    }
-    
-    .category-card {
-      background: var(--bg-secondary);
-      border-radius: var(--radius-lg);
-      padding: var(--spacing-lg);
-    }
-    
-    .category-name {
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: var(--spacing-md);
-      padding-bottom: var(--spacing-sm);
-      border-bottom: 2px solid var(--border-light);
-    }
-    
-    .shopping-items {
-      list-style: none;
-    }
-    
-    .shopping-item {
-      padding: var(--spacing-xs) 0;
-      color: var(--text-secondary);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    
-    .item-cost {
-      color: var(--primary-color);
-      font-weight: 500;
-    }
-    
-    /* Modal Styles */
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.7);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 2000;
-      opacity: 0;
-      visibility: hidden;
-      transition: all 0.3s ease;
-    }
-    
-    .modal-overlay.show {
-      opacity: 1;
-      visibility: visible;
-    }
-    
-    .modal-content {
-      background: var(--bg-primary);
-      border-radius: var(--radius-xl);
-      box-shadow: var(--shadow-xl);
-      max-width: 500px;
-      width: 90%;
-      max-height: 80vh;
-      overflow-y: auto;
-      transform: translateY(30px) scale(0.95);
-      transition: all 0.3s ease;
-    }
-    
-    .modal-overlay.show .modal-content {
-      transform: translateY(0) scale(1);
-    }
-    
-    .delete-confirmation-modal .modal-header {
-      padding: var(--spacing-xl);
-      text-align: center;
-      border-bottom: 1px solid var(--border-light);
-    }
-    
-    .delete-warning-icon {
-      width: 60px;
-      height: 60px;
-      background: var(--error-gradient);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto var(--spacing-md);
-      color: var(--text-white);
-      font-size: 1.5rem;
-    }
-    
-    .delete-confirmation-modal h3 {
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin: 0;
-    }
-    
-    .delete-confirmation-modal .modal-body {
-      padding: var(--spacing-lg) var(--spacing-xl);
-    }
-    
-    .delete-warning-text {
-      font-size: 1rem;
-      color: var(--text-secondary);
-      margin-bottom: var(--spacing-lg);
-      text-align: center;
-    }
-    
-    .delete-consequences {
-      font-size: 0.875rem;
-      color: var(--text-primary);
-      margin: var(--spacing-md) 0 var(--spacing-sm);
-    }
-    
-    .delete-consequences-list {
-      margin: 0 0 var(--spacing-lg);
-      padding-left: var(--spacing-lg);
-      color: var(--text-secondary);
-      font-size: 0.875rem;
-    }
-    
-    .delete-consequences-list li {
-      margin-bottom: var(--spacing-xs);
-    }
-    
-    .modal-actions {
-      padding: var(--spacing-lg) var(--spacing-xl) var(--spacing-xl);
-      display: flex;
-      gap: var(--spacing-md);
-      justify-content: flex-end;
-      border-top: 1px solid var(--border-light);
-    }
-    
-    .btn-secondary {
-      background: var(--bg-tertiary);
-      color: var(--text-secondary);
-      border: 1px solid var(--border-medium);
-    }
-    
-    .btn-secondary:hover {
-      background: var(--bg-secondary);
-      color: var(--text-primary);
-    }
-    
-    /* Responsive design */
-    @media (max-width: 768px) {
+    <!-- Font Awesome for icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <style>
+      /* Header */
+      .header {
+        background: var(--bg-primary);
+        border-bottom: 1px solid var(--border-light);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+
+      .nav-link.active {
+        color: var(--text-white);
+      }
+
+      /* Mobile Menu Button */
       .mobile-menu-btn {
-        display: block;
-      }
-      /* Mobile dropdown adjustments */
-      .dropdown-menu {
-        position: fixed;
-        top: 80px;
-        left: var(--spacing-md);
-        right: var(--spacing-md);
-        min-width: calc(100% - 2 * var(--spacing-md));
-        border-radius: var(--radius-xl);
-        box-shadow: 
-          0 20px 40px rgba(0, 0, 0, 0.15),
-          0 8px 16px rgba(0, 0, 0, 0.1);
-        transform: translateY(-20px) scale(0.95);
-        backdrop-filter: blur(20px);
-      }
-      .dropdown-menu::before {
         display: none;
+        background: none;
+        border: none;
+        font-size: 1.25rem;
+        color: var(--text-primary);
+        cursor: pointer;
+        padding: var(--spacing-sm);
+        border-radius: var(--radius-md);
+        transition: all 0.2s ease;
       }
-      .nav-dropdown:hover .dropdown-menu,
-      .nav-dropdown.active .dropdown-menu {
-        transform: translateY(0) scale(1);
+
+      .mobile-menu-btn:hover {
+        background: var(--bg-secondary);
+        color: var(--primary-color);
+      }
+
+      /* Main content */
+      .main-content {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: var(--spacing-xl);
+      }
+
+      .page-header {
+        margin-bottom: var(--spacing-2xl);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-lg);
+      }
+
+      .back-btn {
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        padding: var(--spacing-sm) var(--spacing-md);
+        border: 2px solid var(--border-light);
+        border-radius: var(--radius-md);
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        transition: all 0.3s ease;
+      }
+
+      .back-btn:hover {
+        background: var(--bg-tertiary);
+        color: var(--primary-color);
+      }
+
+      .page-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+      }
+
+      /* Plan info */
+      .plan-info {
+        background: var(--bg-primary);
+        border-radius: var(--radius-xl);
+        padding: var(--spacing-xl);
+        margin-bottom: var(--spacing-2xl);
+        box-shadow: var(--shadow-md);
+      }
+
+      .plan-header-content {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-lg);
+      }
+
+      .plan-meta {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--spacing-lg);
+      }
+
+      .meta-item {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+      }
+
+      .meta-icon {
+        color: var(--primary-color);
+      }
+
+      .plan-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: var(--spacing-md);
+      }
+
+      .btn {
+        padding: var(--spacing-sm) var(--spacing-lg);
+        border: none;
+        border-radius: var(--radius-md);
+        font-family: var(--font-family);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--spacing-sm);
+        font-size: 0.875rem;
+      }
+
+      .btn-danger {
+        background: var(--error-gradient);
+        color: var(--text-white);
+        box-shadow: var(--shadow-sm);
+      }
+
+      .btn-danger:hover {
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-md);
+      }
+
+      .btn-danger:active {
+        transform: translateY(0);
+      }
+
+      /* Loading state */
+      .loading {
+        text-align: center;
+        padding: var(--spacing-2xl);
+      }
+
+      .spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid var(--border-light);
+        border-top: 3px solid var(--primary-color);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto var(--spacing-lg);
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Days grid */
+      .days-grid {
+        display: grid;
+        gap: var(--spacing-xl);
+      }
+
+      .day-card {
+        background: var(--bg-primary);
+        border-radius: var(--radius-xl);
+        padding: var(--spacing-xl);
+        box-shadow: var(--shadow-md);
+      }
+
+      .day-header {
+        border-bottom: 2px solid var(--border-light);
+        padding-bottom: var(--spacing-md);
+        margin-bottom: var(--spacing-lg);
+      }
+
+      .day-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+
+      .meals-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: var(--spacing-lg);
+      }
+
+      .meal-card {
+        background: var(--bg-secondary);
+        border-radius: var(--radius-lg);
+        padding: var(--spacing-lg);
+        border-left: 4px solid var(--primary-color);
+      }
+
+      .meal-header {
+        display: flex;
+        justify-content: between;
+        align-items: start;
+        margin-bottom: var(--spacing-md);
+      }
+
+      .meal-type {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--primary-color);
+        text-transform: uppercase;
+        margin-bottom: var(--spacing-xs);
+      }
+
+      .meal-name {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-sm);
+      }
+
+      .meal-meta {
+        display: flex;
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-md);
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+      }
+
+      .meal-description {
+        color: var(--text-secondary);
+        margin-bottom: var(--spacing-md);
+      }
+
+      .ingredients-section {
+        margin-bottom: var(--spacing-lg);
+      }
+
+      .section-label {
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-sm);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+      }
+
+      .ingredients-list {
+        list-style: none;
+        padding-left: var(--spacing-md);
+      }
+
+      .ingredient-item {
+        padding: var(--spacing-xs) 0;
+        color: var(--text-secondary);
+      }
+
+      .instructions-section {
+        background: var(--bg-tertiary);
+        border-radius: var(--radius-md);
+        padding: var(--spacing-md);
+      }
+
+      .instructions {
+        white-space: pre-wrap;
+        color: var(--text-secondary);
+        line-height: 1.6;
+      }
+
+      /* Batch prep section */
+      .batch-prep {
+        background: var(--bg-primary);
+        border-radius: var(--radius-xl);
+        padding: var(--spacing-xl);
+        margin-top: var(--spacing-2xl);
+        box-shadow: var(--shadow-md);
+      }
+
+      .section-title {
+        font-size: 1.875rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-lg);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+      }
+
+      .prep-steps {
+        display: grid;
+        gap: var(--spacing-lg);
+      }
+
+      .prep-step {
+        background: var(--bg-secondary);
+        border-radius: var(--radius-lg);
+        padding: var(--spacing-lg);
+        border-left: 4px solid var(--accent-color);
+      }
+
+      .step-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-md);
+      }
+
+      .step-name {
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+
+      .step-time {
+        background: var(--accent-color);
+        color: var(--text-white);
+        padding: var(--spacing-xs) var(--spacing-sm);
+        border-radius: var(--radius-md);
+        font-size: 0.875rem;
+        font-weight: 500;
+      }
+
+      .step-description {
+        color: var(--text-secondary);
+        margin-bottom: var(--spacing-sm);
+      }
+
+      .step-tips {
+        font-style: italic;
+        color: var(--text-muted);
+        font-size: 0.875rem;
+      }
+
+      /* Shopping list section */
+      .shopping-list {
+        background: var(--bg-primary);
+        border-radius: var(--radius-xl);
+        padding: var(--spacing-xl);
+        margin-top: var(--spacing-2xl);
+        box-shadow: var(--shadow-md);
+      }
+
+      .shopping-categories {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: var(--spacing-lg);
+      }
+
+      .category-card {
+        background: var(--bg-secondary);
+        border-radius: var(--radius-lg);
+        padding: var(--spacing-lg);
+      }
+
+      .category-name {
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-md);
+        padding-bottom: var(--spacing-sm);
+        border-bottom: 2px solid var(--border-light);
+      }
+
+      .shopping-items {
+        list-style: none;
+      }
+
+      .shopping-item {
+        padding: var(--spacing-xs) 0;
+        color: var(--text-secondary);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .item-cost {
+        color: var(--primary-color);
+        font-weight: 500;
+      }
+
+      /* Modal Styles */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 2000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+      }
+
+      .modal-overlay.show {
         opacity: 1;
         visibility: visible;
       }
-      
-      .nav-links {
-        display: none;
+
+      .modal-content {
+        background: var(--bg-primary);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-xl);
+        max-width: 500px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+        transform: translateY(30px) scale(0.95);
+        transition: all 0.3s ease;
       }
-      
-      .main-content {
-        padding: var(--spacing-md);
+
+      .modal-overlay.show .modal-content {
+        transform: translateY(0) scale(1);
       }
-      
-      .page-header {
-        flex-direction: column;
-        align-items: flex-start;
+
+      .delete-confirmation-modal .modal-header {
+        padding: var(--spacing-xl);
+        text-align: center;
+        border-bottom: 1px solid var(--border-light);
+      }
+
+      .delete-warning-icon {
+        width: 60px;
+        height: 60px;
+        background: var(--error-gradient);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto var(--spacing-md);
+        color: var(--text-white);
+        font-size: 1.5rem;
+      }
+
+      .delete-confirmation-modal h3 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0;
+      }
+
+      .delete-confirmation-modal .modal-body {
+        padding: var(--spacing-lg) var(--spacing-xl);
+      }
+
+      .delete-warning-text {
+        font-size: 1rem;
+        color: var(--text-secondary);
+        margin-bottom: var(--spacing-lg);
+        text-align: center;
+      }
+
+      .delete-consequences {
+        font-size: 0.875rem;
+        color: var(--text-primary);
+        margin: var(--spacing-md) 0 var(--spacing-sm);
+      }
+
+      .delete-consequences-list {
+        margin: 0 0 var(--spacing-lg);
+        padding-left: var(--spacing-lg);
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+      }
+
+      .delete-consequences-list li {
+        margin-bottom: var(--spacing-xs);
+      }
+
+      .modal-actions {
+        padding: var(--spacing-lg) var(--spacing-xl) var(--spacing-xl);
+        display: flex;
         gap: var(--spacing-md);
+        justify-content: flex-end;
+        border-top: 1px solid var(--border-light);
       }
-      
-      .page-title {
-        font-size: 2rem;
+
+      .btn-secondary {
+        background: var(--bg-tertiary);
+        color: var(--text-secondary);
+        border: 1px solid var(--border-medium);
       }
-      
-      .plan-meta {
-        grid-template-columns: 1fr;
+
+      .btn-secondary:hover {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
       }
-      
-      .meals-grid {
-        grid-template-columns: 1fr;
+
+      /* Responsive design */
+      @media (max-width: 768px) {
+        .mobile-menu-btn {
+          display: block;
+        }
+        /* Mobile dropdown adjustments */
+        .dropdown-menu {
+          position: fixed;
+          top: 80px;
+          left: var(--spacing-md);
+          right: var(--spacing-md);
+          min-width: calc(100% - 2 * var(--spacing-md));
+          border-radius: var(--radius-xl);
+          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15),
+            0 8px 16px rgba(0, 0, 0, 0.1);
+          transform: translateY(-20px) scale(0.95);
+          backdrop-filter: blur(20px);
+        }
+        .dropdown-menu::before {
+          display: none;
+        }
+        .nav-dropdown:hover .dropdown-menu,
+        .nav-dropdown.active .dropdown-menu {
+          transform: translateY(0) scale(1);
+          opacity: 1;
+          visibility: visible;
+        }
+
+        .nav-links {
+          display: none;
+        }
+
+        .main-content {
+          padding: var(--spacing-md);
+        }
+
+        .page-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: var(--spacing-md);
+        }
+
+        .page-title {
+          font-size: 2rem;
+        }
+
+        .plan-meta {
+          grid-template-columns: 1fr;
+        }
+
+        .meals-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .shopping-categories {
+          grid-template-columns: 1fr;
+        }
       }
-      
-      .shopping-categories {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
-</head>
+    </style>
+  </head>
 
-<body>
-  <!-- Header -->
-  <header class="header">
-    <div class="nav-container">
-      <a href="{{ url_for('shopping.home') }}" class="logo">
-        <img src="{{ url_for('static', filename='images/preppr-logo.png') }}" alt="Preppr Logo" style="width: 40px; height: 40px; border-radius: var(--radius-lg);">
-        Preppr
-      </a>
-      
-      <nav>
-        <ul class="nav-links">
-          <li class="nav-dropdown">
-            <a href="#" class="nav-link dropdown-toggle">
-              <i class="fas fa-shopping-cart" style="margin-right: 6px; font-size: 0.85em;"></i>Shopping
-              <i class="fas fa-chevron-down dropdown-arrow" style="margin-left: 6px; font-size: 0.7em;"></i>
-            </a>
-            <ul class="dropdown-menu">
-              <li><a href="{{ url_for('shopping.shopping_trip') }}" class="dropdown-link">
-                <i class="fas fa-cart-plus"></i>New Trip
-              </a></li>
-              <li><a href="{{ url_for('shopping.shopping_lists') }}" class="dropdown-link">
-                <i class="fas fa-list-ul"></i>Lists
-              </a></li>
-            </ul>
-          </li>
-          <li><a href="{{ url_for('shopping.budget') }}" class="nav-link">
-            <i class="fas fa-chart-line" style="margin-right: 6px; font-size: 0.85em;"></i>Budget & Analytics
-          </a></li>
-          <li class="nav-dropdown">
-            <a href="#" class="nav-link dropdown-toggle">
-              <i class="fas fa-utensils" style="margin-right: 6px; font-size: 0.85em;"></i>Kitchen
-              <i class="fas fa-chevron-down dropdown-arrow" style="margin-left: 6px; font-size: 0.7em;"></i>
-            </a>
-            <ul class="dropdown-menu">
-              <li><a href="{{ url_for('shopping.pantry') }}" class="dropdown-link">
-                <i class="fas fa-warehouse"></i>My Pantry
-              </a></li>
-              <li><a href="{{ url_for('shopping.meal_plans') }}" class="dropdown-link" style="color: var(--primary-color);">
-                <i class="fas fa-calendar-alt"></i>Meal Plans
-              </a></li>
-            </ul>
-          </li>
-          <li class="nav-dropdown">
-            <a href="#" class="nav-link dropdown-toggle">
-              <i class="fas fa-user" style="margin-right: 6px; font-size: 0.85em;"></i>Account
-              <i class="fas fa-chevron-down dropdown-arrow" style="margin-left: 6px; font-size: 0.7em;"></i>
-            </a>
-            <ul class="dropdown-menu">
-              <li><a href="{{ url_for('auth.settings') }}" class="dropdown-link">
-                <i class="fas fa-cog"></i>Settings
-              </a></li>
-              <li><a href="{{ url_for('auth.logout') }}" class="dropdown-link logout">
-                <i class="fas fa-sign-out-alt"></i>Logout
-              </a></li>
-            </ul>
-          </li>
-        </ul>
-        
-        <button class="mobile-menu-btn" aria-label="Toggle mobile menu">
-          <i class="fas fa-bars"></i>
-        </button>
-      </nav>
-    </div>
-  </header>
+  <body>
+    <!-- Header -->
+    <header class="header">
+      <div class="nav-container">
+        <a href="{{ url_for('shopping.home') }}" class="logo">
+          <img
+            src="{{ url_for('static', filename='images/preppr-logo.png') }}"
+            alt="Preppr Logo"
+            style="width: 40px; height: 40px; border-radius: var(--radius-lg)"
+          />
+          Preppr
+        </a>
 
-  <!-- Main Content -->
-  <main class="main-content">
-    <!-- Page Header -->
-    <div class="page-header">
-      <a href="{{ url_for('shopping.meal_plans') }}" class="back-btn">
-        <i class="fas fa-arrow-left"></i>
-        Back to Meal Plans
-      </a>
-      <h1 class="page-title" id="planTitle">Meal Plan Details</h1>
-    </div>
+        <nav>
+          <ul class="nav-links">
+            <li class="nav-dropdown">
+              <a href="#" class="nav-link dropdown-toggle">
+                <i
+                  class="fas fa-shopping-cart"
+                  style="margin-right: 6px; font-size: 0.85em"
+                ></i
+                >Shopping
+                <i
+                  class="fas fa-chevron-down dropdown-arrow"
+                  style="margin-left: 6px; font-size: 0.7em"
+                ></i>
+              </a>
+              <ul class="dropdown-menu">
+                <li>
+                  <a
+                    href="{{ url_for('shopping.shopping_trip') }}"
+                    class="dropdown-link"
+                  >
+                    <i class="fas fa-cart-plus"></i>New Trip
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="{{ url_for('shopping.shopping_lists') }}"
+                    class="dropdown-link"
+                  >
+                    <i class="fas fa-list-ul"></i>Lists
+                  </a>
+                </li>
+              </ul>
+            </li>
+            <li>
+              <a href="{{ url_for('shopping.budget') }}" class="nav-link">
+                <i
+                  class="fas fa-chart-line"
+                  style="margin-right: 6px; font-size: 0.85em"
+                ></i
+                >Budget & Analytics
+              </a>
+            </li>
+            <li class="nav-dropdown">
+              <a href="#" class="nav-link dropdown-toggle">
+                <i
+                  class="fas fa-utensils"
+                  style="margin-right: 6px; font-size: 0.85em"
+                ></i
+                >Kitchen
+                <i
+                  class="fas fa-chevron-down dropdown-arrow"
+                  style="margin-left: 6px; font-size: 0.7em"
+                ></i>
+              </a>
+              <ul class="dropdown-menu">
+                <li>
+                  <a
+                    href="{{ url_for('shopping.pantry') }}"
+                    class="dropdown-link"
+                  >
+                    <i class="fas fa-warehouse"></i>My Pantry
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="{{ url_for('shopping.meal_plans') }}"
+                    class="dropdown-link"
+                    style="color: var(--primary-color)"
+                  >
+                    <i class="fas fa-calendar-alt"></i>Meal Plans
+                  </a>
+                </li>
+              </ul>
+            </li>
+            <li class="nav-dropdown">
+              <a href="#" class="nav-link dropdown-toggle">
+                <i
+                  class="fas fa-user"
+                  style="margin-right: 6px; font-size: 0.85em"
+                ></i
+                >Account
+                <i
+                  class="fas fa-chevron-down dropdown-arrow"
+                  style="margin-left: 6px; font-size: 0.7em"
+                ></i>
+              </a>
+              <ul class="dropdown-menu">
+                <li>
+                  <a
+                    href="{{ url_for('auth.settings') }}"
+                    class="dropdown-link"
+                  >
+                    <i class="fas fa-cog"></i>Settings
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="{{ url_for('auth.logout') }}"
+                    class="dropdown-link logout"
+                  >
+                    <i class="fas fa-sign-out-alt"></i>Logout
+                  </a>
+                </li>
+              </ul>
+            </li>
+          </ul>
 
-    <!-- Loading State -->
-    <div class="loading" id="loadingState">
-      <div class="spinner"></div>
-      <p>Loading meal plan details...</p>
-    </div>
+          <button class="mobile-menu-btn" aria-label="Toggle mobile menu">
+            <i class="fas fa-bars"></i>
+          </button>
+        </nav>
+      </div>
+    </header>
 
-    <!-- Plan Content -->
-    <div id="planContent" style="display: none;">
-      <!-- Plan Info -->
-      <section class="plan-info" id="planInfo">
-        <!-- Will be populated by JavaScript -->
-      </section>
-
-      <!-- Days and Recipes -->
-      <div class="days-grid" id="daysGrid">
-        <!-- Will be populated by JavaScript -->
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Page Header -->
+      <div class="page-header">
+        <a href="{{ url_for('shopping.meal_plans') }}" class="back-btn">
+          <i class="fas fa-arrow-left"></i>
+          Back to Meal Plans
+        </a>
+        <h1 class="page-title" id="planTitle">Meal Plan Details</h1>
       </div>
 
-      <!-- Batch Prep Steps -->
-      <section class="batch-prep" id="batchPrep" style="display: none;">
-        <h2 class="section-title">
-          <i class="fas fa-tasks"></i>
-          Batch Prep Instructions
-        </h2>
-        <div class="prep-steps" id="prepSteps">
+      <!-- Loading State -->
+      <div class="loading" id="loadingState">
+        <div class="spinner"></div>
+        <p>Loading meal plan details...</p>
+      </div>
+
+      <!-- Plan Content -->
+      <div id="planContent" style="display: none">
+        <!-- Plan Info -->
+        <section class="plan-info" id="planInfo">
+          <!-- Will be populated by JavaScript -->
+        </section>
+
+        <!-- Days and Recipes -->
+        <div class="days-grid" id="daysGrid">
           <!-- Will be populated by JavaScript -->
         </div>
-      </section>
 
-      <!-- Shopping List -->
-      <section class="shopping-list" id="shoppingList" style="display: none;">
-        <h2 class="section-title">
-          <i class="fas fa-shopping-bag"></i>
-          Shopping List
-        </h2>
-        <div class="shopping-categories" id="shoppingCategories">
-          <!-- Will be populated by JavaScript -->
-        </div>
-      </section>
-    </div>
-  </main>
+        <!-- Batch Prep Steps -->
+        <section class="batch-prep" id="batchPrep" style="display: none">
+          <h2 class="section-title">
+            <i class="fas fa-tasks"></i>
+            Batch Prep Instructions
+          </h2>
+          <div class="prep-steps" id="prepSteps">
+            <!-- Will be populated by JavaScript -->
+          </div>
+        </section>
 
-  <!-- Footer -->
-  <footer class="footer">
-    <p>&copy; 2025 Preppr. All rights reserved. Prep smarter. Save time. Eat better.</p>
-  </footer>
+        <!-- Shopping List -->
+        <section class="shopping-list" id="shoppingList" style="display: none">
+          <h2 class="section-title">
+            <i class="fas fa-shopping-bag"></i>
+            Shopping List
+          </h2>
+          <div class="shopping-categories" id="shoppingCategories">
+            <!-- Will be populated by JavaScript -->
+          </div>
+        </section>
+      </div>
+    </main>
 
-<script>
-// Pass server data to JavaScript
-window.MEAL_PLAN_DETAILS_CONFIG = {
-    planId: JSON.parse('{{ plan_id }}')
-};
-</script>
-<script src="{{ url_for('static', filename='js/meal_plan_details.js') }}"></script>
+    <!-- Footer -->
+    <footer class="footer">
+      <p>
+        &copy; 2025 Preppr. All rights reserved. Prep smarter. Save time. Eat
+        better.
+      </p>
+    </footer>
 
-</body>
+    <script>
+      // Pass server data to JavaScript
+      window.MEAL_PLAN_DETAILS_CONFIG = {
+        planId: JSON.parse("{{ plan_id }}"),
+      };
+    </script>
+    <script src="{{ url_for('static', filename='js/meal_plan_details.js') }}"></script>
+  </body>
 </html>

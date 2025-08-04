@@ -267,7 +267,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const oneMonthFromToday = new Date(today);
   oneMonthFromToday.setMonth(today.getMonth() + 1);
   const maxDateString = oneMonthFromToday.toISOString().split("T")[0];
-  
+
   const startDateInput = document.getElementById("start_date");
   startDateInput.value = todayString;
   startDateInput.min = todayString;
@@ -292,11 +292,11 @@ function initializeCalendar() {
     const today = new Date();
     const twelveMonthsAgo = new Date(today);
     twelveMonthsAgo.setMonth(today.getMonth() - 12);
-    
+
     // Check if we can go back one more month
     const potentialDate = new Date(currentDate);
     potentialDate.setMonth(currentDate.getMonth() - 1);
-    
+
     if (potentialDate >= twelveMonthsAgo) {
       currentDate.setMonth(currentDate.getMonth() - 1);
       clearMealPlanPreview(); // Clear preview when changing months
@@ -309,11 +309,11 @@ function initializeCalendar() {
     const today = new Date();
     const twoMonthsFromNow = new Date(today);
     twoMonthsFromNow.setMonth(today.getMonth() + 2);
-    
+
     // Check if we can go forward one more month
     const potentialDate = new Date(currentDate);
     potentialDate.setMonth(currentDate.getMonth() + 1);
-    
+
     if (potentialDate <= twoMonthsFromNow) {
       currentDate.setMonth(currentDate.getMonth() + 1);
       clearMealPlanPreview(); // Clear preview when changing months
@@ -347,42 +347,42 @@ function updateNavigationButtons() {
   twelveMonthsAgo.setMonth(today.getMonth() - 12);
   const twoMonthsFromNow = new Date(today);
   twoMonthsFromNow.setMonth(today.getMonth() + 2);
-  
+
   const prevButton = document.getElementById("prevMonth");
   const nextButton = document.getElementById("nextMonth");
-  
+
   // Check if we can go back one more month
   const potentialPrevDate = new Date(currentDate);
   potentialPrevDate.setMonth(currentDate.getMonth() - 1);
-  
+
   // Check if we can go forward one more month
   const potentialNextDate = new Date(currentDate);
   potentialNextDate.setMonth(currentDate.getMonth() + 1);
-  
+
   // Disable/enable previous button
   if (potentialPrevDate < twelveMonthsAgo) {
     prevButton.disabled = true;
-    prevButton.style.opacity = '0.4';
-    prevButton.style.cursor = 'not-allowed';
-    prevButton.title = 'Cannot go back more than 12 months';
+    prevButton.style.opacity = "0.4";
+    prevButton.style.cursor = "not-allowed";
+    prevButton.title = "Cannot go back more than 12 months";
   } else {
     prevButton.disabled = false;
-    prevButton.style.opacity = '1';
-    prevButton.style.cursor = 'pointer';
-    prevButton.title = 'Previous month';
+    prevButton.style.opacity = "1";
+    prevButton.style.cursor = "pointer";
+    prevButton.title = "Previous month";
   }
-  
+
   // Disable/enable next button
   if (potentialNextDate > twoMonthsFromNow) {
     nextButton.disabled = true;
-    nextButton.style.opacity = '0.4';
-    nextButton.style.cursor = 'not-allowed';
-    nextButton.title = 'Cannot go forward more than 2 months';
+    nextButton.style.opacity = "0.4";
+    nextButton.style.cursor = "not-allowed";
+    nextButton.title = "Cannot go forward more than 2 months";
   } else {
     nextButton.disabled = false;
-    nextButton.style.opacity = '1';
-    nextButton.style.cursor = 'pointer';
-    nextButton.title = 'Next month';
+    nextButton.style.opacity = "1";
+    nextButton.style.cursor = "pointer";
+    nextButton.title = "Next month";
   }
 }
 
@@ -434,7 +434,7 @@ function renderCalendar() {
   } else {
     renderWeekView(calendarGrid);
   }
-  
+
   // Update navigation button states after rendering
   updateNavigationButtons();
 }
@@ -1452,9 +1452,9 @@ function closeEmptyDayPopupAndNavigate() {
         const startDateInput = document.getElementById("start_date");
         if (startDateInput) {
           startDateInput.value = window.selectedEmptyDate;
-          
+
           // Trigger calendar preview update
-          const event = new Event('change');
+          const event = new Event("change");
           startDateInput.dispatchEvent(event);
         }
       }
@@ -1474,12 +1474,12 @@ function showDateLimitWarning() {
   const today = new Date();
   const oneMonthFromToday = new Date(today);
   oneMonthFromToday.setMonth(today.getMonth() + 1);
-  
+
   const maxDateStr = oneMonthFromToday.toLocaleDateString("en-US", {
     weekday: "long",
     month: "long",
     day: "numeric",
-    year: "numeric"
+    year: "numeric",
   });
 
   const popupHTML = `

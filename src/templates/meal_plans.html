@@ -1,1982 +1,2162 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Meal Plans - Preppr</title>
-  
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  
-  <!-- Base CSS -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Meal Plans - Preppr</title>
 
-  <!-- Font Awesome for icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
-  <style>    
-    /* Header */
-    .header {
-      background: var(--bg-primary);
-      border-bottom: 1px solid var(--border-light);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-    
-    .nav-link.active {
-      background: var(--primary-color);
-      color: var(--text-white);
-    }
-    
-    /* Main content */
-    .main-content {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: var(--spacing-xl);
-    }
-    
-    .page-header {
-      margin-bottom: var(--spacing-2xl);
-    }
-    
-    .page-title {
-      font-size: 2.5rem;
-      font-weight: 700;
-      color: var(--text-primary);
-      margin-bottom: var(--spacing-sm);
-    }
-    
-    /* Generate Plan Section */
-    .generate-section {
-      background: var(--bg-primary);
-      border-radius: var(--radius-xl);
-      padding: var(--spacing-xl);
-      margin-bottom: var(--spacing-2xl);
-      box-shadow: var(--shadow-md);
-    }
-    
-    .generate-form {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: var(--spacing-lg);
-      margin-bottom: var(--spacing-xl);
-    }
-    
-    .form-group {
-      display: flex;
-      flex-direction: column;
-    }
-    
-    .form-label {
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: var(--spacing-xs);
-    }
-    
-    .form-input, .form-select {
-      padding: var(--spacing-sm) var(--spacing-md);
-      border: 2px solid var(--border-light);
-      border-radius: var(--radius-md);
-      font-size: 1rem;
-      font-family: var(--font-family);
-      transition: border-color 0.3s ease;
-    }
-    
-    .form-input:focus, .form-select:focus {
-      outline: none;
-      border-color: var(--primary-color);
-    }
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
 
-    /* Range Input Styles */
-    .form-range {
-      width: 100%;
-      height: 6px;
-      border-radius: var(--radius-md);
-      background: var(--bg-tertiary);
-      outline: none;
-      -webkit-appearance: none;
-      appearance: none;
-      margin: var(--spacing-sm) 0;
-    }
+    <!-- Base CSS -->
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/base.css') }}"
+    />
 
-    .form-range::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      background: var(--primary-gradient);
-      cursor: pointer;
-      box-shadow: var(--shadow-sm);
-      transition: all 0.3s ease;
-    }
+    <!-- Font Awesome for icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
 
-    .form-range::-webkit-slider-thumb:hover {
-      transform: scale(1.1);
-      box-shadow: var(--shadow-md);
-    }
-
-    .form-range::-moz-range-thumb {
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      background: var(--primary-gradient);
-      cursor: pointer;
-      border: none;
-      box-shadow: var(--shadow-sm);
-      transition: all 0.3s ease;
-    }
-
-    .form-range::-moz-range-thumb:hover {
-      transform: scale(1.1);
-      box-shadow: var(--shadow-md);
-    }
-
-    .range-labels {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.875rem;
-      color: var(--text-secondary);
-      margin-top: var(--spacing-xs);
-    }
-
-    /* Budget Input Wrapper */
-    .budget-input-wrapper {
-      position: relative;
-      display: flex;
-      align-items: center;
-    }
-
-    .budget-symbol {
-      position: absolute;
-      left: var(--spacing-md);
-      color: var(--text-secondary);
-      font-weight: 600;
-      z-index: 1;
-    }
-
-    .budget-input {
-      padding-left: 2.5rem !important;
-    }
-
-    /* Meal Plan Preview Styles */
-    .meal-plan-preview {
-      background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.15) 100%) !important;
-      border: 2px solid #ef4444 !important;
-      position: relative;
-      animation: previewPulse 2s ease-in-out infinite;
-      color: #dc2626 !important;
-    }
-
-    .meal-plan-preview::before {
-      content: '';
-      position: absolute;
-      top: 2px;
-      right: 2px;
-      width: 8px;
-      height: 8px;
-      background: var(--primary-gradient);
-      border-radius: 50%;
-      box-shadow: 0 0 4px rgba(16, 185, 129, 0.5);
-    }
-
-    .preview-start {
-      border-top-left-radius: var(--radius-lg) !important;
-      border-bottom-left-radius: var(--radius-lg) !important;
-    }
-
-    .preview-end {
-      border-top-right-radius: var(--radius-lg) !important;
-      border-bottom-right-radius: var(--radius-lg) !important;
-    }
-
-    .preview-start::after {
-      content: 'START';
-      position: absolute;
-      top: 6px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 0.6rem;
-      font-weight: 700;
-      color: #dc2626;
-      text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
-      background: rgba(255, 255, 255, 0.9);
-      padding: 1px 4px;
-      border-radius: 3px;
-    }
-
-    .preview-end::after {
-      content: 'END';
-      position: absolute;
-      top: 6px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 0.6rem;
-      font-weight: 700;
-      color: #dc2626;
-      text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
-      background: rgba(255, 255, 255, 0.9);
-      padding: 1px 4px;
-      border-radius: 3px;
-    }
-
-    @keyframes previewPulse {
-      0%, 100% {
-        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+    <style>
+      /* Header */
+      .header {
+        background: var(--bg-primary);
+        border-bottom: 1px solid var(--border-light);
+        position: sticky;
+        top: 0;
+        z-index: 100;
       }
-      50% {
-        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+
+      .nav-link.active {
+        background: var(--primary-color);
+        color: var(--text-white);
       }
-    }
 
-    /* Enhanced calendar cell styles for better preview visibility */
-    .calendar-cell {
-      transition: all 0.3s ease;
-    }
-
-    .calendar-cell:hover:not(.meal-plan-preview) {
-      transform: scale(1.02);
-    }
-
-    
-    .btn-generate {
-      background: var(--primary-gradient);
-      color: var(--text-white);
-      padding: var(--spacing-md) var(--spacing-xl);
-      border: none;
-      border-radius: var(--radius-lg);
-      font-size: 1.125rem;
-      font-weight: 600;
-      font-family: var(--font-family);
-      cursor: pointer;
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-sm);
-      justify-self: start;
-    }
-    
-    .btn-generate:hover {
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-lg);
-    }
-    
-    .btn-generate:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      transform: none;
-    }
-    
-    /* Loading spinner */
-    .spinner {
-      display: none;
-      width: 20px;
-      height: 20px;
-      border: 2px solid var(--text-white);
-      border-top: 2px solid transparent;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-    
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    
-    /* Meal Plans Grid */
-    .plans-section {
-      margin-bottom: var(--spacing-2xl);
-    }
-    
-    .section-title {
-      font-size: 1.875rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: var(--spacing-lg);
-    }
-    
-    .plans-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-      gap: var(--spacing-lg);
-    }
-    
-    .plan-card {
-      background: var(--bg-primary);
-      border-radius: var(--radius-xl);
-      padding: var(--spacing-xl);
-      box-shadow: var(--shadow-md);
-      transition: all 0.3s ease;
-      cursor: pointer;
-    }
-    
-    .plan-card:hover {
-      transform: translateY(-4px);
-      box-shadow: var(--shadow-xl);
-    }
-    
-    .plan-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: start;
-      margin-bottom: var(--spacing-md);
-    }
-    
-    .plan-name {
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: var(--spacing-xs);
-    }
-    
-    .plan-dates {
-      font-size: 0.875rem;
-      color: var(--text-secondary);
-    }
-    
-    .plan-status {
-      padding: var(--spacing-xs) var(--spacing-sm);
-      border-radius: var(--radius-md);
-      font-size: 0.75rem;
-      font-weight: 500;
-      text-transform: uppercase;
-    }
-    
-    .status-active {
-      background: var(--success-color);
-      color: var(--text-white);
-    }
-    
-    .status-completed {
-      background: var(--text-muted);
-      color: var(--text-white);
-    }
-    
-    .plan-details {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: var(--spacing-md);
-      margin-bottom: var(--spacing-lg);
-    }
-    
-    .plan-detail {
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-xs);
-      font-size: 0.875rem;
-      color: var(--text-secondary);
-    }
-    
-    .plan-actions {
-      display: flex;
-      gap: var(--spacing-sm);
-    }
-    
-    .btn-view {
-      background: var(--primary-color);
-      color: var(--text-white);
-      padding: var(--spacing-xs) var(--spacing-md);
-      border: none;
-      border-radius: var(--radius-md);
-      font-size: 0.875rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-    
-    .btn-view:hover {
-      background: var(--secondary-color);
-    }
-    
-    /* Empty state */
-    .empty-state {
-      text-align: center;
-      padding: var(--spacing-2xl);
-      color: var(--text-secondary);
-    }
-    
-    .empty-icon {
-      font-size: 4rem;
-      color: var(--text-muted);
-      margin-bottom: var(--spacing-lg);
-    }
-    
-    .empty-title {
-      font-size: 1.5rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: var(--spacing-md);
-    }
-    
-    .empty-description {
-      font-size: 1rem;
-      color: var(--text-secondary);
-      max-width: 400px;
-      margin: 0 auto;
-    }
-    
-    /* Calendar Styles */
-    .calendar-section {
-      background: var(--bg-primary);
-      border-radius: var(--radius-xl);
-      padding: var(--spacing-xl);
-      margin-bottom: var(--spacing-2xl);
-      box-shadow: var(--shadow-md);
-    }
-    
-    .calendar-container {
-      overflow-x: auto;
-      overflow-y: hidden;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: thin;
-      scrollbar-color: var(--border-medium) var(--bg-secondary);
-    }
-    
-    .calendar-container::-webkit-scrollbar {
-      height: 8px;
-    }
-    
-    .calendar-container::-webkit-scrollbar-track {
-      background: var(--bg-secondary);
-      border-radius: var(--radius-sm);
-    }
-    
-    .calendar-container::-webkit-scrollbar-thumb {
-      background: var(--border-medium);
-      border-radius: var(--radius-sm);
-    }
-    
-    .calendar-container::-webkit-scrollbar-thumb:hover {
-      background: var(--text-muted);
-    }
-    
-    .calendar-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: var(--spacing-lg);
-    }
-    
-    .calendar-nav {
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-md);
-    }
-    
-    .calendar-nav-btn {
-      background: var(--bg-tertiary);
-      border: none;
-      border-radius: var(--radius-md);
-      width: 40px;
-      height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      color: var(--text-secondary);
-      transition: all 0.3s ease;
-    }
-    
-    .calendar-nav-btn:hover:not(:disabled) {
-      background: var(--primary-color);
-      color: var(--text-white);
-    }
-    
-    .calendar-nav-btn:disabled {
-      opacity: 0.4 !important;
-      cursor: not-allowed !important;
-      background: var(--bg-tertiary) !important;
-      color: var(--text-muted) !important;
-    }
-    
-    .calendar-month-year {
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      min-width: 200px;
-      text-align: center;
-    }
-    
-    .calendar-grid {
-      display: grid;
-      grid-template-columns: repeat(7, minmax(120px, 1fr));
-      gap: 1px;
-      background: var(--border-light);
-      border-radius: var(--radius-lg);
-      overflow-x: auto;
-      overflow-y: hidden;
-      min-width: 840px; /* 7 days * 120px minimum width */
-    }
-    
-    .calendar-day-header {
-      background: var(--bg-tertiary);
-      padding: var(--spacing-sm);
-      text-align: center;
-      font-weight: 600;
-      font-size: 0.875rem;
-      color: var(--text-secondary);
-    }
-    
-    .calendar-day {
-      background: var(--bg-primary);
-      min-height: 120px;
-      padding: var(--spacing-xs);
-      position: relative;
-      cursor: pointer;
-      transition: background-color 0.2s ease;
-      display: flex;
-      flex-direction: column;
-    }
-    
-    .calendar-day.week-view {
-      min-height: 200px;
-      padding: var(--spacing-sm);
-    }
-    
-    .calendar-day:hover {
-      background: var(--bg-secondary);
-    }
-    
-    .calendar-day.other-month {
-      background: var(--bg-secondary);
-      color: var(--text-muted);
-    }
-    
-    .calendar-day.today {
-      background: rgba(16, 185, 129, 0.1);
-      border: 2px solid var(--primary-color);
-    }
-    
-    .calendar-day.has-meals {
-      background: rgba(16, 185, 129, 0.05);
-    }
-    
-    .calendar-day-number {
-      font-weight: 600;
-      font-size: 0.875rem;
-      margin-bottom: var(--spacing-xs);
-    }
-    
-    .calendar-meals {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-    
-    .calendar-meal {
-      background: var(--primary-color);
-      color: var(--text-white);
-      padding: 2px 6px;
-      border-radius: var(--radius-sm);
-      font-size: 0.75rem;
-      font-weight: 500;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      position: relative;
-    }
-    
-    .calendar-meal:hover {
-      transform: scale(1.05);
-      box-shadow: var(--shadow-sm);
-    }
-    
-    .calendar-meal.breakfast {
-      background: var(--warning-color);
-    }
-    
-    .calendar-meal.lunch {
-      background: var(--primary-color);
-    }
-    
-    .calendar-meal.dinner {
-      background: var(--secondary-color);
-    }
-    
-    .calendar-meal.completed {
-      opacity: 0.6;
-      text-decoration: line-through;
-    }
-    
-    .meal-checkbox {
-      width: 12px;
-      height: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.5);
-      border-radius: 2px;
-      background: transparent;
-      cursor: pointer;
-      flex-shrink: 0;
-      position: relative;
-    }
-    
-    .meal-checkbox:checked {
-      background: rgba(255, 255, 255, 0.9);
-      border-color: rgba(255, 255, 255, 0.9);
-    }
-    
-    .meal-checkbox:checked::after {
-      content: '✓';
-      position: absolute;
-      top: -2px;
-      left: 1px;
-      font-size: 10px;
-      color: var(--primary-color);
-      font-weight: bold;
-    }
-    
-    .meal-checkbox:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-      background: rgba(255, 255, 255, 0.2);
-      border-color: rgba(255, 255, 255, 0.2);
-    }
-    
-    .meal-checkbox:disabled + span {
-      opacity: 0.6;
-      color: var(--text-muted);
-    }
-    
-    .meal-name-text {
-      flex: 1;
-      min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    
-    .calendar-meal-count {
-      background: var(--text-muted);
-      color: var(--text-white);
-      padding: 2px 6px;
-      border-radius: var(--radius-sm);
-      font-size: 0.7rem;
-      text-align: center;
-      margin-top: 2px;
-      transition: all 0.2s ease;
-    }
-    
-    .calendar-meal-count:hover {
-      background: var(--primary-color);
-      transform: scale(1.05);
-    }
-    
-    .week-view .calendar-meals {
-      display: flex;
-      flex-direction: column;
-      gap: var(--spacing-xs);
-      flex: 1;
-    }
-    
-    .week-view .calendar-meal-slot {
-      background: var(--bg-tertiary);
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius-md);
-      padding: var(--spacing-xs);
-      min-height: 40px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      position: relative;
-      transition: all 0.2s ease;
-    }
-    
-    .week-view .calendar-meal-slot.has-meal:hover {
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-md);
-    }
-    
-    .week-view .calendar-meal-slot.has-meal {
-      border: none;
-      box-shadow: var(--shadow-sm);
-    }
-    
-    .week-view .calendar-meal-slot.breakfast.has-meal {
-      background: var(--warning-color);
-      color: var(--text-white);
-    }
-    
-    .week-view .calendar-meal-slot.lunch.has-meal {
-      background: var(--primary-color);
-      color: var(--text-white);
-    }
-    
-    .week-view .calendar-meal-slot.dinner.has-meal {
-      background: var(--secondary-color);
-      color: var(--text-white);
-    }
-    
-    .week-view .calendar-meal-slot.snack.has-meal {
-      background: var(--accent-color);
-      color: var(--text-white);
-    }
-    
-    .week-view .calendar-meal-slot.completed {
-      opacity: 0.6;
-    }
-    
-    .week-view .calendar-meal-slot.completed .calendar-meal-name {
-      text-decoration: line-through;
-    }
-    
-    .week-view .meal-completion {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      margin-top: 2px;
-    }
-    
-    .week-view .meal-checkbox {
-      width: 10px;
-      height: 10px;
-      border: 1px solid rgba(255, 255, 255, 0.7);
-    }
-    
-    .week-view .calendar-meal-type {
-      font-size: 0.65rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      opacity: 0.8;
-      margin-bottom: 2px;
-    }
-    
-    .week-view .calendar-meal-slot.has-meal .calendar-meal-type {
-      opacity: 0.9;
-    }
-    
-    .week-view .calendar-meal-name {
-      font-size: 0.75rem;
-      font-weight: 500;
-      line-height: 1.2;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      line-clamp: 2;
-      -webkit-box-orient: vertical;
-    }
-    
-    .week-view .calendar-meal-slot:not(.has-meal) .calendar-meal-type {
-      color: var(--text-muted);
-      font-style: italic;
-    }
-    
-    .calendar-legend {
-      display: flex;
-      justify-content: center;
-      gap: var(--spacing-lg);
-      margin-top: var(--spacing-md);
-      flex-wrap: wrap;
-    }
-    
-    .calendar-legend-item {
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-xs);
-      font-size: 0.875rem;
-      color: var(--text-secondary);
-    }
-    
-    .calendar-legend-color {
-      width: 12px;
-      height: 12px;
-      border-radius: var(--radius-sm);
-    }
-    
-    /* Calendar View Toggle */
-    .calendar-view-toggle {
-      display: flex;
-      background: var(--bg-tertiary);
-      border-radius: var(--radius-md);
-      padding: 4px;
-    }
-    
-    .calendar-view-btn {
-      background: none;
-      border: none;
-      padding: var(--spacing-xs) var(--spacing-sm);
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      font-size: 0.875rem;
-      font-weight: 500;
-      font-family: var(--font-family);
-      color: var(--text-secondary);
-      transition: all 0.2s ease;
-    }
-    
-    .calendar-view-btn.active {
-      background: var(--bg-primary);
-      color: var(--primary-color);
-      box-shadow: var(--shadow-sm);
-    }
-
-    /* Responsive design */
-    @media (max-width: 768px) {
-      .mobile-menu-btn {
-        display: block;
+      /* Main content */
+      .main-content {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: var(--spacing-xl);
       }
-      /* Mobile dropdown adjustments */
-      .dropdown-menu {
-        position: fixed;
-        top: 80px;
-        left: var(--spacing-md);
-        right: var(--spacing-md);
-        min-width: calc(100% - 2 * var(--spacing-md));
+
+      .page-header {
+        margin-bottom: var(--spacing-2xl);
+      }
+
+      .page-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-sm);
+      }
+
+      /* Generate Plan Section */
+      .generate-section {
+        background: var(--bg-primary);
         border-radius: var(--radius-xl);
-        box-shadow: 
-          0 20px 40px rgba(0, 0, 0, 0.15),
-          0 8px 16px rgba(0, 0, 0, 0.1);
-        transform: translateY(-20px) scale(0.95);
-        backdrop-filter: blur(20px);
+        padding: var(--spacing-xl);
+        margin-bottom: var(--spacing-2xl);
+        box-shadow: var(--shadow-md);
       }
-      .dropdown-menu::before {
+
+      .generate-form {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: var(--spacing-lg);
+        margin-bottom: var(--spacing-xl);
+      }
+
+      .form-group {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .form-label {
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-xs);
+      }
+
+      .form-input,
+      .form-select {
+        padding: var(--spacing-sm) var(--spacing-md);
+        border: 2px solid var(--border-light);
+        border-radius: var(--radius-md);
+        font-size: 1rem;
+        font-family: var(--font-family);
+        transition: border-color 0.3s ease;
+      }
+
+      .form-input:focus,
+      .form-select:focus {
+        outline: none;
+        border-color: var(--primary-color);
+      }
+
+      /* Range Input Styles */
+      .form-range {
+        width: 100%;
+        height: 6px;
+        border-radius: var(--radius-md);
+        background: var(--bg-tertiary);
+        outline: none;
+        -webkit-appearance: none;
+        appearance: none;
+        margin: var(--spacing-sm) 0;
+      }
+
+      .form-range::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: var(--primary-gradient);
+        cursor: pointer;
+        box-shadow: var(--shadow-sm);
+        transition: all 0.3s ease;
+      }
+
+      .form-range::-webkit-slider-thumb:hover {
+        transform: scale(1.1);
+        box-shadow: var(--shadow-md);
+      }
+
+      .form-range::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: var(--primary-gradient);
+        cursor: pointer;
+        border: none;
+        box-shadow: var(--shadow-sm);
+        transition: all 0.3s ease;
+      }
+
+      .form-range::-moz-range-thumb:hover {
+        transform: scale(1.1);
+        box-shadow: var(--shadow-md);
+      }
+
+      .range-labels {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        margin-top: var(--spacing-xs);
+      }
+
+      /* Budget Input Wrapper */
+      .budget-input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+      }
+
+      .budget-symbol {
+        position: absolute;
+        left: var(--spacing-md);
+        color: var(--text-secondary);
+        font-weight: 600;
+        z-index: 1;
+      }
+
+      .budget-input {
+        padding-left: 2.5rem !important;
+      }
+
+      /* Meal Plan Preview Styles */
+      .meal-plan-preview {
+        background: linear-gradient(
+          135deg,
+          rgba(239, 68, 68, 0.15) 0%,
+          rgba(220, 38, 38, 0.15) 100%
+        ) !important;
+        border: 2px solid #ef4444 !important;
+        position: relative;
+        animation: previewPulse 2s ease-in-out infinite;
+        color: #dc2626 !important;
+      }
+
+      .meal-plan-preview::before {
+        content: "";
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        width: 8px;
+        height: 8px;
+        background: var(--primary-gradient);
+        border-radius: 50%;
+        box-shadow: 0 0 4px rgba(16, 185, 129, 0.5);
+      }
+
+      .preview-start {
+        border-top-left-radius: var(--radius-lg) !important;
+        border-bottom-left-radius: var(--radius-lg) !important;
+      }
+
+      .preview-end {
+        border-top-right-radius: var(--radius-lg) !important;
+        border-bottom-right-radius: var(--radius-lg) !important;
+      }
+
+      .preview-start::after {
+        content: "START";
+        position: absolute;
+        top: 6px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 0.6rem;
+        font-weight: 700;
+        color: #dc2626;
+        text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+        background: rgba(255, 255, 255, 0.9);
+        padding: 1px 4px;
+        border-radius: 3px;
+      }
+
+      .preview-end::after {
+        content: "END";
+        position: absolute;
+        top: 6px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 0.6rem;
+        font-weight: 700;
+        color: #dc2626;
+        text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+        background: rgba(255, 255, 255, 0.9);
+        padding: 1px 4px;
+        border-radius: 3px;
+      }
+
+      @keyframes previewPulse {
+        0%,
+        100% {
+          box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+        }
+        50% {
+          box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+        }
+      }
+
+      /* Enhanced calendar cell styles for better preview visibility */
+      .calendar-cell {
+        transition: all 0.3s ease;
+      }
+
+      .calendar-cell:hover:not(.meal-plan-preview) {
+        transform: scale(1.02);
+      }
+
+      .btn-generate {
+        background: var(--primary-gradient);
+        color: var(--text-white);
+        padding: var(--spacing-md) var(--spacing-xl);
+        border: none;
+        border-radius: var(--radius-lg);
+        font-size: 1.125rem;
+        font-weight: 600;
+        font-family: var(--font-family);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        justify-self: start;
+      }
+
+      .btn-generate:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+      }
+
+      .btn-generate:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      /* Loading spinner */
+      .spinner {
         display: none;
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--text-white);
+        border-top: 2px solid transparent;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
       }
-      .nav-dropdown:hover .dropdown-menu,
-      .nav-dropdown.active .dropdown-menu {
-        transform: translateY(0) scale(1);
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Meal Plans Grid */
+      .plans-section {
+        margin-bottom: var(--spacing-2xl);
+      }
+
+      .section-title {
+        font-size: 1.875rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-lg);
+      }
+
+      .plans-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: var(--spacing-lg);
+      }
+
+      .plan-card {
+        background: var(--bg-primary);
+        border-radius: var(--radius-xl);
+        padding: var(--spacing-xl);
+        box-shadow: var(--shadow-md);
+        transition: all 0.3s ease;
+        cursor: pointer;
+      }
+
+      .plan-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-xl);
+      }
+
+      .plan-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: var(--spacing-md);
+      }
+
+      .plan-name {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-xs);
+      }
+
+      .plan-dates {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+      }
+
+      .plan-status {
+        padding: var(--spacing-xs) var(--spacing-sm);
+        border-radius: var(--radius-md);
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-transform: uppercase;
+      }
+
+      .status-active {
+        background: var(--success-color);
+        color: var(--text-white);
+      }
+
+      .status-completed {
+        background: var(--text-muted);
+        color: var(--text-white);
+      }
+
+      .plan-details {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-lg);
+      }
+
+      .plan-detail {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+      }
+
+      .plan-actions {
+        display: flex;
+        gap: var(--spacing-sm);
+      }
+
+      .btn-view {
+        background: var(--primary-color);
+        color: var(--text-white);
+        padding: var(--spacing-xs) var(--spacing-md);
+        border: none;
+        border-radius: var(--radius-md);
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .btn-view:hover {
+        background: var(--secondary-color);
+      }
+
+      /* Empty state */
+      .empty-state {
+        text-align: center;
+        padding: var(--spacing-2xl);
+        color: var(--text-secondary);
+      }
+
+      .empty-icon {
+        font-size: 4rem;
+        color: var(--text-muted);
+        margin-bottom: var(--spacing-lg);
+      }
+
+      .empty-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-md);
+      }
+
+      .empty-description {
+        font-size: 1rem;
+        color: var(--text-secondary);
+        max-width: 400px;
+        margin: 0 auto;
+      }
+
+      /* Calendar Styles */
+      .calendar-section {
+        background: var(--bg-primary);
+        border-radius: var(--radius-xl);
+        padding: var(--spacing-xl);
+        margin-bottom: var(--spacing-2xl);
+        box-shadow: var(--shadow-md);
+      }
+
+      .calendar-container {
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        scrollbar-color: var(--border-medium) var(--bg-secondary);
+      }
+
+      .calendar-container::-webkit-scrollbar {
+        height: 8px;
+      }
+
+      .calendar-container::-webkit-scrollbar-track {
+        background: var(--bg-secondary);
+        border-radius: var(--radius-sm);
+      }
+
+      .calendar-container::-webkit-scrollbar-thumb {
+        background: var(--border-medium);
+        border-radius: var(--radius-sm);
+      }
+
+      .calendar-container::-webkit-scrollbar-thumb:hover {
+        background: var(--text-muted);
+      }
+
+      .calendar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-lg);
+      }
+
+      .calendar-nav {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+      }
+
+      .calendar-nav-btn {
+        background: var(--bg-tertiary);
+        border: none;
+        border-radius: var(--radius-md);
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: var(--text-secondary);
+        transition: all 0.3s ease;
+      }
+
+      .calendar-nav-btn:hover:not(:disabled) {
+        background: var(--primary-color);
+        color: var(--text-white);
+      }
+
+      .calendar-nav-btn:disabled {
+        opacity: 0.4 !important;
+        cursor: not-allowed !important;
+        background: var(--bg-tertiary) !important;
+        color: var(--text-muted) !important;
+      }
+
+      .calendar-month-year {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        min-width: 200px;
+        text-align: center;
+      }
+
+      .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(120px, 1fr));
+        gap: 1px;
+        background: var(--border-light);
+        border-radius: var(--radius-lg);
+        overflow-x: auto;
+        overflow-y: hidden;
+        min-width: 840px; /* 7 days * 120px minimum width */
+      }
+
+      .calendar-day-header {
+        background: var(--bg-tertiary);
+        padding: var(--spacing-sm);
+        text-align: center;
+        font-weight: 600;
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+      }
+
+      .calendar-day {
+        background: var(--bg-primary);
+        min-height: 120px;
+        padding: var(--spacing-xs);
+        position: relative;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .calendar-day.week-view {
+        min-height: 200px;
+        padding: var(--spacing-sm);
+      }
+
+      .calendar-day:hover {
+        background: var(--bg-secondary);
+      }
+
+      .calendar-day.other-month {
+        background: var(--bg-secondary);
+        color: var(--text-muted);
+      }
+
+      .calendar-day.today {
+        background: rgba(16, 185, 129, 0.1);
+        border: 2px solid var(--primary-color);
+      }
+
+      .calendar-day.has-meals {
+        background: rgba(16, 185, 129, 0.05);
+      }
+
+      .calendar-day-number {
+        font-weight: 600;
+        font-size: 0.875rem;
+        margin-bottom: var(--spacing-xs);
+      }
+
+      .calendar-meals {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .calendar-meal {
+        background: var(--primary-color);
+        color: var(--text-white);
+        padding: 2px 6px;
+        border-radius: var(--radius-sm);
+        font-size: 0.75rem;
+        font-weight: 500;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        position: relative;
+      }
+
+      .calendar-meal:hover {
+        transform: scale(1.05);
+        box-shadow: var(--shadow-sm);
+      }
+
+      .calendar-meal.breakfast {
+        background: var(--warning-color);
+      }
+
+      .calendar-meal.lunch {
+        background: var(--primary-color);
+      }
+
+      .calendar-meal.dinner {
+        background: var(--secondary-color);
+      }
+
+      .calendar-meal.completed {
+        opacity: 0.6;
+        text-decoration: line-through;
+      }
+
+      .meal-checkbox {
+        width: 12px;
+        height: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        border-radius: 2px;
+        background: transparent;
+        cursor: pointer;
+        flex-shrink: 0;
+        position: relative;
+      }
+
+      .meal-checkbox:checked {
+        background: rgba(255, 255, 255, 0.9);
+        border-color: rgba(255, 255, 255, 0.9);
+      }
+
+      .meal-checkbox:checked::after {
+        content: "✓";
+        position: absolute;
+        top: -2px;
+        left: 1px;
+        font-size: 10px;
+        color: var(--primary-color);
+        font-weight: bold;
+      }
+
+      .meal-checkbox:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        background: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.2);
+      }
+
+      .meal-checkbox:disabled + span {
+        opacity: 0.6;
+        color: var(--text-muted);
+      }
+
+      .meal-name-text {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .calendar-meal-count {
+        background: var(--text-muted);
+        color: var(--text-white);
+        padding: 2px 6px;
+        border-radius: var(--radius-sm);
+        font-size: 0.7rem;
+        text-align: center;
+        margin-top: 2px;
+        transition: all 0.2s ease;
+      }
+
+      .calendar-meal-count:hover {
+        background: var(--primary-color);
+        transform: scale(1.05);
+      }
+
+      .week-view .calendar-meals {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xs);
+        flex: 1;
+      }
+
+      .week-view .calendar-meal-slot {
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-md);
+        padding: var(--spacing-xs);
+        min-height: 40px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        position: relative;
+        transition: all 0.2s ease;
+      }
+
+      .week-view .calendar-meal-slot.has-meal:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+      }
+
+      .week-view .calendar-meal-slot.has-meal {
+        border: none;
+        box-shadow: var(--shadow-sm);
+      }
+
+      .week-view .calendar-meal-slot.breakfast.has-meal {
+        background: var(--warning-color);
+        color: var(--text-white);
+      }
+
+      .week-view .calendar-meal-slot.lunch.has-meal {
+        background: var(--primary-color);
+        color: var(--text-white);
+      }
+
+      .week-view .calendar-meal-slot.dinner.has-meal {
+        background: var(--secondary-color);
+        color: var(--text-white);
+      }
+
+      .week-view .calendar-meal-slot.snack.has-meal {
+        background: var(--accent-color);
+        color: var(--text-white);
+      }
+
+      .week-view .calendar-meal-slot.completed {
+        opacity: 0.6;
+      }
+
+      .week-view .calendar-meal-slot.completed .calendar-meal-name {
+        text-decoration: line-through;
+      }
+
+      .week-view .meal-completion {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: 2px;
+      }
+
+      .week-view .meal-checkbox {
+        width: 10px;
+        height: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.7);
+      }
+
+      .week-view .calendar-meal-type {
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        opacity: 0.8;
+        margin-bottom: 2px;
+      }
+
+      .week-view .calendar-meal-slot.has-meal .calendar-meal-type {
+        opacity: 0.9;
+      }
+
+      .week-view .calendar-meal-name {
+        font-size: 0.75rem;
+        font-weight: 500;
+        line-height: 1.2;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+      }
+
+      .week-view .calendar-meal-slot:not(.has-meal) .calendar-meal-type {
+        color: var(--text-muted);
+        font-style: italic;
+      }
+
+      .calendar-legend {
+        display: flex;
+        justify-content: center;
+        gap: var(--spacing-lg);
+        margin-top: var(--spacing-md);
+        flex-wrap: wrap;
+      }
+
+      .calendar-legend-item {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+      }
+
+      .calendar-legend-color {
+        width: 12px;
+        height: 12px;
+        border-radius: var(--radius-sm);
+      }
+
+      /* Calendar View Toggle */
+      .calendar-view-toggle {
+        display: flex;
+        background: var(--bg-tertiary);
+        border-radius: var(--radius-md);
+        padding: 4px;
+      }
+
+      .calendar-view-btn {
+        background: none;
+        border: none;
+        padding: var(--spacing-xs) var(--spacing-sm);
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        font-size: 0.875rem;
+        font-weight: 500;
+        font-family: var(--font-family);
+        color: var(--text-secondary);
+        transition: all 0.2s ease;
+      }
+
+      .calendar-view-btn.active {
+        background: var(--bg-primary);
+        color: var(--primary-color);
+        box-shadow: var(--shadow-sm);
+      }
+
+      /* Responsive design */
+      @media (max-width: 768px) {
+        .mobile-menu-btn {
+          display: block;
+        }
+        /* Mobile dropdown adjustments */
+        .dropdown-menu {
+          position: fixed;
+          top: 80px;
+          left: var(--spacing-md);
+          right: var(--spacing-md);
+          min-width: calc(100% - 2 * var(--spacing-md));
+          border-radius: var(--radius-xl);
+          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15),
+            0 8px 16px rgba(0, 0, 0, 0.1);
+          transform: translateY(-20px) scale(0.95);
+          backdrop-filter: blur(20px);
+        }
+        .dropdown-menu::before {
+          display: none;
+        }
+        .nav-dropdown:hover .dropdown-menu,
+        .nav-dropdown.active .dropdown-menu {
+          transform: translateY(0) scale(1);
+          opacity: 1;
+          visibility: visible;
+        }
+
+        .nav-links {
+          display: none;
+        }
+
+        .main-content {
+          padding: var(--spacing-md);
+        }
+
+        .page-title {
+          font-size: 2rem;
+        }
+
+        .generate-form {
+          grid-template-columns: 1fr;
+        }
+
+        .plans-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .plan-details {
+          grid-template-columns: 1fr;
+        }
+
+        /* Calendar Mobile Styles */
+        .calendar-header {
+          flex-direction: column;
+          gap: var(--spacing-md);
+        }
+
+        .calendar-nav {
+          order: 2;
+        }
+
+        .calendar-view-toggle {
+          order: 1;
+        }
+
+        .calendar-grid {
+          grid-template-columns: repeat(7, minmax(100px, 1fr));
+          min-width: 700px; /* Reduced for mobile */
+        }
+
+        .calendar-day {
+          min-height: 80px;
+          padding: 4px;
+        }
+
+        .calendar-day.week-view {
+          min-height: 150px;
+          padding: var(--spacing-xs);
+        }
+
+        .calendar-day-number {
+          font-size: 0.75rem;
+        }
+
+        .calendar-meal {
+          font-size: 0.65rem;
+          padding: 1px 4px;
+        }
+
+        .calendar-legend {
+          gap: var(--spacing-sm);
+        }
+
+        .calendar-legend-item {
+          font-size: 0.75rem;
+        }
+
+        .week-view .calendar-meal-slot {
+          min-height: 32px;
+          padding: 4px 6px;
+        }
+
+        .week-view .calendar-meal-type {
+          font-size: 0.6rem;
+          margin-bottom: 1px;
+        }
+
+        .week-view .calendar-meal-name {
+          font-size: 0.65rem;
+          -webkit-line-clamp: 1;
+          line-clamp: 1;
+        }
+      }
+
+      /* Modal Styles for Meal Details */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(8px);
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+      }
+
+      .modal-overlay.show {
         opacity: 1;
         visibility: visible;
       }
-      
-      .nav-links {
-        display: none;
-      }
-      
-      .main-content {
-        padding: var(--spacing-md);
-      }
-      
-      .page-title {
-        font-size: 2rem;
-      }
-      
-      .generate-form {
-        grid-template-columns: 1fr;
-      }
-      
-      .plans-grid {
-        grid-template-columns: 1fr;
-      }
-      
-      .plan-details {
-        grid-template-columns: 1fr;
-      }
-      
-      /* Calendar Mobile Styles */
-      .calendar-header {
-        flex-direction: column;
-        gap: var(--spacing-md);
-      }
-      
-      .calendar-nav {
-        order: 2;
-      }
-      
-      .calendar-view-toggle {
-        order: 1;
-      }
-      
-      .calendar-grid {
-        grid-template-columns: repeat(7, minmax(100px, 1fr));
-        min-width: 700px; /* Reduced for mobile */
-      }
-      
-      .calendar-day {
-        min-height: 80px;
-        padding: 4px;
-      }
-      
-      .calendar-day.week-view {
-        min-height: 150px;
-        padding: var(--spacing-xs);
-      }
-      
-      .calendar-day-number {
-        font-size: 0.75rem;
-      }
-      
-      .calendar-meal {
-        font-size: 0.65rem;
-        padding: 1px 4px;
-      }
-      
-      .calendar-legend {
-        gap: var(--spacing-sm);
-      }
-      
-      .calendar-legend-item {
-        font-size: 0.75rem;
-      }
-      
-      .week-view .calendar-meal-slot {
-        min-height: 32px;
-        padding: 4px 6px;
-      }
-      
-      .week-view .calendar-meal-type {
-        font-size: 0.6rem;
-        margin-bottom: 1px;
-      }
-      
-      .week-view .calendar-meal-name {
-        font-size: 0.65rem;
-        -webkit-line-clamp: 1;
-        line-clamp: 1;
-      }
-    }
 
-    /* Modal Styles for Meal Details */
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.7);
-      z-index: 1000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      backdrop-filter: blur(8px);
-      opacity: 0;
-      visibility: hidden;
-      transition: all 0.3s ease;
-    }
-
-    .modal-overlay.show {
-      opacity: 1;
-      visibility: visible;
-    }
-
-    .modal-content {
-      background: var(--bg-primary);
-      border-radius: var(--radius-xl);
-      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
-      max-width: 600px;
-      width: 90%;
-      max-height: 90vh;
-      overflow: hidden;
-      border: 1px solid var(--border-light);
-      transform: scale(0.9) translateY(20px);
-      transition: transform 0.3s ease;
-    }
-
-    .modal-overlay.show .modal-content {
-      transform: scale(1) translateY(0);
-    }
-
-    .meal-details-modal {
-      max-width: 700px;
-    }
-
-    .modal-header {
-      padding: var(--spacing-xl);
-      border-bottom: 1px solid var(--border-light);
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      background: var(--primary-gradient);
-      color: var(--text-white);
-    }
-
-    .modal-header h3 {
-      margin: 0;
-      font-size: 1.5rem;
-      font-weight: 600;
-    }
-
-    .meal-meta {
-      margin: var(--spacing-xs) 0 0 0;
-      font-size: 0.875rem;
-      opacity: 0.9;
-    }
-
-    .modal-close {
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: var(--radius-md);
-      width: 40px;
-      height: 40px;
-      color: var(--text-white);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.125rem;
-      transition: all 0.2s ease;
-    }
-
-    .modal-close:hover {
-      background: rgba(255, 255, 255, 0.2);
-      transform: scale(1.05);
-    }
-
-    .modal-body {
-      padding: var(--spacing-xl);
-      max-height: 70vh;
-      overflow-y: auto;
-    }
-
-    /* Meal Selection Grid */
-    .meals-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: var(--spacing-lg);
-    }
-
-    .meal-card {
-      background: var(--bg-secondary);
-      border: 2px solid var(--border-light);
-      border-radius: var(--radius-lg);
-      padding: var(--spacing-lg);
-      cursor: pointer;
-      transition: all 0.3s ease;
-      text-align: center;
-    }
-
-    .meal-card:hover {
-      border-color: var(--primary-color);
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-lg);
-    }
-
-    .meal-type-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: var(--spacing-xs);
-      background: var(--primary-color);
-      color: var(--text-white);
-      padding: var(--spacing-xs) var(--spacing-sm);
-      border-radius: var(--radius-lg);
-      font-size: 0.875rem;
-      font-weight: 600;
-      margin-bottom: var(--spacing-md);
-    }
-
-    .meal-type-badge.breakfast {
-      background: #f59e0b;
-    }
-
-    .meal-type-badge.lunch {
-      background: #10b981;
-    }
-
-    .meal-type-badge.dinner {
-      background: #6366f1;
-    }
-
-    .meal-type-badge.snack {
-      background: #ec4899;
-    }
-
-    .meal-name {
-      font-size: 1.125rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: var(--spacing-sm);
-    }
-
-    .meal-time {
-      font-size: 0.875rem;
-      color: var(--text-secondary);
-    }
-
-    /* Meal Details Content */
-    .meal-details-content {
-      margin-bottom: var(--spacing-xl);
-    }
-
-    .meal-description {
-      font-size: 1rem;
-      color: var(--text-secondary);
-      margin-bottom: var(--spacing-lg);
-      padding: var(--spacing-md);
-      background: var(--bg-tertiary);
-      border-radius: var(--radius-md);
-      border-left: 4px solid var(--primary-color);
-    }
-
-    .meal-info-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: var(--spacing-md);
-      margin-bottom: var(--spacing-lg);
-    }
-
-    .info-item {
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-xs);
-      padding: var(--spacing-sm);
-      background: var(--bg-secondary);
-      border-radius: var(--radius-md);
-      font-size: 0.875rem;
-      color: var(--text-secondary);
-    }
-
-    .info-item i {
-      color: var(--primary-color);
-      width: 16px;
-      text-align: center;
-    }
-
-    .meal-section {
-      margin-bottom: var(--spacing-lg);
-    }
-
-    .meal-section h4 {
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-sm);
-      font-size: 1.125rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: var(--spacing-md);
-      padding-bottom: var(--spacing-sm);
-      border-bottom: 2px solid var(--border-light);
-    }
-
-    .meal-section h4 i {
-      color: var(--primary-color);
-    }
-
-    .ingredients-list {
-      display: grid;
-      gap: var(--spacing-sm);
-    }
-
-    .ingredient-item {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: var(--spacing-md);
-      padding: var(--spacing-sm) var(--spacing-md);
-      background: var(--bg-secondary);
-      border-radius: var(--radius-md);
-      border-left: 3px solid var(--primary-color);
-    }
-
-    .ingredient-item.custom {
-      border-left-color: var(--warning-color);
-      background: rgba(245, 158, 11, 0.1);
-    }
-
-    .ingredient-name {
-      font-weight: 500;
-      color: var(--text-primary);
-    }
-
-    .ingredient-amount {
-      font-size: 0.875rem;
-      color: var(--text-secondary);
-      font-weight: 600;
-    }
-
-    .ingredient-notes {
-      grid-column: 1 / -1;
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      font-style: italic;
-      margin-top: var(--spacing-xs);
-    }
-
-    .instructions-content,
-    .notes-content {
-      background: var(--bg-secondary);
-      padding: var(--spacing-md);
-      border-radius: var(--radius-md);
-      line-height: 1.6;
-      color: var(--text-primary);
-    }
-
-    .meal-actions {
-      display: flex;
-      gap: var(--spacing-md);
-      justify-content: flex-end;
-      padding-top: var(--spacing-lg);
-      border-top: 1px solid var(--border-light);
-    }
-
-    .btn {
-      padding: var(--spacing-sm) var(--spacing-lg);
-      border: none;
-      border-radius: var(--radius-md);
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: var(--spacing-sm);
-      font-size: 0.875rem;
-      font-family: inherit;
-    }
-
-    .btn-primary {
-      background: var(--primary-gradient);
-      color: var(--text-white);
-      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-    }
-
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
-    }
-
-    .btn-secondary {
-      background: var(--bg-primary);
-      color: var(--text-primary);
-      border: 2px solid var(--border-medium);
-      box-shadow: var(--shadow-sm);
-    }
-
-    .btn-secondary:hover {
-      background: var(--bg-secondary);
-      border-color: var(--primary-color);
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-md);
-    }
-
-    /* Mobile Responsive */
-    @media (max-width: 768px) {
       .modal-content {
-        width: 95%;
-        max-height: 95vh;
+        background: var(--bg-primary);
+        border-radius: var(--radius-xl);
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+        max-width: 600px;
+        width: 90%;
+        max-height: 90vh;
+        overflow: hidden;
+        border: 1px solid var(--border-light);
+        transform: scale(0.9) translateY(20px);
+        transition: transform 0.3s ease;
+      }
+
+      .modal-overlay.show .modal-content {
+        transform: scale(1) translateY(0);
+      }
+
+      .meal-details-modal {
+        max-width: 700px;
       }
 
       .modal-header {
-        padding: var(--spacing-lg);
+        padding: var(--spacing-xl);
+        border-bottom: 1px solid var(--border-light);
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        background: var(--primary-gradient);
+        color: var(--text-white);
+      }
+
+      .modal-header h3 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+      }
+
+      .meal-meta {
+        margin: var(--spacing-xs) 0 0 0;
+        font-size: 0.875rem;
+        opacity: 0.9;
+      }
+
+      .modal-close {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: var(--radius-md);
+        width: 40px;
+        height: 40px;
+        color: var(--text-white);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.125rem;
+        transition: all 0.2s ease;
+      }
+
+      .modal-close:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: scale(1.05);
       }
 
       .modal-body {
-        padding: var(--spacing-lg);
+        padding: var(--spacing-xl);
+        max-height: 70vh;
+        overflow-y: auto;
       }
 
+      /* Meal Selection Grid */
       .meals-grid {
-        grid-template-columns: 1fr;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: var(--spacing-lg);
+      }
+
+      .meal-card {
+        background: var(--bg-secondary);
+        border: 2px solid var(--border-light);
+        border-radius: var(--radius-lg);
+        padding: var(--spacing-lg);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+      }
+
+      .meal-card:hover {
+        border-color: var(--primary-color);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+      }
+
+      .meal-type-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        background: var(--primary-color);
+        color: var(--text-white);
+        padding: var(--spacing-xs) var(--spacing-sm);
+        border-radius: var(--radius-lg);
+        font-size: 0.875rem;
+        font-weight: 600;
+        margin-bottom: var(--spacing-md);
+      }
+
+      .meal-type-badge.breakfast {
+        background: #f59e0b;
+      }
+
+      .meal-type-badge.lunch {
+        background: #10b981;
+      }
+
+      .meal-type-badge.dinner {
+        background: #6366f1;
+      }
+
+      .meal-type-badge.snack {
+        background: #ec4899;
+      }
+
+      .meal-name {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-sm);
+      }
+
+      .meal-time {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+      }
+
+      /* Meal Details Content */
+      .meal-details-content {
+        margin-bottom: var(--spacing-xl);
+      }
+
+      .meal-description {
+        font-size: 1rem;
+        color: var(--text-secondary);
+        margin-bottom: var(--spacing-lg);
+        padding: var(--spacing-md);
+        background: var(--bg-tertiary);
+        border-radius: var(--radius-md);
+        border-left: 4px solid var(--primary-color);
       }
 
       .meal-info-grid {
-        grid-template-columns: 1fr;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-lg);
       }
 
-      .meal-actions {
-        flex-direction: column;
-      }
-
-      .ingredient-item {
-        grid-template-columns: 1fr;
+      .info-item {
+        display: flex;
+        align-items: center;
         gap: var(--spacing-xs);
+        padding: var(--spacing-sm);
+        background: var(--bg-secondary);
+        border-radius: var(--radius-md);
+        font-size: 0.875rem;
+        color: var(--text-secondary);
       }
 
-      .ingredient-amount {
-        justify-self: start;
-      }
-    }
-
-    /* Empty Day Popup Styles */
-    .empty-day-popup {
-      max-width: 500px;
-      border-radius: var(--radius-xl);
-    }
-
-    .empty-day-content {
-      text-align: center;
-      padding: var(--spacing-lg);
-    }
-
-    .empty-day-icon {
-      width: 80px;
-      height: 80px;
-      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto var(--spacing-lg);
-      color: var(--text-white);
-      font-size: 2rem;
-      box-shadow: 0 8px 25px rgba(245, 158, 11, 0.3);
-      animation: pulse-warning 2s infinite;
-    }
-
-    @keyframes pulse-warning {
-      0%, 100% {
-        transform: scale(1);
-        box-shadow: 0 8px 25px rgba(245, 158, 11, 0.3);
-      }
-      50% {
-        transform: scale(1.05);
-        box-shadow: 0 12px 35px rgba(245, 158, 11, 0.4);
-      }
-    }
-
-    .empty-day-title {
-      font-size: 1.5rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: var(--spacing-md);
-      line-height: 1.3;
-    }
-
-    .empty-day-message {
-      font-size: 1rem;
-      color: var(--text-secondary);
-      margin-bottom: var(--spacing-xl);
-      line-height: 1.5;
-      max-width: 400px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    .empty-day-actions {
-      display: flex;
-      gap: var(--spacing-md);
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    /* Date Limit Warning Popup Styles */
-    .date-limit-popup {
-      max-width: 500px;
-      border-radius: var(--radius-xl);
-    }
-
-    .warning-content {
-      text-align: center;
-      padding: var(--spacing-lg);
-    }
-
-    .warning-icon {
-      width: 80px;
-      height: 80px;
-      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto var(--spacing-lg);
-      color: var(--text-white);
-      font-size: 2rem;
-      box-shadow: 0 8px 25px rgba(239, 68, 68, 0.3);
-      animation: pulse-error 2s infinite;
-    }
-
-    @keyframes pulse-error {
-      0%, 100% {
-        transform: scale(1);
-        box-shadow: 0 8px 25px rgba(239, 68, 68, 0.3);
-      }
-      50% {
-        transform: scale(1.05);
-        box-shadow: 0 12px 30px rgba(239, 68, 68, 0.4);
-      }
-    }
-
-    .warning-title {
-      font-size: 1.5rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: var(--spacing-md);
-    }
-
-    .warning-message {
-      color: var(--text-secondary);
-      font-size: 1rem;
-      line-height: 1.6;
-      margin-bottom: var(--spacing-lg);
-    }
-
-    .warning-actions {
-      display: flex;
-      gap: var(--spacing-md);
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    /* Animation for auto-closing popup */
-    .modal-overlay.auto-closing {
-      animation: fadeOutSlow 1s ease-out forwards;
-    }
-
-    @keyframes fadeOutSlow {
-      0% {
-        opacity: 1;
-      }
-      70% {
-        opacity: 1;
-      }
-      100% {
-        opacity: 0;
-        visibility: hidden;
-      }
-    }
-
-    /* Mobile adjustments for empty day popup */
-    @media (max-width: 768px) {
-      .empty-day-popup {
-        max-width: 90%;
+      .info-item i {
+        color: var(--primary-color);
+        width: 16px;
+        text-align: center;
       }
 
-      .empty-day-content {
-        padding: var(--spacing-md);
+      .meal-section {
+        margin-bottom: var(--spacing-lg);
       }
 
-      .empty-day-icon {
-        width: 60px;
-        height: 60px;
-        font-size: 1.5rem;
+      .meal-section h4 {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-md);
+        padding-bottom: var(--spacing-sm);
+        border-bottom: 2px solid var(--border-light);
       }
 
-      .empty-day-title {
-        font-size: 1.25rem;
+      .meal-section h4 i {
+        color: var(--primary-color);
       }
 
-      .empty-day-actions {
-        flex-direction: column;
-      }
-
-      .empty-day-actions .btn {
-        width: 100%;
-        justify-content: center;
-      }
-    }
-
-    /* Monthly Goals Section */
-    .monthly-goals-section {
-      margin-top: var(--spacing-2xl);
-    }
-
-    .goals-card {
-      background: var(--bg-primary);
-      border-radius: var(--radius-xl);
-      padding: var(--spacing-xl);
-      box-shadow: var(--shadow-md);
-      border: 1px solid var(--border-light);
-    }
-
-    .goals-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: var(--spacing-lg);
-      padding-bottom: var(--spacing-md);
-      border-bottom: 2px solid var(--border-light);
-    }
-
-    .goals-title {
-      font-size: 1.875rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-sm);
-    }
-
-    .goals-icon {
-      color: var(--primary-color);
-      font-size: 1.5rem;
-    }
-
-    .goals-month {
-      font-size: 1rem;
-      color: var(--text-secondary);
-      background: var(--bg-tertiary);
-      padding: var(--spacing-xs) var(--spacing-md);
-      border-radius: var(--radius-lg);
-      font-weight: 500;
-    }
-
-    .goals-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: var(--spacing-lg);
-    }
-
-    .goal-item {
-      background: var(--bg-secondary);
-      border-radius: var(--radius-lg);
-      padding: var(--spacing-lg);
-      border-left: 4px solid var(--primary-color);
-      transition: all 0.3s ease;
-    }
-
-    .goal-item:hover {
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-md);
-    }
-
-    .goal-item.meal-plans {
-      border-left-color: var(--primary-color);
-    }
-
-    .goal-item.meals-completed {
-      border-left-color: var(--success-color);
-    }
-
-    .goal-item.new-recipes {
-      border-left-color: var(--warning-color);
-    }
-
-
-    .goal-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: var(--spacing-md);
-    }
-
-    .goal-label {
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-xs);
-    }
-
-    .goal-label i {
-      color: var(--primary-color);
-      font-size: 0.875rem;
-    }
-
-    .goal-input {
-      width: 80px;
-      padding: var(--spacing-xs) var(--spacing-sm);
-      border: 2px solid var(--border-light);
-      border-radius: var(--radius-md);
-      font-size: 0.875rem;
-      font-family: var(--font-family);
-      text-align: center;
-      transition: border-color 0.3s ease;
-    }
-
-    .goal-input:focus {
-      outline: none;
-      border-color: var(--primary-color);
-    }
-
-    .goal-progress {
-      margin-bottom: var(--spacing-sm);
-    }
-
-    .progress-bar {
-      width: 100%;
-      height: 8px;
-      background: var(--bg-tertiary);
-      border-radius: var(--radius-sm);
-      overflow: hidden;
-    }
-
-    .progress-fill {
-      height: 100%;
-      background: var(--primary-gradient);
-      border-radius: var(--radius-sm);
-      transition: width 0.3s ease;
-    }
-
-    .progress-fill.success {
-      background: var(--success-gradient);
-    }
-
-    .progress-fill.warning {
-      background: var(--warning-gradient);
-    }
-
-    .progress-fill.accent {
-      background: var(--accent-gradient);
-    }
-
-    .goal-stats {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.875rem;
-      color: var(--text-secondary);
-      margin-top: var(--spacing-xs);
-    }
-
-    .current-count {
-      font-weight: 600;
-      color: var(--text-primary);
-    }
-
-    .goal-target {
-      color: var(--text-muted);
-    }
-
-    .goals-actions {
-      margin-top: var(--spacing-xl);
-      display: flex;
-      gap: var(--spacing-md);
-      justify-content: center;
-    }
-
-    .btn-save-goals {
-      background: var(--primary-gradient);
-      color: var(--text-white);
-      padding: var(--spacing-sm) var(--spacing-xl);
-      border: none;
-      border-radius: var(--radius-lg);
-      font-size: 1rem;
-      font-weight: 600;
-      font-family: var(--font-family);
-      cursor: pointer;
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-sm);
-    }
-
-    .btn-save-goals:hover {
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-lg);
-    }
-
-    .btn-reset-goals {
-      background: var(--bg-primary);
-      color: var(--text-secondary);
-      padding: var(--spacing-sm) var(--spacing-lg);
-      border: 2px solid var(--border-medium);
-      border-radius: var(--radius-lg);
-      font-size: 1rem;
-      font-weight: 500;
-      font-family: var(--font-family);
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .btn-reset-goals:hover {
-      background: var(--bg-secondary);
-      border-color: var(--primary-color);
-      transform: translateY(-2px);
-    }
-
-    /* Mobile responsive for goals */
-    @media (max-width: 768px) {
-      .goals-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .goals-header {
-        flex-direction: column;
-        align-items: flex-start;
+      .ingredients-list {
+        display: grid;
         gap: var(--spacing-sm);
       }
 
-      .goals-actions {
-        flex-direction: column;
+      .ingredient-item {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: var(--spacing-md);
+        padding: var(--spacing-sm) var(--spacing-md);
+        background: var(--bg-secondary);
+        border-radius: var(--radius-md);
+        border-left: 3px solid var(--primary-color);
       }
 
-      .btn-save-goals,
-      .btn-reset-goals {
+      .ingredient-item.custom {
+        border-left-color: var(--warning-color);
+        background: rgba(245, 158, 11, 0.1);
+      }
+
+      .ingredient-name {
+        font-weight: 500;
+        color: var(--text-primary);
+      }
+
+      .ingredient-amount {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        font-weight: 600;
+      }
+
+      .ingredient-notes {
+        grid-column: 1 / -1;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        font-style: italic;
+        margin-top: var(--spacing-xs);
+      }
+
+      .instructions-content,
+      .notes-content {
+        background: var(--bg-secondary);
+        padding: var(--spacing-md);
+        border-radius: var(--radius-md);
+        line-height: 1.6;
+        color: var(--text-primary);
+      }
+
+      .meal-actions {
+        display: flex;
+        gap: var(--spacing-md);
+        justify-content: flex-end;
+        padding-top: var(--spacing-lg);
+        border-top: 1px solid var(--border-light);
+      }
+
+      .btn {
+        padding: var(--spacing-sm) var(--spacing-lg);
+        border: none;
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        font-size: 0.875rem;
+        font-family: inherit;
+      }
+
+      .btn-primary {
+        background: var(--primary-gradient);
+        color: var(--text-white);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+      }
+
+      .btn-secondary {
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        border: 2px solid var(--border-medium);
+        box-shadow: var(--shadow-sm);
+      }
+
+      .btn-secondary:hover {
+        background: var(--bg-secondary);
+        border-color: var(--primary-color);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+      }
+
+      /* Mobile Responsive */
+      @media (max-width: 768px) {
+        .modal-content {
+          width: 95%;
+          max-height: 95vh;
+        }
+
+        .modal-header {
+          padding: var(--spacing-lg);
+        }
+
+        .modal-body {
+          padding: var(--spacing-lg);
+        }
+
+        .meals-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .meal-info-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .meal-actions {
+          flex-direction: column;
+        }
+
+        .ingredient-item {
+          grid-template-columns: 1fr;
+          gap: var(--spacing-xs);
+        }
+
+        .ingredient-amount {
+          justify-self: start;
+        }
+      }
+
+      /* Empty Day Popup Styles */
+      .empty-day-popup {
+        max-width: 500px;
+        border-radius: var(--radius-xl);
+      }
+
+      .empty-day-content {
+        text-align: center;
+        padding: var(--spacing-lg);
+      }
+
+      .empty-day-icon {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto var(--spacing-lg);
+        color: var(--text-white);
+        font-size: 2rem;
+        box-shadow: 0 8px 25px rgba(245, 158, 11, 0.3);
+        animation: pulse-warning 2s infinite;
+      }
+
+      @keyframes pulse-warning {
+        0%,
+        100% {
+          transform: scale(1);
+          box-shadow: 0 8px 25px rgba(245, 158, 11, 0.3);
+        }
+        50% {
+          transform: scale(1.05);
+          box-shadow: 0 12px 35px rgba(245, 158, 11, 0.4);
+        }
+      }
+
+      .empty-day-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-md);
+        line-height: 1.3;
+      }
+
+      .empty-day-message {
+        font-size: 1rem;
+        color: var(--text-secondary);
+        margin-bottom: var(--spacing-xl);
+        line-height: 1.5;
+        max-width: 400px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .empty-day-actions {
+        display: flex;
+        gap: var(--spacing-md);
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      /* Date Limit Warning Popup Styles */
+      .date-limit-popup {
+        max-width: 500px;
+        border-radius: var(--radius-xl);
+      }
+
+      .warning-content {
+        text-align: center;
+        padding: var(--spacing-lg);
+      }
+
+      .warning-icon {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto var(--spacing-lg);
+        color: var(--text-white);
+        font-size: 2rem;
+        box-shadow: 0 8px 25px rgba(239, 68, 68, 0.3);
+        animation: pulse-error 2s infinite;
+      }
+
+      @keyframes pulse-error {
+        0%,
+        100% {
+          transform: scale(1);
+          box-shadow: 0 8px 25px rgba(239, 68, 68, 0.3);
+        }
+        50% {
+          transform: scale(1.05);
+          box-shadow: 0 12px 30px rgba(239, 68, 68, 0.4);
+        }
+      }
+
+      .warning-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-md);
+      }
+
+      .warning-message {
+        color: var(--text-secondary);
+        font-size: 1rem;
+        line-height: 1.6;
+        margin-bottom: var(--spacing-lg);
+      }
+
+      .warning-actions {
+        display: flex;
+        gap: var(--spacing-md);
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      /* Animation for auto-closing popup */
+      .modal-overlay.auto-closing {
+        animation: fadeOutSlow 1s ease-out forwards;
+      }
+
+      @keyframes fadeOutSlow {
+        0% {
+          opacity: 1;
+        }
+        70% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 0;
+          visibility: hidden;
+        }
+      }
+
+      /* Mobile adjustments for empty day popup */
+      @media (max-width: 768px) {
+        .empty-day-popup {
+          max-width: 90%;
+        }
+
+        .empty-day-content {
+          padding: var(--spacing-md);
+        }
+
+        .empty-day-icon {
+          width: 60px;
+          height: 60px;
+          font-size: 1.5rem;
+        }
+
+        .empty-day-title {
+          font-size: 1.25rem;
+        }
+
+        .empty-day-actions {
+          flex-direction: column;
+        }
+
+        .empty-day-actions .btn {
+          width: 100%;
+          justify-content: center;
+        }
+      }
+
+      /* Monthly Goals Section */
+      .monthly-goals-section {
+        margin-top: var(--spacing-2xl);
+      }
+
+      .goals-card {
+        background: var(--bg-primary);
+        border-radius: var(--radius-xl);
+        padding: var(--spacing-xl);
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-light);
+      }
+
+      .goals-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: var(--spacing-lg);
+        padding-bottom: var(--spacing-md);
+        border-bottom: 2px solid var(--border-light);
+      }
+
+      .goals-title {
+        font-size: 1.875rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+      }
+
+      .goals-icon {
+        color: var(--primary-color);
+        font-size: 1.5rem;
+      }
+
+      .goals-month {
+        font-size: 1rem;
+        color: var(--text-secondary);
+        background: var(--bg-tertiary);
+        padding: var(--spacing-xs) var(--spacing-md);
+        border-radius: var(--radius-lg);
+        font-weight: 500;
+      }
+
+      .goals-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: var(--spacing-lg);
+      }
+
+      .goal-item {
+        background: var(--bg-secondary);
+        border-radius: var(--radius-lg);
+        padding: var(--spacing-lg);
+        border-left: 4px solid var(--primary-color);
+        transition: all 0.3s ease;
+      }
+
+      .goal-item:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+      }
+
+      .goal-item.meal-plans {
+        border-left-color: var(--primary-color);
+      }
+
+      .goal-item.meals-completed {
+        border-left-color: var(--success-color);
+      }
+
+      .goal-item.new-recipes {
+        border-left-color: var(--warning-color);
+      }
+
+      .goal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: var(--spacing-md);
+      }
+
+      .goal-label {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+      }
+
+      .goal-label i {
+        color: var(--primary-color);
+        font-size: 0.875rem;
+      }
+
+      .goal-input {
+        width: 80px;
+        padding: var(--spacing-xs) var(--spacing-sm);
+        border: 2px solid var(--border-light);
+        border-radius: var(--radius-md);
+        font-size: 0.875rem;
+        font-family: var(--font-family);
+        text-align: center;
+        transition: border-color 0.3s ease;
+      }
+
+      .goal-input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+      }
+
+      .goal-progress {
+        margin-bottom: var(--spacing-sm);
+      }
+
+      .progress-bar {
         width: 100%;
+        height: 8px;
+        background: var(--bg-tertiary);
+        border-radius: var(--radius-sm);
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: var(--primary-gradient);
+        border-radius: var(--radius-sm);
+        transition: width 0.3s ease;
+      }
+
+      .progress-fill.success {
+        background: var(--success-gradient);
+      }
+
+      .progress-fill.warning {
+        background: var(--warning-gradient);
+      }
+
+      .progress-fill.accent {
+        background: var(--accent-gradient);
+      }
+
+      .goal-stats {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        margin-top: var(--spacing-xs);
+      }
+
+      .current-count {
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+
+      .goal-target {
+        color: var(--text-muted);
+      }
+
+      .goals-actions {
+        margin-top: var(--spacing-xl);
+        display: flex;
+        gap: var(--spacing-md);
         justify-content: center;
       }
-    }
-  </style>
-</head>
 
-<body>
-  <!-- Header -->
-  <header class="header">
-    <div class="nav-container">
-      <a href="{{ url_for('shopping.home') }}" class="logo">
-        <img src="{{ url_for('static', filename='images/preppr-logo.png') }}" alt="Preppr Logo" style="width: 40px; height: 40px; border-radius: var(--radius-lg);">
-        Preppr
-      </a>
-      
-      <nav>
-        <ul class="nav-links">
-          <li><a href="{{ url_for('shopping.home') }}" class="nav-link">
-            <i class="fas fa-home" style="margin-right: 6px; font-size: 0.85em;"></i>Home
-          </a></li>
-          <li class="nav-dropdown">
-            <a href="#" class="nav-link dropdown-toggle">
-              <i class="fas fa-shopping-cart" style="margin-right: 6px; font-size: 0.85em;"></i>Shopping
-              <i class="fas fa-chevron-down dropdown-arrow" style="margin-left: 6px; font-size: 0.7em;"></i>
-            </a>
-            <ul class="dropdown-menu">
-              <li><a href="{{ url_for('shopping.shopping_trip') }}" class="dropdown-link">
-                <i class="fas fa-cart-plus"></i>New Trip
-              </a></li>
-              <li><a href="{{ url_for('shopping.shopping_lists') }}" class="dropdown-link">
-                <i class="fas fa-list-ul"></i>Lists
-              </a></li>
-            </ul>
-          </li>
-          <li><a href="{{ url_for('shopping.budget') }}" class="nav-link">
-            <i class="fas fa-chart-line" style="margin-right: 6px; font-size: 0.85em;"></i>Budget & Analytics
-          </a></li>
-          <li class="nav-dropdown">
-            <a href="#" class="nav-link dropdown-toggle">
-              <i class="fas fa-utensils" style="margin-right: 6px; font-size: 0.85em;"></i>Kitchen
-              <i class="fas fa-chevron-down dropdown-arrow" style="margin-left: 6px; font-size: 0.7em;"></i>
-            </a>
-            <ul class="dropdown-menu">
-              <li><a href="{{ url_for('shopping.pantry') }}" class="dropdown-link">
-                <i class="fas fa-warehouse"></i>My Pantry
-              </a></li>
-              <li><a href="{{ url_for('shopping.meal_plans') }}" class="dropdown-link" style="color: var(--primary-color);">
-                <i class="fas fa-calendar-alt"></i>Meal Plans
-              </a></li>
-            </ul>
-          </li>
-          <li class="nav-dropdown">
-            <a href="#" class="nav-link dropdown-toggle">
-              <i class="fas fa-user" style="margin-right: 6px; font-size: 0.85em;"></i>Account
-              <i class="fas fa-chevron-down dropdown-arrow" style="margin-left: 6px; font-size: 0.7em;"></i>
-            </a>
-            <ul class="dropdown-menu">
-              <li><a href="{{ url_for('auth.settings') }}" class="dropdown-link">
-                <i class="fas fa-cog"></i>Settings
-              </a></li>
-              <li><a href="{{ url_for('auth.logout') }}" class="dropdown-link logout">
-                <i class="fas fa-sign-out-alt"></i>Logout
-              </a></li>
-            </ul>
-          </li>
-        </ul>
-        
-        <button class="mobile-menu-btn" aria-label="Toggle mobile menu">
-          <i class="fas fa-bars"></i>
-        </button>
-      </nav>
-    </div>
-  </header>
+      .btn-save-goals {
+        background: var(--primary-gradient);
+        color: var(--text-white);
+        padding: var(--spacing-sm) var(--spacing-xl);
+        border: none;
+        border-radius: var(--radius-lg);
+        font-size: 1rem;
+        font-weight: 600;
+        font-family: var(--font-family);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+      }
 
-  <!-- Main Content -->
-  <main class="main-content">
-    <!-- Page Header -->
-    <div class="page-header">
-      <h1 class="page-title">Meal Plans</h1>
-    </div>
+      .btn-save-goals:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+      }
 
-    <!-- Calendar Section -->
-    <section class="calendar-section">
-      <div class="calendar-header">
-        <h2 class="section-title" id="calendarTitle">Your Month at a Glance</h2>
-        
-        <div class="calendar-view-toggle">
-          <button class="calendar-view-btn active" data-view="month">Month</button>
-          <button class="calendar-view-btn" data-view="week">Week</button>
-        </div>
-        
-        <div class="calendar-nav">
-          <button class="calendar-nav-btn" id="prevMonth">
-            <i class="fas fa-chevron-left"></i>
+      .btn-reset-goals {
+        background: var(--bg-primary);
+        color: var(--text-secondary);
+        padding: var(--spacing-sm) var(--spacing-lg);
+        border: 2px solid var(--border-medium);
+        border-radius: var(--radius-lg);
+        font-size: 1rem;
+        font-weight: 500;
+        font-family: var(--font-family);
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .btn-reset-goals:hover {
+        background: var(--bg-secondary);
+        border-color: var(--primary-color);
+        transform: translateY(-2px);
+      }
+
+      /* Mobile responsive for goals */
+      @media (max-width: 768px) {
+        .goals-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .goals-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: var(--spacing-sm);
+        }
+
+        .goals-actions {
+          flex-direction: column;
+        }
+
+        .btn-save-goals,
+        .btn-reset-goals {
+          width: 100%;
+          justify-content: center;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Header -->
+    <header class="header">
+      <div class="nav-container">
+        <a href="{{ url_for('shopping.home') }}" class="logo">
+          <img
+            src="{{ url_for('static', filename='images/preppr-logo.png') }}"
+            alt="Preppr Logo"
+            style="width: 40px; height: 40px; border-radius: var(--radius-lg)"
+          />
+          Preppr
+        </a>
+
+        <nav>
+          <ul class="nav-links">
+            <li>
+              <a href="{{ url_for('shopping.home') }}" class="nav-link">
+                <i
+                  class="fas fa-home"
+                  style="margin-right: 6px; font-size: 0.85em"
+                ></i
+                >Home
+              </a>
+            </li>
+            <li class="nav-dropdown">
+              <a href="#" class="nav-link dropdown-toggle">
+                <i
+                  class="fas fa-shopping-cart"
+                  style="margin-right: 6px; font-size: 0.85em"
+                ></i
+                >Shopping
+                <i
+                  class="fas fa-chevron-down dropdown-arrow"
+                  style="margin-left: 6px; font-size: 0.7em"
+                ></i>
+              </a>
+              <ul class="dropdown-menu">
+                <li>
+                  <a
+                    href="{{ url_for('shopping.shopping_trip') }}"
+                    class="dropdown-link"
+                  >
+                    <i class="fas fa-cart-plus"></i>New Trip
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="{{ url_for('shopping.shopping_lists') }}"
+                    class="dropdown-link"
+                  >
+                    <i class="fas fa-list-ul"></i>Lists
+                  </a>
+                </li>
+              </ul>
+            </li>
+            <li>
+              <a href="{{ url_for('shopping.budget') }}" class="nav-link">
+                <i
+                  class="fas fa-chart-line"
+                  style="margin-right: 6px; font-size: 0.85em"
+                ></i
+                >Budget & Analytics
+              </a>
+            </li>
+            <li class="nav-dropdown">
+              <a href="#" class="nav-link dropdown-toggle">
+                <i
+                  class="fas fa-utensils"
+                  style="margin-right: 6px; font-size: 0.85em"
+                ></i
+                >Kitchen
+                <i
+                  class="fas fa-chevron-down dropdown-arrow"
+                  style="margin-left: 6px; font-size: 0.7em"
+                ></i>
+              </a>
+              <ul class="dropdown-menu">
+                <li>
+                  <a
+                    href="{{ url_for('shopping.pantry') }}"
+                    class="dropdown-link"
+                  >
+                    <i class="fas fa-warehouse"></i>My Pantry
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="{{ url_for('shopping.meal_plans') }}"
+                    class="dropdown-link"
+                    style="color: var(--primary-color)"
+                  >
+                    <i class="fas fa-calendar-alt"></i>Meal Plans
+                  </a>
+                </li>
+              </ul>
+            </li>
+            <li class="nav-dropdown">
+              <a href="#" class="nav-link dropdown-toggle">
+                <i
+                  class="fas fa-user"
+                  style="margin-right: 6px; font-size: 0.85em"
+                ></i
+                >Account
+                <i
+                  class="fas fa-chevron-down dropdown-arrow"
+                  style="margin-left: 6px; font-size: 0.7em"
+                ></i>
+              </a>
+              <ul class="dropdown-menu">
+                <li>
+                  <a
+                    href="{{ url_for('auth.settings') }}"
+                    class="dropdown-link"
+                  >
+                    <i class="fas fa-cog"></i>Settings
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="{{ url_for('auth.logout') }}"
+                    class="dropdown-link logout"
+                  >
+                    <i class="fas fa-sign-out-alt"></i>Logout
+                  </a>
+                </li>
+              </ul>
+            </li>
+          </ul>
+
+          <button class="mobile-menu-btn" aria-label="Toggle mobile menu">
+            <i class="fas fa-bars"></i>
           </button>
-          <div class="calendar-month-year" id="monthYear">
-            <!-- Month and year will be inserted here -->
-          </div>
-          <button class="calendar-nav-btn" id="nextMonth">
-            <i class="fas fa-chevron-right"></i>
-          </button>
-        </div>
+        </nav>
       </div>
-      
-      <div class="calendar-container">
-        <div class="calendar-grid" id="calendarGrid">
-          <!-- Calendar will be generated here -->
-        </div>
-      </div>
-      
-      <div class="calendar-legend">
-        <div class="calendar-legend-item">
-          <div class="calendar-legend-color" style="background: var(--warning-color);"></div>
-          <span>Breakfast</span>
-        </div>
-        <div class="calendar-legend-item">
-          <div class="calendar-legend-color" style="background: var(--primary-color);"></div>
-          <span>Lunch</span>
-        </div>
-        <div class="calendar-legend-item">
-          <div class="calendar-legend-color" style="background: var(--secondary-color);"></div>
-          <span>Dinner</span>
-        </div>
-      </div>
-    </section>
+    </header>
 
-    <!-- Generate New Plan Section -->
-    <section class="generate-section">
-      <h2 class="section-title">Generate Meal Plan</h2>
-      <form class="generate-form" id="generateForm">
-        <div class="form-group">
-          <label for="start_date" class="form-label">Start Date</label>
-          <input type="date" id="start_date" name="start_date" class="form-input" required min="">
-        </div>
-        
-        <div class="form-group">
-          <label for="days" class="form-label">Number of Days: <span id="daysValue">7</span></label>
-          <input type="range" id="days" name="days" class="form-range" min="1" max="14" value="7" step="1">
-          <div class="range-labels">
-            <span>1 day</span>
-            <span>14 days</span>
-          </div>
-        </div>
-        
-        <div class="form-group">
-          <label for="dietary_preference" class="form-label">Dietary Preference</label>
-          <select id="dietary_preference" name="dietary_preference" class="form-select">
-            <option value="none">No Restrictions</option>
-            <option value="vegetarian">Vegetarian</option>
-            <option value="vegan">Vegan</option>
-            <option value="keto">Keto</option>
-            <option value="paleo">Paleo</option>
-            <option value="mediterranean">Mediterranean</option>
-            <option value="low_carb">Low Carb</option>
-            <option value="gluten_free">Gluten Free</option>
-          </select>
-        </div>
-        
-        <div class="form-group">
-          <label for="budget" class="form-label">Budget (Optional)</label>
-          <div class="budget-input-wrapper">
-            <span class="budget-symbol">$</span>
-            <input type="number" id="budget" name="budget" class="form-input budget-input" placeholder="50" min="10" max="1000" step="5">
-          </div>
-        </div>
-        
-        <div class="form-group">
-          <label for="cooking_time" class="form-label">Max Cooking Time/Day</label>
-          <select id="cooking_time" name="cooking_time" class="form-select">
-            <option value="30">30 minutes</option>
-            <option value="60" selected>1 hour</option>
-            <option value="90">1.5 hours</option>
-            <option value="120">2 hours</option>
-          </select>
-        </div>
-      </form>
-      
-      <button type="button" class="btn-generate" id="generateBtn">
-        <div class="spinner" id="spinner"></div>
-        <i class="fas fa-magic" id="generateIcon"></i>
-        <span id="generateText">Generate Meal Plan</span>
-      </button>
-    </section>
-
-    <!-- Existing Plans Section -->
-    <section class="plans-section">
-      <h2 class="section-title">Your Meal Plans</h2>
-      <div class="plans-grid" id="plansGrid">
-        <!-- Plans will be loaded here -->
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Page Header -->
+      <div class="page-header">
+        <h1 class="page-title">Meal Plans</h1>
       </div>
-      
-      <!-- Empty state -->
-      <div class="empty-state" id="emptyState" style="display: none;">
-        <div class="empty-icon">
-          <i class="fas fa-utensils"></i>
-        </div>
-        <h3 class="empty-title">No Meal Plans Yet</h3>
-        <p class="empty-description">
-          Generate your first AI-powered meal plan using your pantry ingredients and preferences. 
-          Get personalized recipes, shopping lists, and batch prep instructions.
-        </p>
-      </div>
-    </section>
 
-    <!-- Monthly Goals Section -->
-    <section class="monthly-goals-section">
-      <div class="goals-card">
-        <div class="goals-header">
-          <h2 class="goals-title">
-            <i class="fas fa-target goals-icon"></i>
-            Monthly Meal Planning Goals
+      <!-- Calendar Section -->
+      <section class="calendar-section">
+        <div class="calendar-header">
+          <h2 class="section-title" id="calendarTitle">
+            Your Month at a Glance
           </h2>
-          <div class="goals-month" id="currentMonth">
-            <!-- Will be populated by JavaScript -->
+
+          <div class="calendar-view-toggle">
+            <button class="calendar-view-btn active" data-view="month">
+              Month
+            </button>
+            <button class="calendar-view-btn" data-view="week">Week</button>
+          </div>
+
+          <div class="calendar-nav">
+            <button class="calendar-nav-btn" id="prevMonth">
+              <i class="fas fa-chevron-left"></i>
+            </button>
+            <div class="calendar-month-year" id="monthYear">
+              <!-- Month and year will be inserted here -->
+            </div>
+            <button class="calendar-nav-btn" id="nextMonth">
+              <i class="fas fa-chevron-right"></i>
+            </button>
           </div>
         </div>
 
-        <div class="goals-grid">
-          <!-- Meal Plans Generated Goal -->
-          <div class="goal-item meal-plans">
-            <div class="goal-header">
-              <div class="goal-label">
-                <i class="fas fa-calendar-alt"></i>
-                Meal Plans Generated
-              </div>
-              <input type="number" class="goal-input" id="mealPlansGoal" min="1" max="20" value="4">
-            </div>
-            <div class="goal-progress">
-              <div class="progress-bar">
-                <div class="progress-fill" id="mealPlansProgress" style="width: 0%"></div>
-              </div>
-            </div>
-            <div class="goal-stats">
-              <span class="current-count" id="mealPlansCount">0 plans</span>
-              <span class="goal-target">Goal: <span id="mealPlansTarget">4</span></span>
-            </div>
+        <div class="calendar-container">
+          <div class="calendar-grid" id="calendarGrid">
+            <!-- Calendar will be generated here -->
           </div>
-
-          <!-- Meals Completed Goal -->
-          <div class="goal-item meals-completed">
-            <div class="goal-header">
-              <div class="goal-label">
-                <i class="fas fa-check-circle"></i>
-                Meals Completed
-              </div>
-              <input type="number" class="goal-input" id="mealsCompletedGoal" min="10" max="200" value="60">
-            </div>
-            <div class="goal-progress">
-              <div class="progress-bar">
-                <div class="progress-fill success" id="mealsCompletedProgress" style="width: 0%"></div>
-              </div>
-            </div>
-            <div class="goal-stats">
-              <span class="current-count" id="mealsCompletedCount">0 meals</span>
-              <span class="goal-target">Goal: <span id="mealsCompletedTarget">60</span></span>
-            </div>
-          </div>
-
-          <!-- New Recipes Tried Goal -->
-          <div class="goal-item new-recipes">
-            <div class="goal-header">
-              <div class="goal-label">
-                <i class="fas fa-utensils"></i>
-                New Recipes Tried
-              </div>
-              <input type="number" class="goal-input" id="newRecipesGoal" min="1" max="50" value="12">
-            </div>
-            <div class="goal-progress">
-              <div class="progress-bar">
-                <div class="progress-fill warning" id="newRecipesProgress" style="width: 0%"></div>
-              </div>
-            </div>
-            <div class="goal-stats">
-              <span class="current-count" id="newRecipesCount">0 recipes</span>
-              <span class="goal-target">Goal: <span id="newRecipesTarget">12</span></span>
-            </div>
-          </div>
-
         </div>
 
-        <div class="goals-actions">
-          <button class="btn-save-goals" id="saveGoalsBtn">
-            <i class="fas fa-save"></i>
-            Save Goals
-          </button>
-          <button class="btn-reset-goals" id="resetGoalsBtn">
-            Reset to Defaults
-          </button>
+        <div class="calendar-legend">
+          <div class="calendar-legend-item">
+            <div
+              class="calendar-legend-color"
+              style="background: var(--warning-color)"
+            ></div>
+            <span>Breakfast</span>
+          </div>
+          <div class="calendar-legend-item">
+            <div
+              class="calendar-legend-color"
+              style="background: var(--primary-color)"
+            ></div>
+            <span>Lunch</span>
+          </div>
+          <div class="calendar-legend-item">
+            <div
+              class="calendar-legend-color"
+              style="background: var(--secondary-color)"
+            ></div>
+            <span>Dinner</span>
+          </div>
         </div>
-      </div>
-    </section>
-  </main>
+      </section>
 
-  <!-- Footer -->
-  <footer class="footer">
-    <p>&copy; 2025 Preppr. All rights reserved. Prep smarter. Save time. Eat better.</p>
-  </footer>
+      <!-- Generate New Plan Section -->
+      <section class="generate-section">
+        <h2 class="section-title">Generate Meal Plan</h2>
+        <form class="generate-form" id="generateForm">
+          <div class="form-group">
+            <label for="start_date" class="form-label">Start Date</label>
+            <input
+              type="date"
+              id="start_date"
+              name="start_date"
+              class="form-input"
+              required
+              min=""
+            />
+          </div>
 
-<script src="{{ url_for('static', filename='js/meal_plans.js') }}"></script>
+          <div class="form-group">
+            <label for="days" class="form-label"
+              >Number of Days: <span id="daysValue">7</span></label
+            >
+            <input
+              type="range"
+              id="days"
+              name="days"
+              class="form-range"
+              min="1"
+              max="14"
+              value="7"
+              step="1"
+            />
+            <div class="range-labels">
+              <span>1 day</span>
+              <span>14 days</span>
+            </div>
+          </div>
 
-</body>
+          <div class="form-group">
+            <label for="dietary_preference" class="form-label"
+              >Dietary Preference</label
+            >
+            <select
+              id="dietary_preference"
+              name="dietary_preference"
+              class="form-select"
+            >
+              <option value="none">No Restrictions</option>
+              <option value="vegetarian">Vegetarian</option>
+              <option value="vegan">Vegan</option>
+              <option value="keto">Keto</option>
+              <option value="paleo">Paleo</option>
+              <option value="mediterranean">Mediterranean</option>
+              <option value="low_carb">Low Carb</option>
+              <option value="gluten_free">Gluten Free</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="budget" class="form-label">Budget (Optional)</label>
+            <div class="budget-input-wrapper">
+              <span class="budget-symbol">$</span>
+              <input
+                type="number"
+                id="budget"
+                name="budget"
+                class="form-input budget-input"
+                placeholder="50"
+                min="10"
+                max="1000"
+                step="5"
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="cooking_time" class="form-label"
+              >Max Cooking Time/Day</label
+            >
+            <select id="cooking_time" name="cooking_time" class="form-select">
+              <option value="30">30 minutes</option>
+              <option value="60" selected>1 hour</option>
+              <option value="90">1.5 hours</option>
+              <option value="120">2 hours</option>
+            </select>
+          </div>
+        </form>
+
+        <button type="button" class="btn-generate" id="generateBtn">
+          <div class="spinner" id="spinner"></div>
+          <i class="fas fa-magic" id="generateIcon"></i>
+          <span id="generateText">Generate Meal Plan</span>
+        </button>
+      </section>
+
+      <!-- Existing Plans Section -->
+      <section class="plans-section">
+        <h2 class="section-title">Your Meal Plans</h2>
+        <div class="plans-grid" id="plansGrid">
+          <!-- Plans will be loaded here -->
+        </div>
+
+        <!-- Empty state -->
+        <div class="empty-state" id="emptyState" style="display: none">
+          <div class="empty-icon">
+            <i class="fas fa-utensils"></i>
+          </div>
+          <h3 class="empty-title">No Meal Plans Yet</h3>
+          <p class="empty-description">
+            Generate your first AI-powered meal plan using your pantry
+            ingredients and preferences. Get personalized recipes, shopping
+            lists, and batch prep instructions.
+          </p>
+        </div>
+      </section>
+
+      <!-- Monthly Goals Section -->
+      <section class="monthly-goals-section">
+        <div class="goals-card">
+          <div class="goals-header">
+            <h2 class="goals-title">
+              <i class="fas fa-target goals-icon"></i>
+              Monthly Meal Planning Goals
+            </h2>
+            <div class="goals-month" id="currentMonth">
+              <!-- Will be populated by JavaScript -->
+            </div>
+          </div>
+
+          <div class="goals-grid">
+            <!-- Meal Plans Generated Goal -->
+            <div class="goal-item meal-plans">
+              <div class="goal-header">
+                <div class="goal-label">
+                  <i class="fas fa-calendar-alt"></i>
+                  Meal Plans Generated
+                </div>
+                <input
+                  type="number"
+                  class="goal-input"
+                  id="mealPlansGoal"
+                  min="1"
+                  max="20"
+                  value="4"
+                />
+              </div>
+              <div class="goal-progress">
+                <div class="progress-bar">
+                  <div
+                    class="progress-fill"
+                    id="mealPlansProgress"
+                    style="width: 0%"
+                  ></div>
+                </div>
+              </div>
+              <div class="goal-stats">
+                <span class="current-count" id="mealPlansCount">0 plans</span>
+                <span class="goal-target"
+                  >Goal: <span id="mealPlansTarget">4</span></span
+                >
+              </div>
+            </div>
+
+            <!-- Meals Completed Goal -->
+            <div class="goal-item meals-completed">
+              <div class="goal-header">
+                <div class="goal-label">
+                  <i class="fas fa-check-circle"></i>
+                  Meals Completed
+                </div>
+                <input
+                  type="number"
+                  class="goal-input"
+                  id="mealsCompletedGoal"
+                  min="10"
+                  max="200"
+                  value="60"
+                />
+              </div>
+              <div class="goal-progress">
+                <div class="progress-bar">
+                  <div
+                    class="progress-fill success"
+                    id="mealsCompletedProgress"
+                    style="width: 0%"
+                  ></div>
+                </div>
+              </div>
+              <div class="goal-stats">
+                <span class="current-count" id="mealsCompletedCount"
+                  >0 meals</span
+                >
+                <span class="goal-target"
+                  >Goal: <span id="mealsCompletedTarget">60</span></span
+                >
+              </div>
+            </div>
+
+            <!-- New Recipes Tried Goal -->
+            <div class="goal-item new-recipes">
+              <div class="goal-header">
+                <div class="goal-label">
+                  <i class="fas fa-utensils"></i>
+                  New Recipes Tried
+                </div>
+                <input
+                  type="number"
+                  class="goal-input"
+                  id="newRecipesGoal"
+                  min="1"
+                  max="50"
+                  value="12"
+                />
+              </div>
+              <div class="goal-progress">
+                <div class="progress-bar">
+                  <div
+                    class="progress-fill warning"
+                    id="newRecipesProgress"
+                    style="width: 0%"
+                  ></div>
+                </div>
+              </div>
+              <div class="goal-stats">
+                <span class="current-count" id="newRecipesCount"
+                  >0 recipes</span
+                >
+                <span class="goal-target"
+                  >Goal: <span id="newRecipesTarget">12</span></span
+                >
+              </div>
+            </div>
+          </div>
+
+          <div class="goals-actions">
+            <button class="btn-save-goals" id="saveGoalsBtn">
+              <i class="fas fa-save"></i>
+              Save Goals
+            </button>
+            <button class="btn-reset-goals" id="resetGoalsBtn">
+              Reset to Defaults
+            </button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>
+        &copy; 2025 Preppr. All rights reserved. Prep smarter. Save time. Eat
+        better.
+      </p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/meal_plans.js') }}"></script>
+  </body>
 </html>
