@@ -1352,7 +1352,7 @@ function closeEmptyDayPopupAndNavigate() {
     if (generateSection) {
       generateSection.scrollIntoView({
         behavior: "smooth",
-        block: "start",
+        block: "center",
       });
 
       // Set the start date to the selected empty date
