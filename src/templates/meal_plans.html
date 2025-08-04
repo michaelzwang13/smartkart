@@ -1336,6 +1336,64 @@
       flex-wrap: wrap;
     }
 
+    /* Date Limit Warning Popup Styles */
+    .date-limit-popup {
+      max-width: 500px;
+      border-radius: var(--radius-xl);
+    }
+
+    .warning-content {
+      text-align: center;
+      padding: var(--spacing-lg);
+    }
+
+    .warning-icon {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto var(--spacing-lg);
+      color: var(--text-white);
+      font-size: 2rem;
+      box-shadow: 0 8px 25px rgba(239, 68, 68, 0.3);
+      animation: pulse-error 2s infinite;
+    }
+
+    @keyframes pulse-error {
+      0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 8px 25px rgba(239, 68, 68, 0.3);
+      }
+      50% {
+        transform: scale(1.05);
+        box-shadow: 0 12px 30px rgba(239, 68, 68, 0.4);
+      }
+    }
+
+    .warning-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--spacing-md);
+    }
+
+    .warning-message {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      line-height: 1.6;
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .warning-actions {
+      display: flex;
+      gap: var(--spacing-md);
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
     /* Animation for auto-closing popup */
     .modal-overlay.auto-closing {
       animation: fadeOutSlow 1s ease-out forwards;

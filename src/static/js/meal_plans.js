@@ -261,12 +261,17 @@ document.addEventListener("DOMContentLoaded", function () {
   initializeDropdowns();
   handleDropdownResize();
 
-  // Set default start date to today and prevent past dates
+  // Set default start date to today and prevent past dates and future dates beyond one month
   const today = new Date();
   const todayString = today.toISOString().split("T")[0];
+  const oneMonthFromToday = new Date(today);
+  oneMonthFromToday.setMonth(today.getMonth() + 1);
+  const maxDateString = oneMonthFromToday.toISOString().split("T")[0];
+  
   const startDateInput = document.getElementById("start_date");
   startDateInput.value = todayString;
   startDateInput.min = todayString;
+  startDateInput.max = maxDateString;
 
   loadMealPlans();
   initializeCalendar();
@@ -873,6 +878,22 @@ async function generateMealPlan() {
       return;
     }
 
+    // Validate that start date is not more than one month in the future
+    const selectedDate = new Date(startDate);
+    const today = new Date();
+    const oneMonthFromToday = new Date(today);
+    oneMonthFromToday.setMonth(today.getMonth() + 1);
+
+    if (selectedDate > oneMonthFromToday) {
+      showDateLimitWarning();
+      // Reset button state
+      btn.disabled = false;
+      spinner.style.display = "none";
+      icon.style.display = "inline";
+      text.textContent = "Generate Meal Plan";
+      return;
+    }
+
     const data = {
       start_date: startDate,
       days: parseInt(formData.get("days")),
@@ -1374,6 +1395,81 @@ function closeEmptyDayPopupAndNavigate() {
       }, 800);
     }
   }, 300);
+}
+
+function showDateLimitWarning() {
+  const today = new Date();
+  const oneMonthFromToday = new Date(today);
+  oneMonthFromToday.setMonth(today.getMonth() + 1);
+  
+  const maxDateStr = oneMonthFromToday.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric"
+  });
+
+  const popupHTML = `
+    <div id="dateLimitWarning" class="modal-overlay">
+        <div class="modal-content date-limit-popup">
+        <div class="modal-body">
+            <div class="warning-content">
+            <div class="warning-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h3 class="warning-title">Date Too Far in Future</h3>
+            <p class="warning-message">
+                You can only plan meals up to one month in advance. Please select a date on or before <strong>${maxDateStr}</strong>.
+            </p>
+            <div class="warning-actions">
+                <button class="btn btn-primary" onclick="closeDateLimitWarning()">
+                <i class="fas fa-check"></i> Got It
+                </button>
+            </div>
+            </div>
+        </div>
+        </div>
+    </div>
+    `;
+
+  document.body.insertAdjacentHTML("beforeend", popupHTML);
+
+  // Show popup with animation
+  setTimeout(() => {
+    document.getElementById("dateLimitWarning").classList.add("show");
+  }, 10);
+
+  // Close popup when clicking outside
+  const popup = document.getElementById("dateLimitWarning");
+  popup.addEventListener("click", (e) => {
+    if (e.target === popup) {
+      closeDateLimitWarning();
+    }
+  });
+
+  // Close popup with Escape key
+  document.addEventListener("keydown", handleDateLimitEscape);
+}
+
+function handleDateLimitEscape(e) {
+  if (e.key === "Escape") {
+    const popup = document.getElementById("dateLimitWarning");
+    if (popup) {
+      closeDateLimitWarning();
+      document.removeEventListener("keydown", handleDateLimitEscape);
+    }
+  }
+}
+
+function closeDateLimitWarning() {
+  const popup = document.getElementById("dateLimitWarning");
+  if (popup) {
+    popup.classList.remove("show");
+    document.removeEventListener("keydown", handleDateLimitEscape);
+    setTimeout(() => {
+      popup.remove();
+    }, 300);
+  }
 }
 
 // Handle range input for number of days and calendar preview
