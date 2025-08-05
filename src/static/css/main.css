@@ -121,6 +121,7 @@ body {
   align-items: center;
   justify-content: space-between;
   height: 4rem;
+  position: relative;
 }
 
 .logo {
@@ -156,6 +157,9 @@ body {
 
 .nav-links.desktop {
   display: flex;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 .nav-link {
