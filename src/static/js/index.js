@@ -33,8 +33,8 @@ const Navigation = () => {
         
         // Desktop buttons
         React.createElement('div', { className: 'nav-buttons desktop' },
-          React.createElement('a', { href: '#', className: 'btn btn-ghost' }, 'Sign in'),
-          React.createElement('a', { href: '#', className: 'btn btn-primary' }, 'Get started free')
+          React.createElement('a', { href: '/login', className: 'btn btn-ghost' }, 'Sign in'),
+          React.createElement('a', { href: '/register', className: 'btn btn-primary' }, 'Get started free')
         ),
         
         // Mobile menu button
@@ -60,8 +60,8 @@ const Navigation = () => {
             }, link.name)
           ),
           React.createElement('div', { className: 'mobile-menu-buttons' },
-            React.createElement('a', { href: '#', className: 'btn btn-ghost' }, 'Sign in'),
-            React.createElement('a', { href: '#', className: 'btn btn-primary' }, 'Get started free')
+            React.createElement('a', { href: '/login', className: 'btn btn-ghost' }, 'Sign in'),
+            React.createElement('a', { href: '/register', className: 'btn btn-primary' }, 'Get started free')
           )
         )
       )
@@ -93,13 +93,9 @@ const HeroSection = () => {
             'Your AI-powered meal planning companion that tracks your pantry, creates personalized meal plans, and optimizes your shopping—all while reducing food waste and fitting your budget.'
           ),
           React.createElement('div', { className: 'hero-buttons' },
-            React.createElement('a', { href: '#', className: 'btn btn-primary btn-xl' },
-              'Start planning for free ',
+            React.createElement('a', { href: '/register', className: 'btn btn-primary btn-hero' },
+              'Start planning for free',
               React.createElement('span', { className: 'icon icon-arrow-right' })
-            ),
-            React.createElement('a', { href: '#', className: 'btn btn-ghost btn-xl' },
-              React.createElement('span', { className: 'icon icon-play' }),
-              ' Watch demo'
             )
           ),
           React.createElement('div', { className: 'hero-features' },
@@ -320,7 +316,7 @@ const FeaturesSection = () => {
           React.createElement('p', { className: 'features-cta-description' },
             'Join thousands of users who\'ve already discovered the joy of stress-free, budget-conscious meal planning with Preppr.'
           ),
-          React.createElement('a', { href: '#', className: 'features-cta-button' },
+          React.createElement('a', { href: '/register', className: 'features-cta-button' },
             'Start your free trial'
           )
         )
@@ -443,7 +439,7 @@ const TestimonialsSection = () => {
         React.createElement('h3', { className: 'testimonials-cta-title' },
           'Ready to start your meal planning journey?'
         ),
-        React.createElement('a', { href: '#', className: 'testimonials-cta-button' },
+        React.createElement('a', { href: '/register', className: 'testimonials-cta-button' },
           'Get started for free'
         )
       )
@@ -554,7 +550,7 @@ const PricingSection = () => {
             ),
 
             React.createElement('a', { 
-              href: '#', 
+              href: '/register', 
               className: `btn ${plan.popular ? 'btn-primary' : 'btn-secondary'} btn-lg`,
               style: { width: '100%' }
             }, plan.cta)

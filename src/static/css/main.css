@@ -266,6 +266,22 @@ body {
   font-size: 1.25rem;
 }
 
+.btn-hero {
+  padding: 1rem 2rem;
+  font-size: 1.125rem;
+  border-radius: 0.75rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  box-shadow: 0 4px 14px rgba(5, 150, 105, 0.25);
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.btn-hero:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(5, 150, 105, 0.35);
+}
+
 /* Hero Section */
 .hero-section {
   min-height: 100vh;
@@ -365,6 +381,10 @@ body {
   flex-direction: column;
   gap: 1rem;
   margin-bottom: 2rem;
+}
+
+.hero-buttons .btn-hero {
+  align-self: flex-start;
 }
 
 .hero-features {
