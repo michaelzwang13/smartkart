@@ -179,6 +179,11 @@ body {
   display: flex;
 }
 
+.nav-buttons .btn {
+  padding: 0.5rem 1.25rem;
+  font-size: 0.875rem;
+}
+
 .mobile-menu-button {
   display: block;
   background: none;
@@ -427,49 +432,43 @@ body {
 .hero-stats {
   position: absolute;
   background: var(--card);
-  border-radius: 0.75rem;
-  padding: 1rem;
+  border-radius: 0.25rem;
+  padding: 0.25rem 0.5rem;
   box-shadow: var(--shadow-medium);
+  font-size: 0.25rem;
+  /* max-width: 140px;
+  min-width: 100px;
+  max-height: 80px; */
 }
 
 .hero-stats.top-left {
-  top: -1rem;
-  left: -1rem;
+  top: -0.5rem;
+  left: -0.5rem;
+  transform: translate(-25%, -25%);
 }
 
 .hero-stats.bottom-right {
-  bottom: -1rem;
-  right: -1rem;
+  bottom: -0.5rem;
+  right: -0.5rem;
+  transform: translate(25%, 25%);
 }
 
-.stat-item {
+.hero-stats .stat-item {
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
-.stat-dot {
-  width: 0.75rem;
-  height: 0.75rem;
-  border-radius: 50%;
-}
-
-.stat-dot.emerald {
-  background: var(--emerald-dark);
-}
-
-.stat-dot.accent {
-  background: var(--accent);
-}
-
-.stat-value {
+.hero-stats .stat-value {
   font-weight: 600;
-  font-size: 0.875rem;
+  font-size: 1rem !important;
+  line-height: 1.2;
 }
 
-.stat-label {
-  font-size: 0.75rem;
+.hero-stats .stat-label {
+  font-size: 0.75rem !important;
   color: var(--slate-medium);
+  line-height: 1.2;
 }
 
 /* Section Styles */

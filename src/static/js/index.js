@@ -34,7 +34,7 @@ const Navigation = () => {
         // Desktop buttons
         React.createElement('div', { className: 'nav-buttons desktop' },
           React.createElement('a', { href: '/login', className: 'btn btn-ghost' }, 'Sign in'),
-          React.createElement('a', { href: '/register', className: 'btn btn-primary' }, 'Get started free')
+          React.createElement('a', { href: '/register', className: 'btn btn-primary' }, 'Get Started')
         ),
         
         // Mobile menu button
@@ -61,7 +61,7 @@ const Navigation = () => {
           ),
           React.createElement('div', { className: 'mobile-menu-buttons' },
             React.createElement('a', { href: '/login', className: 'btn btn-ghost' }, 'Sign in'),
-            React.createElement('a', { href: '/register', className: 'btn btn-primary' }, 'Get started free')
+            React.createElement('a', { href: '/register', className: 'btn btn-primary' }, 'Get Started')
           )
         )
       )
@@ -120,7 +120,6 @@ const HeroSection = () => {
           // Floating stats cards
           React.createElement('div', { className: 'hero-stats top-left' },
             React.createElement('div', { className: 'stat-item' },
-              React.createElement('div', { className: 'stat-dot emerald' }),
               React.createElement('div', null,
                 React.createElement('div', { className: 'stat-value' }, '15 meals planned'),
                 React.createElement('div', { className: 'stat-label' }, 'This week')
@@ -130,7 +129,6 @@ const HeroSection = () => {
           
           React.createElement('div', { className: 'hero-stats bottom-right' },
             React.createElement('div', { className: 'stat-item' },
-              React.createElement('div', { className: 'stat-dot accent' }),
               React.createElement('div', null,
                 React.createElement('div', { className: 'stat-value' }, '$127 saved'),
                 React.createElement('div', { className: 'stat-label' }, 'This month')
