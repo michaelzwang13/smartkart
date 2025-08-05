@@ -924,6 +924,164 @@ function clearMealPlanPreview() {
   });
 }
 
+async function checkForMealConflicts(startDate, days) {
+  try {
+    const startDateObj = new Date(startDate);
+    const endDateObj = new Date(startDateObj);
+    endDateObj.setDate(startDateObj.getDate() + days - 1);
+
+    const startDateStr = startDateObj.toISOString().split("T")[0];
+    const endDateStr = endDateObj.toISOString().split("T")[0];
+
+    const response = await fetch(
+      `/api/meals?start_date=${startDateStr}&end_date=${endDateStr}`
+    );
+    const data = await response.json();
+
+    if (data.success && data.meals && data.meals.length > 0) {
+      // Group meals by date and type
+      const conflictsByDate = {};
+      let lockedMeals = [];
+      let unlockedMeals = [];
+
+      data.meals.forEach((meal) => {
+        if (!conflictsByDate[meal.date]) {
+          conflictsByDate[meal.date] = [];
+        }
+        conflictsByDate[meal.date].push(meal);
+
+        const mealInfo = `${meal.date} (${meal.type})`;
+        if (meal.is_locked) {
+          lockedMeals.push(mealInfo);
+        } else {
+          unlockedMeals.push(mealInfo);
+        }
+      });
+
+      return {
+        hasConflicts: true,
+        conflictsByDate,
+        lockedMeals,
+        unlockedMeals,
+        conflictingDates: Object.keys(conflictsByDate),
+        totalConflicts: data.meals.length
+      };
+    }
+
+    return { hasConflicts: false };
+  } catch (error) {
+    console.error("Error checking for meal conflicts:", error);
+    return { hasConflicts: false };
+  }
+}
+
+function resetGenerateButton(btn, spinner, icon, text) {
+  btn.disabled = false;
+  spinner.style.display = "none";
+  icon.style.display = "block";
+  text.textContent = "Generate Meal Plan";
+}
+
+function showMealConflictWarning(conflicts) {
+  const conflictDates = conflicts.conflictingDates
+    .map(date => new Date(date).toLocaleDateString())
+    .join(', ');
+
+  let conflictDetails = [];
+  if (conflicts.lockedMeals.length > 0) {
+    conflictDetails.push(`Locked meals: ${conflicts.lockedMeals.join(', ')}`);
+  }
+  if (conflicts.unlockedMeals.length > 0) {
+    conflictDetails.push(`Existing meals: ${conflicts.unlockedMeals.join(', ')}`);
+  }
+
+  const detailText = conflictDetails.length > 0 ? `\n\n${conflictDetails.join('\n')}` : '';
+
+  const popupHTML = `
+    <div id="mealConflictWarning" class="modal-overlay">
+        <div class="modal-content date-limit-popup">
+        <div class="modal-body">
+            <div class="warning-content">
+            <div class="warning-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h3 class="warning-title">Meal Plan Conflict Detected</h3>
+            <p class="warning-message">
+                Cannot generate meal plan because there are existing meals on the selected dates: <strong>${conflictDates}</strong>.
+                <br><br>
+                You have ${conflicts.totalConflicts} existing meal(s) in this date range. Please choose a different date range or delete the conflicting meals first.
+                ${detailText ? `<br><br><small style="color: var(--text-secondary);">${detailText.replace(/\n/g, '<br>')}</small>` : ''}
+            </p>
+            <div class="warning-actions">
+                <button class="btn btn-secondary" onclick="closeMealConflictWarning(); navigateToConflictDate('${conflicts.conflictingDates[0]}')">
+                <i class="fas fa-calendar-alt"></i> View Conflicts
+                </button>
+                <button class="btn btn-primary" onclick="closeMealConflictWarning()">
+                <i class="fas fa-check"></i> Got It
+                </button>
+            </div>
+            </div>
+        </div>
+        </div>
+    </div>
+    `;
+
+  document.body.insertAdjacentHTML("beforeend", popupHTML);
+
+  // Show popup with animation
+  setTimeout(() => {
+    document.getElementById("mealConflictWarning").classList.add("show");
+  }, 10);
+
+  // Close popup when clicking outside
+  const popup = document.getElementById("mealConflictWarning");
+  popup.addEventListener("click", (e) => {
+    if (e.target === popup) {
+      closeMealConflictWarning();
+    }
+  });
+
+  // Close popup with Escape key
+  document.addEventListener("keydown", handleMealConflictEscape);
+}
+
+function handleMealConflictEscape(e) {
+  if (e.key === "Escape") {
+    const popup = document.getElementById("mealConflictWarning");
+    if (popup) {
+      closeMealConflictWarning();
+    }
+  }
+}
+
+function closeMealConflictWarning() {
+  const popup = document.getElementById("mealConflictWarning");
+  if (popup) {
+    popup.classList.remove("show");
+    document.removeEventListener("keydown", handleMealConflictEscape);
+    setTimeout(() => {
+      popup.remove();
+    }, 300);
+  }
+}
+
+function navigateToConflictDate(dateStr) {
+  // Update calendar to show the conflict date
+  const conflictDate = new Date(dateStr);
+  currentDate = new Date(conflictDate.getFullYear(), conflictDate.getMonth(), 1);
+  renderCalendar();
+  updateNavigationButtons();
+
+  // Scroll to calendar
+  const calendarSection = document.querySelector(".calendar-section");
+  if (calendarSection) {
+    calendarSection.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }
+}
+
 async function generateMealPlan() {
   const btn = document.getElementById("generateBtn");
   const spinner = document.getElementById("spinner");
@@ -934,7 +1092,7 @@ async function generateMealPlan() {
   btn.disabled = true;
   spinner.style.display = "block";
   icon.style.display = "none";
-  text.textContent = "Generating...";
+  text.textContent = "Checking for conflicts...";
 
   try {
     const formData = new FormData(document.getElementById("generateForm"));
@@ -943,13 +1101,22 @@ async function generateMealPlan() {
     const startDate = formData.get("start_date");
     if (!startDate) {
       alert("Please select a start date for your meal plan.");
-      // Reset button state
-      btn.disabled = false;
-      spinner.style.display = "none";
-      icon.style.display = "inline";
-      text.textContent = "Generate Meal Plan";
+      resetGenerateButton(btn, spinner, icon, text);
       return;
     }
+
+    const days = parseInt(formData.get("days"));
+    
+    // Check for existing meals in the date range before proceeding
+    const conflictCheck = await checkForMealConflicts(startDate, days);
+    if (conflictCheck.hasConflicts) {
+      showMealConflictWarning(conflictCheck);
+      resetGenerateButton(btn, spinner, icon, text);
+      return;
+    }
+
+    // Update loading message
+    text.textContent = "Generating...";
 
     // Validate that start date is not more than one month in the future
     const selectedDate = new Date(startDate);
@@ -959,11 +1126,7 @@ async function generateMealPlan() {
 
     if (selectedDate > oneMonthFromToday) {
       showDateLimitWarning();
-      // Reset button state
-      btn.disabled = false;
-      spinner.style.display = "none";
-      icon.style.display = "inline";
-      text.textContent = "Generate Meal Plan";
+      resetGenerateButton(btn, spinner, icon, text);
       return;
     }
 
@@ -1001,7 +1164,19 @@ async function generateMealPlan() {
         viewPlanDetails(result.session_id);
       }
     } else {
-      alert("Error generating meal plan: " + result.message);
+      // Handle conflict errors with more detailed information
+      if (result.conflicting_dates && result.conflicting_dates.length > 0) {
+        const conflictInfo = {
+          hasConflicts: true,
+          conflictingDates: result.conflicting_dates,
+          lockedMeals: result.locked_meals || [],
+          unlockedMeals: result.unlocked_meals || [],
+          totalConflicts: (result.locked_meals || []).length + (result.unlocked_meals || []).length
+        };
+        showMealConflictWarning(conflictInfo);
+      } else {
+        alert("Error generating meal plan: " + result.message);
+      }
     }
   } catch (error) {
     console.error("Error generating meal plan:", error);

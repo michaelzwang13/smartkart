@@ -79,7 +79,7 @@ def generate_meal_plan():
                 for item in pantry_items[:20]
             ]
 
-        # Check for existing meals in date range and respect locked meals
+        # Check for existing meals in date range
         existing_meals_query = """
             SELECT meal_date, meal_type, is_locked 
             FROM meals 
@@ -88,11 +88,40 @@ def generate_meal_plan():
         cursor.execute(existing_meals_query, (user_id, start_date, end_date))
         existing_meals = cursor.fetchall()
         
-        # Create set of locked/existing meal slots
+        # Check if there are any existing meals in the date range
+        if existing_meals:
+            existing_dates = set()
+            locked_meals = []
+            unlocked_meals = []
+            
+            for meal in existing_meals:
+                meal_date_str = meal['meal_date'].strftime('%Y-%m-%d')
+                existing_dates.add(meal_date_str)
+                
+                if meal['is_locked']:
+                    locked_meals.append(f"{meal_date_str} ({meal['meal_type']})")
+                else:
+                    unlocked_meals.append(f"{meal_date_str} ({meal['meal_type']})")
+            
+            # Create detailed error message
+            error_parts = []
+            if locked_meals:
+                error_parts.append(f"Locked meals: {', '.join(locked_meals)}")
+            if unlocked_meals:
+                error_parts.append(f"Existing meals: {', '.join(unlocked_meals)}")
+            
+            error_message = f"Cannot generate meal plan. The selected date range conflicts with existing meals. {' | '.join(error_parts)}. Please choose a different date range or delete conflicting meals first."
+            
+            return jsonify({
+                "success": False, 
+                "message": error_message,
+                "conflicting_dates": list(existing_dates),
+                "locked_meals": locked_meals,
+                "unlocked_meals": unlocked_meals
+            })
+        
+        # No existing meals, safe to proceed
         blocked_slots = set()
-        for meal in existing_meals:
-            if meal['is_locked']:
-                blocked_slots.add((meal['meal_date'], meal['meal_type']))
 
         # Generate meal plan using AI
         meal_plan_data = generate_meal_plan_with_ai(
@@ -133,22 +162,12 @@ def generate_meal_plan():
             
             for meal_type in ["breakfast", "lunch", "dinner"]:
                 if meal_type in day_data:
-                    # Skip if this slot is blocked by existing locked meal
-                    if (meal_date, meal_type) in blocked_slots:
-                        continue
-
                     recipe_data = day_data[meal_type]
                     recipe_name = recipe_data.get("name", "")
 
                     # Get or create recipe template
                     template_id = get_or_create_recipe_template(cursor, recipe_data, meal_type)
                     recipe_template_map[template_id] = recipe_data
-
-                    # Delete existing meal in this slot (if not locked)
-                    cursor.execute("""
-                        DELETE FROM meals 
-                        WHERE user_id = %s AND meal_date = %s AND meal_type = %s AND is_locked = FALSE
-                    """, (user_id, meal_date, meal_type))
 
                     # Create individual meal
                     meal_query = """
