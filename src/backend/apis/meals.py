@@ -1,7 +1,5 @@
-from flask import Blueprint, request, jsonify, session, current_app
-import requests
+from flask import Blueprint, request, jsonify, session
 from src.database import get_db
-from src import helper
 import json
 from datetime import datetime, timedelta
 
@@ -440,11 +438,22 @@ def update_meal(meal_id):
     cursor = db.cursor()
 
     try:
-        # Verify meal belongs to user
-        verify_query = "SELECT meal_id FROM meals WHERE meal_id = %s AND user_id = %s"
+        # Verify meal belongs to user and get meal date
+        verify_query = "SELECT meal_id, meal_date FROM meals WHERE meal_id = %s AND user_id = %s"
         cursor.execute(verify_query, (meal_id, user_id))
-        if not cursor.fetchone():
+        meal_info = cursor.fetchone()
+        if not meal_info:
             return jsonify({"success": False, "message": "Meal not found or access denied"})
+        
+        # Check if trying to complete a future meal
+        if 'is_completed' in data and data['is_completed']:
+            meal_date = meal_info['meal_date']
+            today = datetime.now().date()
+            if meal_date > today:
+                return jsonify({
+                    "success": False, 
+                    "message": "Cannot mark future meals as completed. You can only complete meals for today or past dates."
+                })
 
         # Update meal fields
         update_fields = []

@@ -610,7 +610,11 @@ function createDayCell(date, currentMonth, isWeekView = false) {
   dayCell.setAttribute("data-date", date.toISOString().split("T")[0]);
 
   const today = new Date();
-  const isToday = date.toDateString() === today.toDateString();
+  today.setHours(0, 0, 0, 0);
+  const mealDate = new Date(date);
+  mealDate.setHours(0, 0, 0, 0);
+  const isFuture = mealDate > today;
+  const isToday = date.toDateString() === new Date().toDateString();
   const isCurrentMonth = date.getMonth() === currentMonth;
 
   if (isToday) {
@@ -650,9 +654,12 @@ function createDayCell(date, currentMonth, isWeekView = false) {
       checkbox.type = "checkbox";
       checkbox.className = "meal-checkbox";
       checkbox.checked = meal.is_completed;
+      checkbox.disabled = isFuture;
       checkbox.addEventListener("click", (e) => {
         e.stopPropagation(); // Prevent day click handler
-        toggleMealCompletion(meal.meal_id, checkbox.checked);
+        if (!checkbox.disabled) {
+          toggleMealCompletion(meal.meal_id, checkbox.checked, date.toISOString().split("T")[0]);
+        }
       });
 
       // Create meal name text
