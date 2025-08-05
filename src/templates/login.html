@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign In - Preppr</title>
     <link rel="icon" type="image/x-icon" href="./assets/favicon.ico">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base2.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -137,8 +138,7 @@
                       className: 'btn btn-primary btn-login',
                       disabled: isSubmitting
                     },
-                      isSubmitting ? 'Signing in...' : 'Sign In',
-                      React.createElement('span', { className: 'icon icon-arrow-right' })
+                      isSubmitting ? 'Logging in...' : 'Login'
                     )
                   ),
 
