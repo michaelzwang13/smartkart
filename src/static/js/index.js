@@ -11,6 +11,25 @@ const Navigation = () => {
     { name: "Testimonials", href: "#testimonials" }
   ];
 
+  const handleNavClick = (e, href) => {
+    e.preventDefault();
+    const targetId = href.substring(1);
+    const targetElement = document.getElementById(targetId);
+    
+    if (targetElement) {
+      const headerHeight = 64; // 4rem = 64px
+      const targetPosition = targetElement.offsetTop - headerHeight;
+      
+      window.scrollTo({
+        top: targetPosition,
+        behavior: 'smooth'
+      });
+    }
+    
+    // Close mobile menu if open
+    setIsMenuOpen(false);
+  };
+
   return React.createElement('nav', { className: 'navigation' },
     React.createElement('div', { className: 'container' },
       React.createElement('div', { className: 'nav-container' },
@@ -33,7 +52,8 @@ const Navigation = () => {
             React.createElement('a', {
               key: link.name,
               href: link.href,
-              className: 'nav-link'
+              className: 'nav-link',
+              onClick: (e) => handleNavClick(e, link.href)
             }, link.name)
           )
         ),
@@ -63,7 +83,7 @@ const Navigation = () => {
               key: link.name,
               href: link.href,
               className: 'nav-link',
-              onClick: () => setIsMenuOpen(false)
+              onClick: (e) => handleNavClick(e, link.href)
             }, link.name)
           ),
           React.createElement('div', { className: 'mobile-menu-buttons' },
