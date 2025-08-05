@@ -635,6 +635,7 @@
   gap: 2rem;
   max-width: 75rem;
   margin: 0 auto 4rem;
+  align-items: stretch;
 }
 
 .pricing-card {
@@ -644,6 +645,9 @@
   box-shadow: var(--shadow-soft);
   transition: all 0.3s ease;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .pricing-card:hover {
@@ -652,7 +656,6 @@
 
 .pricing-card.popular {
   border: 2px solid var(--emerald-dark);
-  transform: scale(1.05);
 }
 
 .popular-badge {
@@ -724,6 +727,7 @@
 .pricing-features {
   list-style: none;
   margin-bottom: 2rem;
+  flex-grow: 1;
 }
 
 .pricing-features li {
@@ -740,6 +744,11 @@
   color: var(--emerald-dark);
   font-weight: bold;
   flex-shrink: 0;
+}
+
+.pricing-card .btn {
+  text-align: center;
+  justify-content: center;
 }
 
 .pricing-info {
@@ -862,19 +871,6 @@
   align-items: center;
   gap: 1rem;
   text-align: center;
-}
-
-.footer-love {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 0.875rem;
-}
-
-.heart {
-  color: #f87171;
-  fill: currentColor;
 }
 
 .footer-copyright {

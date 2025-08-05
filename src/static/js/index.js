@@ -671,11 +671,6 @@ const Footer = () => {
 
       // Bottom section
       React.createElement('div', { className: 'footer-bottom' },
-        React.createElement('div', { className: 'footer-love' },
-          'Made with ',
-          React.createElement('span', { className: 'heart' }, '❤️'),
-          ' for better eating'
-        ),
         React.createElement('div', { className: 'footer-copyright' },
           '© 2024 Preppr. All rights reserved.'
         )
