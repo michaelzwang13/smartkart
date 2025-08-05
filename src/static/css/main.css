@@ -128,6 +128,22 @@ body {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  text-decoration: none !important;
+  cursor: pointer;
+  transition: opacity 0.3s ease;
+}
+
+.logo:hover {
+  opacity: 0.8;
+}
+
+.logo:focus {
+  outline: none;
+  text-decoration: none !important;
+}
+
+.logo:visited {
+  text-decoration: none !important;
 }
 
 .logo-icon {
