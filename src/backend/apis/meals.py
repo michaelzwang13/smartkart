@@ -385,15 +385,6 @@ def get_meal_details(meal_id):
             cursor.execute(template_ingredients_query, (meal['recipe_template_id'],))
             ingredients.extend(cursor.fetchall())
 
-        # Get custom ingredients for this meal
-        custom_ingredients_query = """
-            SELECT ingredient_name, quantity, unit, notes, 0 as estimated_cost, TRUE as is_custom
-            FROM meal_custom_ingredients 
-            WHERE meal_id = %s
-        """
-        cursor.execute(custom_ingredients_query, (meal_id,))
-        ingredients.extend(cursor.fetchall())
-
         # Format response
         meal_details = {
             "meal_id": meal['meal_id'],
@@ -488,26 +479,6 @@ def update_meal(meal_id):
                 WHERE meal_id = %s AND user_id = %s
             """
             cursor.execute(update_query, params)
-
-        # Handle custom ingredients if provided
-        if 'custom_ingredients' in data:
-            # Remove existing custom ingredients
-            cursor.execute("DELETE FROM meal_custom_ingredients WHERE meal_id = %s", (meal_id,))
-            
-            # Add new custom ingredients
-            for ingredient in data['custom_ingredients']:
-                ingredient_query = """
-                    INSERT INTO meal_custom_ingredients (
-                        meal_id, ingredient_name, quantity, unit, notes
-                    ) VALUES (%s, %s, %s, %s, %s)
-                """
-                cursor.execute(ingredient_query, (
-                    meal_id,
-                    ingredient.get('name', ''),
-                    ingredient.get('quantity', 1),
-                    ingredient.get('unit', ''),
-                    ingredient.get('notes', '')
-                ))
 
         db.commit()
         return jsonify({"success": True, "message": "Meal updated successfully"})
