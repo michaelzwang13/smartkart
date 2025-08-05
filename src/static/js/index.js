@@ -112,8 +112,8 @@ const HeroSection = () => {
         React.createElement('div', { className: 'hero-image-container' },
           React.createElement('div', { className: 'hero-image' },
             React.createElement('img', {
-              src: '../src/assets/hero-image.jpg',
-              alt: 'Person using Preppr meal planning app with healthy ingredients'
+              src: '/static/images/meal-prep.jpg',
+              alt: 'Meals prepped in containers'
             })
           ),
           
