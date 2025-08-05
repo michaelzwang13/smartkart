@@ -15,7 +15,14 @@ const Navigation = () => {
     React.createElement('div', { className: 'container' },
       React.createElement('div', { className: 'nav-container' },
         // Logo
-        React.createElement('div', { className: 'logo' },
+        React.createElement('a', { 
+          href: '#', 
+          className: 'logo',
+          onClick: (e) => {
+            e.preventDefault();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+        },
           React.createElement('div', { className: 'logo-icon' }, 'P'),
           React.createElement('span', { className: 'logo-text' }, 'Preppr')
         ),
@@ -145,22 +152,19 @@ const HeroSection = () => {
 const HowItWorksSection = () => {
   const steps = [
     {
-      icon: 'icon-package',
       title: "Track your pantry",
-      description: "Quickly scan or add items to your digital pantry. We'll track expiration dates and quantities automatically.",
-      color: "text-emerald-dark"
+      description: "Quickly scan or add items to your digital pantry. We'll track expiration dates and quantities automatically, so you always know what you have at home.",
+      imagePlaceholder: "Pantry Tracking Interface"
     },
     {
-      icon: 'icon-brain',
       title: "Get AI meal plans",
-      description: "Our smart AI creates personalized meal plans based on your preferences, dietary needs, and what you already have.",
-      color: "text-accent"
+      description: "Our smart AI creates personalized meal plans based on your preferences, dietary needs, and what you already have. Never wonder what's for dinner again.",
+      imagePlaceholder: "AI Meal Planning Dashboard"
     },
     {
-      icon: 'icon-shopping-cart',
       title: "Shop smarter",
-      description: "Get optimized shopping lists organized by store layout and budget. Never overbuy or forget ingredients again.",
-      color: "text-primary"
+      description: "Get optimized shopping lists organized by store layout and budget. Never overbuy or forget ingredients again with our intelligent shopping assistant.",
+      imagePlaceholder: "Smart Shopping List"
     }
   ];
 
@@ -177,33 +181,30 @@ const HowItWorksSection = () => {
         )
       ),
 
-      React.createElement('div', { className: 'how-it-works-grid' },
-        // Workflow illustration
-        React.createElement('div', { className: 'workflow-image' },
-          React.createElement('img', {
-            src: '../src/assets/workflow-illustration.jpg',
-            alt: 'Preppr workflow illustration showing pantry tracking, AI planning, and smart shopping'
-          })
-        ),
-
-        // Steps
-        React.createElement('div', { className: 'steps-container' },
-          ...steps.map((step, index) =>
-            React.createElement('div', { key: index, className: 'step' },
-              React.createElement('div', { className: 'step-icon' },
-                React.createElement('span', { className: `icon ${step.icon} ${step.color}` })
-              ),
-              React.createElement('div', { className: 'step-content' },
-                React.createElement('div', { className: 'step-header' },
-                  React.createElement('span', { className: 'step-number' }, `Step ${index + 1}`),
-                  React.createElement('div', { className: 'step-divider' })
-                ),
-                React.createElement('h3', { className: 'step-title' }, step.title),
-                React.createElement('p', { className: 'step-description' }, step.description)
+      // Alternating step rows
+      React.createElement('div', { className: 'steps-alternating' },
+        ...steps.map((step, index) => {
+          const isEven = index % 2 === 0;
+          
+          return React.createElement('div', { 
+            key: index, 
+            className: `step-row ${isEven ? 'image-left' : 'image-right'}` 
+          },
+            // Image placeholder
+            React.createElement('div', { className: 'step-image' },
+              React.createElement('div', { className: 'image-placeholder' },
+                React.createElement('span', { className: 'placeholder-text' }, step.imagePlaceholder)
               )
+            ),
+            
+            // Content
+            React.createElement('div', { className: 'step-content' },
+              React.createElement('div', { className: 'step-number' }, `Step ${index + 1}`),
+              React.createElement('h3', { className: 'step-title' }, step.title),
+              React.createElement('p', { className: 'step-description' }, step.description)
             )
-          )
-        )
+          );
+        })
       ),
 
       // Stats bar
