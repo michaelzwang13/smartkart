@@ -229,6 +229,10 @@ const HowItWorksSection = () => {
 
       // Stats bar
       React.createElement('div', { className: 'stats-bar' },
+        React.createElement('div', { className: 'stats-header' },
+          React.createElement('h3', { className: 'stats-title' }, 'Average Preppr user benefits'),
+          React.createElement('p', { className: 'stats-subtitle' }, 'Real results from our community of meal planners')
+        ),
         React.createElement('div', { className: 'stats-grid' },
           React.createElement('div', { className: 'stat-item' },
             React.createElement('div', { className: 'stat-value emerald' }, '85%'),
@@ -236,11 +240,11 @@ const HowItWorksSection = () => {
           ),
           React.createElement('div', { className: 'stat-item' },
             React.createElement('div', { className: 'stat-value accent' }, '3.2hrs'),
-            React.createElement('div', { className: 'stat-label' }, 'Saved per week')
+            React.createElement('div', { className: 'stat-label' }, 'Time saved weekly')
           ),
           React.createElement('div', { className: 'stat-item' },
             React.createElement('div', { className: 'stat-value primary' }, '$180'),
-            React.createElement('div', { className: 'stat-label' }, 'Average monthly savings')
+            React.createElement('div', { className: 'stat-label' }, 'Monthly savings')
           )
         )
       )

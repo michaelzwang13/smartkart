@@ -536,8 +536,8 @@ body {
   grid-template-columns: 1fr 1fr;
   gap: 4rem;
   align-items: center;
-  margin-bottom: 5rem;
-  padding: 2rem 0;
+  margin-bottom: 3rem;
+  padding: 1rem 0;
 }
 
 .step-row:last-child {
@@ -630,6 +630,25 @@ body {
   border-radius: 1rem;
   padding: 2rem;
   box-shadow: var(--shadow-soft);
+  text-align: center;
+}
+
+.stats-header {
+  margin-bottom: 2rem;
+}
+
+.stats-title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: var(--slate-dark);
+  margin-bottom: 1rem;
+  line-height: 1.2;
+}
+
+.stats-subtitle {
+  color: var(--slate-medium);
+  font-size: 1.25rem;
+  line-height: 1.6;
 }
 
 .stats-grid {
@@ -646,9 +665,10 @@ body {
 }
 
 .stat-value {
-  font-size: 2rem;
+  font-size: 3rem;
   font-weight: bold;
   margin-bottom: 0.5rem;
+  line-height: 1.1;
 }
 
 .stat-value.emerald {
@@ -665,6 +685,8 @@ body {
 
 .stat-label {
   color: var(--slate-medium);
+  font-size: 1.125rem;
+  font-weight: 500;
 }
 
 /* Features Section */
