@@ -274,7 +274,7 @@ function createMealCard(mealType, recipe) {
   const ingredientsList = recipe.ingredients
     .map(
       (ing) =>
-        `<li class="ingredient-item">${convertToMixedFraction(ing.quantity)} ${ing.unit === 'pcs' ? '' : ing.unit} ${ing.name}${
+        `<li class="ingredient-item">${convertToMixedFraction(ing.quantity)} ${ing.unit === 'pcs' || ing.unit === 'pc' ? '' : ing.unit} ${ing.name}${
           ing.notes ? " (" + ing.notes + ")" : ""
         }</li>`
     )
