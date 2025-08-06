@@ -1,7 +1,5 @@
 from flask import Blueprint, request, jsonify, session, current_app
-import requests
 from src.database import get_db
-from src import helper
 
 budget_bp = Blueprint("budget", __name__, url_prefix="/api")
 
@@ -199,7 +197,6 @@ def get_spending_trends():
               
         # Create a complete date range for the period
         from datetime import datetime, timedelta
-        import calendar
 
         # Debug: print raw data
         print(f"DEBUG: Period={period}, Raw trends count: {len(trends)}")
@@ -209,10 +206,10 @@ def get_spending_trends():
         # Convert existing data to dictionary for easy lookup
         trend_data = {}
         for trend in trends:
+            date_key = trend["date"]
             if period != "1y": # 1y is already in str format
               date_key = trend["date"].strftime("%Y-%m-%d")
-            else:
-              date_key = trend["date"]
+            
             trend_data[date_key] = float(trend["amount"])
             print(f"DEBUG: Added to trend_data: {date_key} = {trend_data[date_key]}")
         
@@ -402,115 +399,6 @@ def get_spending_details():
         cursor.close()
 
 
-@budget_bp.route("/budget/categories", methods=["GET"])
-def get_category_breakdown():
-    """Get spending breakdown by category"""
-    if "user_ID" not in session:
-        return jsonify({"error": "Not authenticated"}), 401
-
-    user_ID = session["user_ID"]
-    db = get_db()
-    cursor = db.cursor()
-
-    try:
-        # Get current month's items
-        query = """
-            SELECT i.item_name, SUM(i.price * i.quantity) as amount
-            FROM shopping_cart c
-            JOIN cart_item i ON c.cart_ID = i.cart_ID
-            WHERE c.user_ID = %s 
-              AND c.status = 'purchased'
-              AND MONTH(c.created_at) = MONTH(CURRENT_DATE())
-              AND YEAR(c.created_at) = YEAR(CURRENT_DATE())
-            GROUP BY i.item_name
-            ORDER BY amount DESC
-        """
-        cursor.execute(query, (user_ID,))
-        items = cursor.fetchall()
-
-        # Simple categorization logic
-        categories = {
-            "Fresh Produce": {"amount": 0, "items": []},
-            "Meat & Seafood": {"amount": 0, "items": []},
-            "Bakery & Dairy": {"amount": 0, "items": []},
-            "Pantry Items": {"amount": 0, "items": []},
-            "Frozen Foods": {"amount": 0, "items": []},
-            "Beverages": {"amount": 0, "items": []},
-        }
-
-        # Categorization keywords
-        category_keywords = {
-            "Fresh Produce": [
-                "apple",
-                "banana",
-                "orange",
-                "lettuce",
-                "tomato",
-                "potato",
-                "carrot",
-                "onion",
-                "fruit",
-                "vegetable",
-            ],
-            "Meat & Seafood": [
-                "chicken",
-                "beef",
-                "pork",
-                "fish",
-                "salmon",
-                "turkey",
-                "ham",
-                "meat",
-            ],
-            "Bakery & Dairy": [
-                "milk",
-                "cheese",
-                "yogurt",
-                "butter",
-                "bread",
-                "bagel",
-                "muffin",
-                "dairy",
-            ],
-            "Frozen Foods": ["frozen", "ice cream", "pizza"],
-            "Beverages": [
-                "juice",
-                "soda",
-                "water",
-                "coffee",
-                "tea",
-                "beer",
-                "wine",
-                "drink",
-            ],
-        }
-
-        for item in items:
-            item_name = item["item_name"].lower()
-            amount = float(item["amount"])
-
-            categorized = False
-            for category, keywords in category_keywords.items():
-                if any(keyword in item_name for keyword in keywords):
-                    categories[category]["amount"] += amount
-                    categories[category]["items"].append(item["item_name"])
-                    categorized = True
-                    break
-
-            if not categorized:
-                categories["Pantry Items"]["amount"] += amount
-                categories["Pantry Items"]["items"].append(item["item_name"])
-
-        cursor.close()
-
-        return jsonify({"categories": categories})
-
-    except Exception as e:
-        return jsonify({"error": f"Failed to get category breakdown: {str(e)}"}), 500
-    finally:
-        cursor.close()
-
-
 @budget_bp.route("/budget/settings", methods=["POST"])
 def update_budget_settings():
     """Update user's budget settings"""
@@ -653,66 +541,4 @@ def update_budget_spending(user_id, amount_spent):
         print(f"Error updating budget spending: {str(e)}")
     finally:
         cursor.close()
-
-
-# MOVED TO shopping_trip_routes.py
-# TEMPORARILY DISABLED - Shopping trip details API
-"""
-@budget_bp.route('/shopping-trip/details', methods=['GET'])
-def get_shopping_trip_details():
-    #Get detailed items for a specific shopping trip#
-    if 'user_ID' not in session:
-        return jsonify({'error': 'Not authenticated'}), 401
-    
-    user_ID = session['user_ID']
-    cart_id = request.args.get('cart_id')
-    
-    if not cart_id:
-        return jsonify({'error': 'Cart ID parameter required'}), 400
-    
-    db = get_db()
-    cursor = db.cursor()
-    
-    try:
-        # Get cart info and verify ownership
-        cart_query = \"\"\"
-            SELECT cart_ID, store_name, created_at
-            FROM shopping_cart 
-            WHERE cart_ID = %s AND user_ID = %s AND status = 'purchased'
-        \"\"\"
-        cursor.execute(cart_query, (cart_id, user_ID))
-        cart = cursor.fetchone()
         
-        if not cart:
-            return jsonify({'error': 'Shopping trip not found'}), 404
-        
-        # Get all items for this cart
-        items_query = \"\"\"
-            SELECT item_name, quantity, price, image_url
-            FROM cart_item 
-            WHERE cart_ID = %s
-            ORDER BY item_name ASC
-        \"\"\"
-        cursor.execute(items_query, (cart_id,))
-        items = cursor.fetchall()
-        
-        # Calculate totals
-        total_items = sum(item['quantity'] for item in items)
-        total_amount = sum(item['price'] * item['quantity'] for item in items)
-        
-        cursor.close()
-        
-        return jsonify({
-            'cart_id': cart['cart_ID'],
-            'store_name': cart['store_name'], 
-            'created_at': cart['created_at'].strftime('%Y-%m-%d %H:%M:%S'),
-            'items': items,
-            'total_items': total_items,
-            'total_amount': float(total_amount)
-        })
-        
-    except Exception as e:
-        return jsonify({'error': f'Failed to get shopping trip details: {str(e)}'}), 500
-    finally:
-        cursor.close()
-"""
