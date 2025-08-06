@@ -186,8 +186,9 @@ function displayRecipes(recipes) {
 }
 
 function createMealCard(mealType, recipe) {
-  const mealCard = document.createElement("div");
-  mealCard.className = "meal-card";
+  const mealRow = document.createElement("div");
+  mealRow.className = "meal-row";
+  mealRow.setAttribute("data-meal-type", mealType);
 
   const ingredientsList = recipe.ingredients
     .map(
@@ -198,57 +199,66 @@ function createMealCard(mealType, recipe) {
     )
     .join("");
 
-  mealCard.innerHTML = `
-    <div class="meal-header">
-        <div>
-        <div class="meal-type">${mealType}</div>
-        <h4 class="meal-name">${recipe.name}</h4>
+  const totalTime = (recipe.prep_time || 0) + (recipe.cook_time || 0);
+
+  mealRow.innerHTML = `
+    <div class="meal-row-header" onclick="toggleMealDetails(this)">
+        <div class="meal-type-badge ${mealType}">
+            <i class="fas fa-${getMealIcon(mealType)}"></i>
+            ${mealType.charAt(0).toUpperCase() + mealType.slice(1)}
+        </div>
+        <div class="meal-row-content">
+            <div class="meal-name">${recipe.name}</div>
+            <div class="meal-meta">
+                <span><i class="fas fa-clock"></i> ${totalTime} min total</span>
+                <span><i class="fas fa-users"></i> ${recipe.servings} servings</span>
+                <span><i class="fas fa-dollar-sign"></i> $${recipe.estimated_cost || "0.00"}</span>
+                <span><i class="fas fa-signal"></i> ${recipe.difficulty}</span>
+            </div>
+        </div>
+        <div class="meal-toggle">
+            <i class="fas fa-chevron-down"></i>
         </div>
     </div>
     
-    <div class="meal-meta">
-        <span><i class="fas fa-clock"></i> ${
-          recipe.prep_time + recipe.cook_time
-        } min</span>
-        <span><i class="fas fa-users"></i> ${recipe.servings} servings</span>
-        <span><i class="fas fa-dollar-sign"></i> $${
-          recipe.estimated_cost || "0.00"
-        }</span>
-        <span><i class="fas fa-signal"></i> ${recipe.difficulty}</span>
-    </div>
-    
-    ${
-      recipe.description
-        ? `<p class="meal-description">${recipe.description}</p>`
-        : ""
-    }
-    
-    <div class="ingredients-section">
-        <div class="section-label">
-        <i class="fas fa-list-ul"></i>
-        Ingredients
+    <div class="meal-details">
+        ${
+          recipe.description
+            ? `<p class="meal-description">${recipe.description}</p>`
+            : ""
+        }
+        
+        <div class="details-grid">
+            <div class="ingredients-section">
+                <div class="section-label">
+                    <i class="fas fa-list-ul"></i>
+                    Ingredients
+                </div>
+                <ul class="ingredients-list">
+                    ${ingredientsList}
+                </ul>
+            </div>
+            
+            <div class="instructions-section">
+                <div class="section-label">
+                    <i class="fas fa-clipboard-list"></i>
+                    Instructions
+                </div>
+                <div class="instructions">${recipe.instructions}</div>
+            </div>
         </div>
-        <ul class="ingredients-list">
-        ${ingredientsList}
-        </ul>
+        
+        ${
+          recipe.notes
+            ? `<div class="meal-notes">
+                <i class="fas fa-lightbulb"></i> ${recipe.notes}
+               </div>`
+            : ""
+        }
     </div>
-    
-    <div class="instructions-section">
-        <div class="section-label">
-        <i class="fas fa-clipboard-list"></i>
-        Instructions
-        </div>
-        <div class="instructions">${recipe.instructions}</div>
-    </div>
-    
-    ${
-      recipe.notes
-        ? `<div style="margin-top: 1rem; font-style: italic; color: var(--text-muted); font-size: 0.875rem;"><i class="fas fa-lightbulb"></i> ${recipe.notes}</div>`
-        : ""
-    }
     `;
 
-  return mealCard;
+  return mealRow;
 }
 
 function displayBatchPrep(prepSteps) {
@@ -321,6 +331,20 @@ function displayShoppingList(items) {
 
     categoriesContainer.appendChild(categoryCard);
   });
+}
+
+function getMealIcon(mealType) {
+  switch (mealType) {
+    case 'breakfast': return 'sun';
+    case 'lunch': return 'leaf';
+    case 'dinner': return 'moon';
+    default: return 'utensils';
+  }
+}
+
+function toggleMealDetails(header) {
+  const mealRow = header.closest('.meal-row');
+  mealRow.classList.toggle('expanded');
 }
 
 function getDayName(dayNum) {
