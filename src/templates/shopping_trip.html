@@ -1446,7 +1446,7 @@
       ),
       remainingBudget: JSON.parse("{{ remaining | default(1000) | tojson }}"),
       cartSessionExists: JSON.parse(
-        "{{ cart_session | default(false) | tojson }}"
+        '{{ cart_session | default(false) | tojson }}'
       ),
       cartId: JSON.parse(
         "{{ cart_session.cart_ID if cart_session else null }}"
