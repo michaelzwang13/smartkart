@@ -172,22 +172,31 @@ def get_spending_trends():
                 ORDER BY date;
             """
         else:  # 1y - Last 12 months - monthly buckets
-            query = """
+            query = '''
                 SELECT 
-                    DATE(DATE_FORMAT(c.created_at, '%Y-%m-01')) AS date,
-                    COALESCE(SUM(i.price * i.quantity), 0) AS amount
-                FROM shopping_cart c
-                LEFT JOIN cart_item i ON c.cart_ID = i.cart_ID
-                WHERE c.user_ID = %s 
-                    AND c.status = 'purchased'
-                    AND c.created_at >= DATE_SUB(CURRENT_DATE(), INTERVAL 12 MONTH)
-                GROUP BY DATE(DATE_FORMAT(c.created_at, '%Y-%m-01'))
-                ORDER BY date;
-            """
-
-        cursor.execute(query, (user_ID,))
+                  months.month_start AS date,
+                  COALESCE(SUM(i.price * i.quantity), 0) AS amount
+                FROM (
+                  SELECT DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL seq MONTH), '%%Y-%%m-01') AS month_start
+                  FROM (
+                    SELECT 0 AS seq UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION
+                    SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION
+                    SELECT 10 UNION SELECT 11
+                  ) AS seqs
+                ) AS months
+                LEFT JOIN shopping_cart c
+                  ON DATE_FORMAT(c.created_at, '%%Y-%%m-01') = months.month_start
+                  AND c.user_ID = %s
+                  AND c.status = 'purchased'
+                LEFT JOIN cart_item i
+                  ON c.cart_ID = i.cart_ID
+                GROUP BY months.month_start
+                ORDER BY months.month_start;
+            '''
+            
+        cursor.execute(query, (user_ID,))  
         trends = cursor.fetchall()
-        
+              
         # Create a complete date range for the period
         from datetime import datetime, timedelta
         import calendar
@@ -200,12 +209,13 @@ def get_spending_trends():
         # Convert existing data to dictionary for easy lookup
         trend_data = {}
         for trend in trends:
-            date_key = trend["date"].strftime("%Y-%m-%d")
+            if period != "1y": # 1y is already in str format
+              date_key = trend["date"].strftime("%Y-%m-%d")
+            else:
+              date_key = trend["date"]
             trend_data[date_key] = float(trend["amount"])
             print(f"DEBUG: Added to trend_data: {date_key} = {trend_data[date_key]}")
         
-        print(trend_data)
-
         # Generate complete date range and labels based on period
         formatted_trends = []
         if period == "7d":
