@@ -265,7 +265,7 @@ def get_or_create_recipe_template(cursor, recipe_data, meal_type):
 
 @meals_bp.route("/meals", methods=["GET"])
 def get_meals():
-    """Get meals for date range (for calendar view)"""
+    """Get meals for date range (for calendar view) - timezone-aware"""
     if "user_ID" not in session:
         return jsonify({"success": False, "message": "Not authenticated"})
 
@@ -310,8 +310,10 @@ def get_meals():
         cursor.execute(query, (user_id, start_date, end_date))
         meals = cursor.fetchall()
 
-        # Format for frontend
+        # Format for frontend with timezone awareness for "today" detection
         formatted_meals = []
+        user_today = get_user_current_date(user_id)
+        
         for meal in meals:
             meal_name = meal['recipe_name'] or meal['custom_recipe_name'] or f"Custom {meal['meal_type']}"
             formatted_meals.append({
@@ -326,10 +328,12 @@ def get_meals():
                 "is_completed": meal['is_completed'],
                 "notes": meal['notes'],
                 "session_id": meal['session_id'],
-                "session_name": meal['session_name']
+                "session_name": meal['session_name'],
+                "is_today": meal['meal_date'] == user_today,
+                "is_future": meal['meal_date'] > user_today
             })
 
-        return jsonify({"success": True, "meals": formatted_meals})
+        return jsonify({"success": True, "meals": formatted_meals, "user_today": user_today.strftime("%Y-%m-%d")})
 
     except Exception as e:
         return jsonify({"success": False, "message": f"Failed to get meals: {str(e)}"})

@@ -479,8 +479,11 @@ function createWeekDayCell(date) {
   dayCell.className = "calendar-day week-view";
   dayCell.setAttribute("data-date", date.toISOString().split("T")[0]);
 
-  const today = new Date();
-  const isToday = date.toDateString() === today.toDateString();
+  // Use timezone-aware today detection
+  const serverToday = window.serverToday;
+  const isToday = serverToday ? 
+    date.toISOString().split("T")[0] === serverToday : 
+    date.toDateString() === new Date().toDateString();
 
   if (isToday) {
     dayCell.classList.add("today");
@@ -530,12 +533,8 @@ function createWeekDayCell(date) {
           ? getDishName(meals[0])
           : `${getDishName(meals[0])} +${meals.length - 1} more`;
 
-      // Check if meal is in the future
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const mealDate = new Date(date);
-      mealDate.setHours(0, 0, 0, 0);
-      const isFuture = mealDate > today;
+      // Use server-provided future check (timezone-aware)
+      const isFuture = meals[0].is_future;
 
       mealSlot.innerHTML = `
         <div class="calendar-meal-type">${type}</div>
@@ -609,13 +608,14 @@ function createDayCell(date, currentMonth, isWeekView = false) {
   dayCell.className = "calendar-day";
   dayCell.setAttribute("data-date", date.toISOString().split("T")[0]);
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const mealDate = new Date(date);
-  mealDate.setHours(0, 0, 0, 0);
-  const isFuture = mealDate > today;
-  const isToday = date.toDateString() === new Date().toDateString();
   const isCurrentMonth = date.getMonth() === currentMonth;
+  
+  // Get timezone-aware today info from server data
+  const serverToday = window.mealsData && window.mealsData.length > 0 ? 
+    window.serverToday : null;
+  const isToday = serverToday ? 
+    date.toISOString().split("T")[0] === serverToday : 
+    date.toDateString() === new Date().toDateString();
 
   if (isToday) {
     dayCell.classList.add("today");
@@ -654,7 +654,7 @@ function createDayCell(date, currentMonth, isWeekView = false) {
       checkbox.type = "checkbox";
       checkbox.className = "meal-checkbox";
       checkbox.checked = meal.is_completed;
-      checkbox.disabled = isFuture;
+      checkbox.disabled = meal.is_future;
       checkbox.addEventListener("click", (e) => {
         e.stopPropagation(); // Prevent day click handler
         if (!checkbox.disabled) {
@@ -805,6 +805,7 @@ async function loadMealsForCalendar() {
 
       // Store meals data globally for calendar
       window.mealsData = data.meals || [];
+      window.serverToday = data.user_today || null; // Store timezone-aware "today"
       mealsData = data.meals || [];
 
       // Update calendar with new meal data
@@ -1463,23 +1464,7 @@ function editMeal(mealId) {
 }
 
 async function toggleMealCompletion(mealId, isCompleted, mealDate = null) {
-  // Prevent completing future meals
-  if (mealDate) {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const checkDate = new Date(mealDate);
-    checkDate.setHours(0, 0, 0, 0);
-
-    if (checkDate > today) {
-      alert("You can only complete meals for today or past dates.");
-      // Revert checkbox
-      const checkbox = document.querySelector(`input[onclick*="${mealId}"]`);
-      if (checkbox) {
-        checkbox.checked = !isCompleted;
-      }
-      return;
-    }
-  }
+  // Server-side validation will handle timezone-aware future date checking
   try {
     const response = await fetch(`/api/meals/${mealId}`, {
       method: "PUT",

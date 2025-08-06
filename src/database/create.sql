@@ -333,7 +333,6 @@ CREATE TABLE meals (
     custom_recipe_name VARCHAR(200) NULL, -- if not using template
     custom_instructions TEXT NULL, -- if not using template
     is_completed BOOLEAN DEFAULT FALSE,
-    completion_date TIMESTAMP NULL,
     notes TEXT NULL,
     is_locked BOOLEAN DEFAULT FALSE, -- prevents AI from overwriting
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
