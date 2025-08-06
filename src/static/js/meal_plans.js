@@ -1591,6 +1591,18 @@ function showEmptyDayPopup(date) {
   // Store the selected date globally for use when navigating
   window.selectedEmptyDate = date.toISOString().split("T")[0];
 
+  // Check if date is in the past using timezone-aware today
+  const selectedDateStr = date.toISOString().split("T")[0];
+  const serverToday = window.serverToday; // This should be set from the meals API
+  const isPastDate = serverToday && selectedDateStr < serverToday;
+
+  const generateButtonClass = isPastDate ? "btn btn-secondary" : "btn btn-primary";
+  const generateButtonDisabled = isPastDate ? "disabled" : "";
+  const generateButtonTitle = isPastDate ? "Cannot generate meal plans for past dates" : "";
+  const generateButtonOnClick = isPastDate ? "" : "onclick=\"closeEmptyDayPopupAndNavigate()\"";
+  const generateButtonIcon = isPastDate ? "fas fa-ban" : "fas fa-magic";
+  const generateButtonText = isPastDate ? "Cannot Generate" : "Generate Meal Plan";
+
   const popupHTML = `
     <div id="emptyDayPopup" class="modal-overlay">
         <div class="modal-content empty-day-popup">
@@ -1601,11 +1613,14 @@ function showEmptyDayPopup(date) {
             </div>
             <h3 class="empty-day-title">No meals planned for ${dateStr}</h3>
             <p class="empty-day-message">
-                Generate a meal plan to see your meals for this day and start planning your delicious week ahead!
+                ${isPastDate 
+                  ? "This date is in the past. You can only generate meal plans for today or future dates."
+                  : "Generate a meal plan to see your meals for this day and start planning your delicious week ahead!"
+                }
             </p>
             <div class="empty-day-actions">
-                <button class="btn btn-primary" onclick="closeEmptyDayPopupAndNavigate()">
-                <i class="fas fa-magic"></i> Generate Meal Plan
+                <button class="${generateButtonClass}" ${generateButtonDisabled} title="${generateButtonTitle}" ${generateButtonOnClick}>
+                <i class="${generateButtonIcon}"></i> ${generateButtonText}
                 </button>
                 <button class="btn btn-secondary" onclick="closeEmptyDayPopup()">
                 <i class="fas fa-times"></i> Close

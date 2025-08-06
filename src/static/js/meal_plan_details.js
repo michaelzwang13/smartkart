@@ -282,12 +282,6 @@ function createMealCard(mealType, recipe) {
     </div>
     
     <div class="meal-details">
-        ${
-          recipe.description
-            ? `<p class="meal-description">${recipe.description}</p>`
-            : ""
-        }
-        
         <div class="details-grid">
             <div class="ingredients-section">
                 <div class="section-label">
