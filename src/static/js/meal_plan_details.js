@@ -90,7 +90,7 @@ function displayMealPlan(mealPlan) {
   displayPlanInfo(plan_info);
 
   // Display recipes by day
-  displayRecipes(recipes);
+  displayRecipes(recipes, plan_info.start_date);
 
   // Display batch prep steps
   if (batch_prep && batch_prep.length > 0) {
@@ -104,8 +104,9 @@ function displayMealPlan(mealPlan) {
 }
 
 function displayPlanInfo(plan) {
-  const startDate = new Date(plan.start_date).toLocaleDateString();
-  const endDate = new Date(plan.end_date).toLocaleDateString();
+  // Display raw dates directly from backend
+  const startDate = plan.start_date;
+  const endDate = plan.end_date;
 
   document.getElementById("planInfo").innerHTML = `
     <div class="plan-header-content">
@@ -146,7 +147,7 @@ function displayPlanInfo(plan) {
     `;
 }
 
-function displayRecipes(recipes) {
+function displayRecipes(recipes, startDate) {
   const daysGrid = document.getElementById("daysGrid");
   daysGrid.innerHTML = "";
 
@@ -160,11 +161,11 @@ function displayRecipes(recipes) {
     const dayCard = document.createElement("div");
     dayCard.className = "day-card";
 
-    const dayName = getDayName(parseInt(dayNum));
+    const { dayName, dateString } = getDayNameAndDate(parseInt(dayNum), startDate);
 
     dayCard.innerHTML = `
         <div class="day-header">
-        <h3 class="day-title">Day ${dayNum} - ${dayName}</h3>
+        <h3 class="day-title">Day ${dayNum} - ${dayName}, ${dateString}</h3>
         </div>
         <div class="meals-grid" id="day${dayNum}Meals">
         </div>
@@ -347,11 +348,19 @@ function toggleMealDetails(header) {
   mealRow.classList.toggle('expanded');
 }
 
-function getDayName(dayNum) {
-  const today = new Date();
-  const targetDate = new Date(today);
-  targetDate.setDate(today.getDate() + dayNum - 1);
-  return targetDate.toLocaleDateString("en-US", { weekday: "long" });
+function getDayNameAndDate(dayNum, startDate) {
+  const startDateObj = new Date(startDate);
+  const targetDate = new Date(startDateObj);
+  targetDate.setDate(startDateObj.getDate() + dayNum - 1);
+  
+  const dayName = targetDate.toLocaleDateString("en-US", { weekday: "long" });
+  const dateString = targetDate.toLocaleDateString("en-US", { 
+    month: "short", 
+    day: "numeric",
+    year: "numeric"
+  });
+  
+  return { dayName, dateString };
 }
 
 function showDeleteConfirmation() {

@@ -845,8 +845,9 @@ function createPlanCard(plan) {
   card.className = "plan-card";
   card.onclick = () => viewPlanDetails(plan.plan_id);
 
-  const startDate = new Date(plan.start_date).toLocaleDateString();
-  const endDate = new Date(plan.end_date).toLocaleDateString();
+  // Display raw dates directly from backend
+  const startDate = plan.start_date;
+  const endDate = plan.end_date;
 
   card.innerHTML = `
     <div class="plan-header">

@@ -36,7 +36,15 @@ def get_meal_plans():
         cursor.execute(query, (user_id,))
         plans = cursor.fetchall()
 
-        return jsonify({"success": True, "plans": plans})
+        # Format dates as strings for consistency
+        formatted_plans = []
+        for plan in plans:
+            plan_copy = dict(plan)
+            plan_copy['start_date'] = plan['start_date'].strftime("%Y-%m-%d") if hasattr(plan['start_date'], 'strftime') else plan['start_date']
+            plan_copy['end_date'] = plan['end_date'].strftime("%Y-%m-%d") if hasattr(plan['end_date'], 'strftime') else plan['end_date']
+            formatted_plans.append(plan_copy)
+
+        return jsonify({"success": True, "plans": formatted_plans})
 
     except Exception as e:
         return jsonify({"success": False, "message": f"Failed to get meal plans: {str(e)}"})
@@ -170,13 +178,13 @@ def get_meal_plan_details(plan_id):
         cursor.execute(shopping_query, (plan_id,))
         shopping_items = cursor.fetchall()
 
-        # Structure the response in old format
+        # Structure the response in old format (use raw dates from database)
         structured_plan = {
             "plan_info": {
                 "plan_id": session_info['session_id'],
                 "plan_name": session_info['session_name'],
-                "start_date": session_info['start_date'],
-                "end_date": session_info['end_date'],
+                "start_date": session_info['start_date'].strftime("%Y-%m-%d") if hasattr(session_info['start_date'], 'strftime') else session_info['start_date'],
+                "end_date": session_info['end_date'].strftime("%Y-%m-%d") if hasattr(session_info['end_date'], 'strftime') else session_info['end_date'],
                 "total_days": session_info['total_days'],
                 "dietary_preference": session_info['dietary_preference'],
                 "budget_limit": session_info['budget_limit'],

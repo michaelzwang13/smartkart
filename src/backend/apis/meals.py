@@ -643,8 +643,8 @@ REQUIREMENTS:
 - Focus on meal prep efficiency and batch cooking
 - Prioritize using available ingredients first{blocked_info}
 
-IMPORTANT: Respond with a valid JSON object in exactly this format:
 Do not use fractions like 1/2 — convert them to decimals (e.g., 0.5) to ensure valid JSON
+IMPORTANT: Respond with a valid JSON object in exactly this format:
 
 {{
   "days": [
