@@ -1223,25 +1223,33 @@ function showMealSelectionModal(date, meals) {
             </button>
         </div>
         <div class="modal-body">
-            <div class="meals-grid">
+            <div class="meals-list">
             ${meals
               .map(
                 (meal) => `
-                <div class="meal-card" onclick="showMealDetails(${JSON.stringify(
+                <div class="meal-row" onclick="showMealDetails(${JSON.stringify(
                   meal
                 ).replace(/"/g, "&quot;")})">
-                <div class="meal-type-badge ${meal.type}">
-                    <i class="fas fa-${getMealIcon(meal.type)}"></i>
-                    ${meal.type.charAt(0).toUpperCase() + meal.type.slice(1)}
-                </div>
-                <div class="meal-name">${meal.name}</div>
-                ${
-                  meal.prep_time
-                    ? `<div class="meal-time">${
-                        meal.prep_time + (meal.cook_time || 0)
-                      } min total</div>`
-                    : ""
-                }
+                    <div class="meal-row-type">
+                        <div class="meal-type-badge ${meal.type}">
+                            <i class="fas fa-${getMealIcon(meal.type)}"></i>
+                            ${meal.type.charAt(0).toUpperCase() + meal.type.slice(1)}
+                        </div>
+                    </div>
+                    <div class="meal-row-content">
+                        <div class="meal-row-name">${meal.name}</div>
+                        ${
+                          meal.prep_time
+                            ? `<div class="meal-row-time">
+                                <i class="fas fa-clock"></i>
+                                ${meal.prep_time + (meal.cook_time || 0)} min total
+                               </div>`
+                            : ""
+                        }
+                    </div>
+                    <div class="meal-row-action">
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
                 </div>
             `
               )
