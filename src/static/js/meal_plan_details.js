@@ -356,16 +356,21 @@ function toggleMealDetails(header) {
 }
 
 function getDayNameAndDate(dayNum, startDate) {
-  const startDateObj = new Date(startDate);
+  // Parse start date manually: YYYY-MM-DD
+  const [year, month, day] = startDate.split('-').map(num => parseInt(num));
+  
+  // Calculate target date by adding days
+  const startDateObj = new Date(year, month - 1, day);
   const targetDate = new Date(startDateObj);
   targetDate.setDate(startDateObj.getDate() + dayNum - 1);
   
-  const dayName = targetDate.toLocaleDateString("en-US", { weekday: "long" });
-  const dateString = targetDate.toLocaleDateString("en-US", { 
-    month: "short", 
-    day: "numeric",
-    year: "numeric"
-  });
+  // Get day name manually
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const dayName = dayNames[targetDate.getDay()];
+  
+  // Format date manually
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const dateString = `${months[targetDate.getMonth()]} ${targetDate.getDate()}, ${targetDate.getFullYear()}`;
   
   return { dayName, dateString };
 }
