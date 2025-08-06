@@ -1375,11 +1375,6 @@ function displayMealDetailsModal(meal) {
         </div>
         <div class="modal-body">
             <div class="meal-details-content">
-            ${
-              meal.description
-                ? `<div class="meal-description">${meal.description}</div>`
-                : ""
-            }
             
             <div class="meal-info-grid">
                 ${
@@ -1431,15 +1426,14 @@ function displayMealDetailsModal(meal) {
                     }">
                         <span class="ingredient-name">${
                           ingredient.ingredient_name
+                        }${
+                          ingredient.notes
+                            ? ` (${ingredient.notes})`
+                            : ""
                         }</span>
                         <span class="ingredient-amount">${
                           convertToMixedFraction(ingredient.quantity)
-                        } ${ingredient.unit === 'pcs' ? '' : ingredient.unit}</span>
-                        ${
-                          ingredient.notes
-                            ? `<span class="ingredient-notes">${ingredient.notes}</span>`
-                            : ""
-                        }
+                        } ${ingredient.unit === 'pcs' || ingredient.unit === 'pc' ? '' : ingredient.unit}</span>
                     </div>
                     `
                       )
