@@ -26,14 +26,29 @@
     />
 
     <style>
+      html, body {
+        height: 100%;
+      }
+
       body {
         padding-top: 80px;
+        display: flex;
+        flex-direction: column;
+        min-height: calc(100vh - 80px);
+      }
+
+      main {
+        flex: 1 0 auto;
       }
 
       .container {
         max-width: 1200px;
         margin: 0 auto;
         padding: 20px;
+      }
+
+      .footer {
+        flex-shrink: 0;
       }
 
       .pantry-header {
@@ -777,7 +792,8 @@
       </div>
     </header>
 
-    <div class="container">
+    <main>
+      <div class="container">
       <div class="pantry-header">
         <h2>My Pantry</h2>
         <div class="header-actions">
@@ -900,7 +916,8 @@
           Add Your First Item
         </button>
       </div>
-    </div>
+      </div>
+    </main>
 
     <!-- Add Item Modal -->
     <div id="addItemModal" class="modal" style="display: none">
