@@ -62,7 +62,7 @@ async function loadMealPlanDetails() {
     const data = await response.json();
 
     if (data.success) {
-      displayMealPlan(data.meal_plan);
+      await displayMealPlan(data.meal_plan);
       document.getElementById("loadingState").style.display = "none";
       document.getElementById("planContent").style.display = "block";
     } else {
@@ -80,7 +80,7 @@ async function loadMealPlanDetails() {
   }
 }
 
-function displayMealPlan(mealPlan) {
+async function displayMealPlan(mealPlan) {
   const { plan_info, recipes, batch_prep, shopping_list } = mealPlan;
 
   // Update page title
@@ -90,7 +90,7 @@ function displayMealPlan(mealPlan) {
   displayPlanInfo(plan_info);
 
   // Display recipes by day
-  displayRecipes(recipes, plan_info.start_date);
+  await displayRecipes(recipes, plan_info.start_date);
 
   // Display batch prep steps
   if (batch_prep && batch_prep.length > 0) {
@@ -206,9 +206,26 @@ function displayPlanInfo(plan) {
     `;
 }
 
-function displayRecipes(recipes, startDate) {
+async function displayRecipes(recipes, startDate) {
   const daysGrid = document.getElementById("daysGrid");
   daysGrid.innerHTML = "";
+
+  // Get timezone-aware today for comparison
+  let serverToday = window.serverToday;
+  if (!serverToday) {
+    try {
+      const response = await fetch('/api/meals/today');
+      const data = await response.json();
+      if (data.success && data.date) {
+        serverToday = data.date;
+        window.serverToday = serverToday; // Cache it
+      } else {
+        serverToday = new Date().toISOString().split("T")[0]; // Fallback
+      }
+    } catch (error) {
+      serverToday = new Date().toISOString().split("T")[0]; // Fallback
+    }
+  }
 
   // Sort days
   const sortedDays = Object.keys(recipes).sort(
@@ -236,6 +253,16 @@ function displayRecipes(recipes, startDate) {
     `;
 
     daysGrid.appendChild(dayCard);
+
+    // Check if this day is in the past and hide it by default
+    const dayDate = new Date(startDate);
+    dayDate.setDate(dayDate.getDate() + parseInt(dayNum) - 1);
+    const dayDateStr = dayDate.toISOString().split("T")[0];
+    
+    if (dayDateStr < serverToday) {
+      // This day is in the past, hide it by default
+      toggleDayMeals(parseInt(dayNum));
+    }
 
     // Add meals for this day
     const mealsGrid = document.getElementById(`day${dayNum}Meals`);
