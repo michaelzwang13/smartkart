@@ -14,6 +14,19 @@ CREATE TABLE user_account (
     PRIMARY KEY (user_ID)
 );
 
+-- Create the shopping_lists table (list metadata)
+CREATE TABLE shopping_lists (
+    list_id INT AUTO_INCREMENT,
+    user_id VARCHAR(50) NOT NULL,
+    list_name VARCHAR(100) NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    is_active BOOLEAN DEFAULT TRUE,
+    PRIMARY KEY (list_id),
+    FOREIGN KEY (user_id) REFERENCES user_account(user_ID)
+);
+
 -- Create the shopping_cart table
 CREATE TABLE shopping_cart (
     cart_ID INT AUTO_INCREMENT,
@@ -71,19 +84,6 @@ CREATE TABLE user_budget_settings (
     currency VARCHAR(10) DEFAULT 'USD',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES user_account(user_ID)
-);
-
--- Create the shopping_lists table (list metadata)
-CREATE TABLE shopping_lists (
-    list_id INT AUTO_INCREMENT,
-    user_id VARCHAR(50) NOT NULL,
-    list_name VARCHAR(100) NOT NULL,
-    description TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    is_active BOOLEAN DEFAULT TRUE,
-    PRIMARY KEY (list_id),
     FOREIGN KEY (user_id) REFERENCES user_account(user_ID)
 );
 
