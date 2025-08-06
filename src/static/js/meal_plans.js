@@ -840,14 +840,21 @@ function displayMealPlans(plans) {
   });
 }
 
+function formatDateString(dateString) {
+  // Parse YYYY-MM-DD format manually
+  const [year, month, day] = dateString.split('-');
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return `${months[parseInt(month) - 1]} ${parseInt(day)}`;
+}
+
 function createPlanCard(plan) {
   const card = document.createElement("div");
   card.className = "plan-card";
   card.onclick = () => viewPlanDetails(plan.plan_id);
 
-  // Display raw dates directly from backend
-  const startDate = plan.start_date;
-  const endDate = plan.end_date;
+  // Format dates manually from YYYY-MM-DD string
+  const startDate = formatDateString(plan.start_date);
+  const endDate = formatDateString(plan.end_date);
 
   card.innerHTML = `
     <div class="plan-header">
