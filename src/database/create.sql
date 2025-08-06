@@ -8,6 +8,9 @@ CREATE TABLE user_account (
     password VARCHAR(50) NOT NULL,
     first_name VARCHAR(50),
     last_name VARCHAR(50),
+    timezone VARCHAR(50) DEFAULT 'America/Los_Angeles',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (user_ID)
 );
 

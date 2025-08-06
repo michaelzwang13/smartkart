@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify, session
 from src.database import get_db
+from src.timezone_utils import get_user_current_date, get_user_date_range_utc, is_date_today_for_user
 import json
 from datetime import datetime, timedelta
 
@@ -336,6 +337,86 @@ def get_meals():
         cursor.close()
 
 
+@meals_bp.route("/meals/today", methods=["GET"])
+def get_todays_meals():
+    """Get today's meals based on user's timezone"""
+    if "user_ID" not in session:
+        return jsonify({"success": False, "message": "Not authenticated"})
+
+    user_id = session["user_ID"]
+    
+    try:
+        # Get user's current date in their timezone
+        user_today = get_user_current_date(user_id)
+        
+        db = get_db()
+        cursor = db.cursor()
+
+        query = """
+            SELECT 
+                m.meal_id,
+                m.meal_date,
+                m.meal_type,
+                m.is_locked,
+                m.is_completed,
+                m.notes,
+                m.session_id,
+                rt.recipe_name,
+                rt.prep_time,
+                rt.cook_time,
+                rt.difficulty,
+                rt.instructions,
+                rt.estimated_cost,
+                m.custom_recipe_name,
+                m.custom_instructions,
+                mps.session_name
+            FROM meals m
+            LEFT JOIN recipe_templates rt ON m.recipe_template_id = rt.template_id
+            LEFT JOIN meal_plan_sessions mps ON m.session_id = mps.session_id
+            WHERE m.user_id = %s AND m.meal_date = %s
+            ORDER BY FIELD(m.meal_type, 'breakfast', 'lunch', 'dinner', 'snack')
+        """
+        cursor.execute(query, (user_id, user_today))
+        meals = cursor.fetchall()
+        
+        # Format for frontend
+        formatted_meals = []
+        for meal in meals:
+            meal_name = meal['recipe_name'] or meal['custom_recipe_name'] or f"Custom {meal['meal_type']}"
+            instructions = meal['instructions'] or meal['custom_instructions'] or "No instructions available"
+            
+            formatted_meals.append({
+                "meal_id": meal['meal_id'],
+                "date": meal['meal_date'].strftime("%Y-%m-%d"),
+                "type": meal['meal_type'],
+                "name": meal_name,
+                "instructions": instructions,
+                "prep_time": meal['prep_time'],
+                "cook_time": meal['cook_time'],
+                "difficulty": meal['difficulty'],
+                "estimated_cost": float(meal['estimated_cost']) if meal['estimated_cost'] else None,
+                "is_locked": meal['is_locked'],
+                "is_completed": meal['is_completed'],
+                "notes": meal['notes'],
+                "session_id": meal['session_id'],
+                "session_name": meal['session_name']
+            })
+
+        return jsonify({
+            "success": True, 
+            "meals": formatted_meals,
+            "date": user_today.strftime("%Y-%m-%d"),
+            "total_meals": len(formatted_meals),
+            "completed_meals": len([m for m in formatted_meals if m['is_completed']])
+        })
+
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Failed to get today's meals: {str(e)}"})
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+
+
 @meals_bp.route("/meals/<int:meal_id>", methods=["GET"])
 def get_meal_details(meal_id):
     """Get detailed information for a specific meal"""
@@ -436,11 +517,11 @@ def update_meal(meal_id):
         if not meal_info:
             return jsonify({"success": False, "message": "Meal not found or access denied"})
         
-        # Check if trying to complete a future meal
+        # Check if trying to complete a future meal (timezone-aware)
         if 'is_completed' in data and data['is_completed']:
             meal_date = meal_info['meal_date']
-            today = datetime.now().date()
-            if meal_date > today:
+            user_today = get_user_current_date(user_id)
+            if meal_date > user_today:
                 return jsonify({
                     "success": False, 
                     "message": "Cannot mark future meals as completed. You can only complete meals for today or past dates."

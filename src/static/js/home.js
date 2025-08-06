@@ -781,10 +781,7 @@ function initializeShoppingHistory() {
 // Load and display today's meals
 async function loadTodaysMeals() {
   try {
-    const today = new Date().toISOString().split("T")[0];
-    const response = await fetch(
-      `/api/meals?start_date=${today}&end_date=${today}`
-    );
+    const response = await fetch('/api/meals/today');
     const data = await response.json();
 
     const loadingDiv = document.getElementById("mealsLoading");

@@ -225,11 +225,16 @@ def settings():
                 first_name = request.form["first_name"].strip()
                 last_name = request.form["last_name"].strip()
                 email = request.form["email"].strip()
+                timezone = request.form.get("timezone", "UTC").strip()
                 
                 # Validation
                 if not first_name or not last_name or not email:
                     error = "All fields are required"
                     return render_settings_with_user_data(user_ID, error=error)
+                
+                # Validate timezone
+                if not timezone:
+                    timezone = "UTC"
                 
                 # Check if email is already used by another user
                 query = "SELECT user_ID FROM user_account WHERE email = %s AND user_ID != %s"
@@ -240,9 +245,9 @@ def settings():
                     error = "This email address is already in use by another account"
                     return render_settings_with_user_data(user_ID, error=error)
                 
-                # Update user information
-                update_query = "UPDATE user_account SET first_name = %s, last_name = %s, email = %s WHERE user_ID = %s"
-                cursor.execute(update_query, (first_name, last_name, email, user_ID))
+                # Update user information including timezone
+                update_query = "UPDATE user_account SET first_name = %s, last_name = %s, email = %s, timezone = %s WHERE user_ID = %s"
+                cursor.execute(update_query, (first_name, last_name, email, timezone, user_ID))
                 db.commit()
                 
                 success = "Personal information updated successfully"
@@ -335,7 +340,7 @@ def render_settings_with_user_data(user_ID, success=None, error=None):
     try:
         db = get_db()
         cursor = db.cursor()
-        query = "SELECT user_ID, email, first_name, last_name FROM user_account WHERE user_ID = %s"
+        query = "SELECT user_ID, email, first_name, last_name, timezone FROM user_account WHERE user_ID = %s"
         cursor.execute(query, (user_ID,))
         user = cursor.fetchone()
         cursor.close()

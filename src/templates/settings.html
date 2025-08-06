@@ -411,6 +411,68 @@
                   </div>
                 </div>
 
+                <div class="form-group">
+                  <label for="timezone" class="form-label">Timezone</label>
+                  <div class="form-input-container">
+                    <select
+                      id="timezone"
+                      name="timezone"
+                      class="form-input"
+                      required
+                    >
+                      <option value="">Select your timezone...</option>
+                      <!-- North America -->
+                      <optgroup label="North America">
+                        <option value="America/New_York" {{ 'selected' if user.timezone == 'America/New_York' else '' }}>Eastern Time (New York)</option>
+                        <option value="America/Chicago" {{ 'selected' if user.timezone == 'America/Chicago' else '' }}>Central Time (Chicago)</option>
+                        <option value="America/Denver" {{ 'selected' if user.timezone == 'America/Denver' else '' }}>Mountain Time (Denver)</option>
+                        <option value="America/Los_Angeles" {{ 'selected' if user.timezone == 'America/Los_Angeles' else '' }}>Pacific Time (Los Angeles)</option>
+                        <option value="America/Anchorage" {{ 'selected' if user.timezone == 'America/Anchorage' else '' }}>Alaska Time (Anchorage)</option>
+                        <option value="Pacific/Honolulu" {{ 'selected' if user.timezone == 'Pacific/Honolulu' else '' }}>Hawaii Time (Honolulu)</option>
+                        <option value="America/Toronto" {{ 'selected' if user.timezone == 'America/Toronto' else '' }}>Eastern Time (Toronto)</option>
+                        <option value="America/Vancouver" {{ 'selected' if user.timezone == 'America/Vancouver' else '' }}>Pacific Time (Vancouver)</option>
+                      </optgroup>
+                      <!-- Europe -->
+                      <optgroup label="Europe">
+                        <option value="Europe/London" {{ 'selected' if user.timezone == 'Europe/London' else '' }}>Greenwich Mean Time (London)</option>
+                        <option value="Europe/Paris" {{ 'selected' if user.timezone == 'Europe/Paris' else '' }}>Central European Time (Paris)</option>
+                        <option value="Europe/Berlin" {{ 'selected' if user.timezone == 'Europe/Berlin' else '' }}>Central European Time (Berlin)</option>
+                        <option value="Europe/Rome" {{ 'selected' if user.timezone == 'Europe/Rome' else '' }}>Central European Time (Rome)</option>
+                        <option value="Europe/Madrid" {{ 'selected' if user.timezone == 'Europe/Madrid' else '' }}>Central European Time (Madrid)</option>
+                        <option value="Europe/Amsterdam" {{ 'selected' if user.timezone == 'Europe/Amsterdam' else '' }}>Central European Time (Amsterdam)</option>
+                        <option value="Europe/Stockholm" {{ 'selected' if user.timezone == 'Europe/Stockholm' else '' }}>Central European Time (Stockholm)</option>
+                        <option value="Europe/Moscow" {{ 'selected' if user.timezone == 'Europe/Moscow' else '' }}>Moscow Time (Moscow)</option>
+                      </optgroup>
+                      <!-- Asia -->
+                      <optgroup label="Asia">
+                        <option value="Asia/Tokyo" {{ 'selected' if user.timezone == 'Asia/Tokyo' else '' }}>Japan Standard Time (Tokyo)</option>
+                        <option value="Asia/Shanghai" {{ 'selected' if user.timezone == 'Asia/Shanghai' else '' }}>China Standard Time (Shanghai)</option>
+                        <option value="Asia/Seoul" {{ 'selected' if user.timezone == 'Asia/Seoul' else '' }}>Korea Standard Time (Seoul)</option>
+                        <option value="Asia/Hong_Kong" {{ 'selected' if user.timezone == 'Asia/Hong_Kong' else '' }}>Hong Kong Time (Hong Kong)</option>
+                        <option value="Asia/Singapore" {{ 'selected' if user.timezone == 'Asia/Singapore' else '' }}>Singapore Standard Time (Singapore)</option>
+                        <option value="Asia/Dubai" {{ 'selected' if user.timezone == 'Asia/Dubai' else '' }}>Gulf Standard Time (Dubai)</option>
+                        <option value="Asia/Kolkata" {{ 'selected' if user.timezone == 'Asia/Kolkata' else '' }}>India Standard Time (Mumbai)</option>
+                        <option value="Asia/Bangkok" {{ 'selected' if user.timezone == 'Asia/Bangkok' else '' }}>Indochina Time (Bangkok)</option>
+                      </optgroup>
+                      <!-- Australia & Oceania -->
+                      <optgroup label="Australia & Oceania">
+                        <option value="Australia/Sydney" {{ 'selected' if user.timezone == 'Australia/Sydney' else '' }}>Australian Eastern Time (Sydney)</option>
+                        <option value="Australia/Melbourne" {{ 'selected' if user.timezone == 'Australia/Melbourne' else '' }}>Australian Eastern Time (Melbourne)</option>
+                        <option value="Australia/Perth" {{ 'selected' if user.timezone == 'Australia/Perth' else '' }}>Australian Western Time (Perth)</option>
+                        <option value="Pacific/Auckland" {{ 'selected' if user.timezone == 'Pacific/Auckland' else '' }}>New Zealand Standard Time (Auckland)</option>
+                      </optgroup>
+                      <!-- Other -->
+                      <optgroup label="Other">
+                        <option value="UTC" {{ 'selected' if user.timezone == 'UTC' or not user.timezone else '' }}>Coordinated Universal Time (UTC)</option>
+                      </optgroup>
+                    </select>
+                    <i
+                      class="fas fa-globe-americas form-input-icon"
+                      aria-hidden="true"
+                    ></i>
+                  </div>
+                </div>
+
                 <div class="btn-actions">
                   <button type="submit" class="btn btn-primary">
                     <i class="fas fa-save" aria-hidden="true"></i>
