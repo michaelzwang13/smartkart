@@ -224,7 +224,12 @@ function displayRecipes(recipes, startDate) {
 
     dayCard.innerHTML = `
         <div class="day-header">
-        <h3 class="day-title">Day ${dayNum} - ${dayName}, ${dateString}</h3>
+        <div class="day-header-content">
+            <h3 class="day-title">Day ${dayNum} - ${dayName}, ${dateString}</h3>
+            <button class="day-toggle-btn" onclick="toggleDayMeals(${dayNum})" title="Hide/Show meals for this day">
+                <i class="fas fa-eye" id="dayToggleIcon${dayNum}"></i>
+            </button>
+        </div>
         </div>
         <div class="meals-grid" id="day${dayNum}Meals">
         </div>
@@ -399,6 +404,23 @@ function getMealIcon(mealType) {
 function toggleMealDetails(header) {
   const mealRow = header.closest('.meal-row');
   mealRow.classList.toggle('expanded');
+}
+
+function toggleDayMeals(dayNum) {
+  const mealsGrid = document.getElementById(`day${dayNum}Meals`);
+  const toggleIcon = document.getElementById(`dayToggleIcon${dayNum}`);
+  
+  if (mealsGrid.style.display === 'none') {
+    // Show meals
+    mealsGrid.style.display = 'grid';
+    toggleIcon.className = 'fas fa-eye';
+    toggleIcon.parentElement.title = 'Hide meals for this day';
+  } else {
+    // Hide meals
+    mealsGrid.style.display = 'none';
+    toggleIcon.className = 'fas fa-eye-slash';
+    toggleIcon.parentElement.title = 'Show meals for this day';
+  }
 }
 
 function getDayNameAndDate(dayNum, startDate) {
