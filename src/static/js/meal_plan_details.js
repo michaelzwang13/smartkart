@@ -110,6 +110,58 @@ function formatDateString(dateString) {
   return `${months[parseInt(month) - 1]} ${parseInt(day)}`;
 }
 
+function convertToMixedFraction(decimal) {
+  if (!decimal || decimal === 0) return '0';
+  
+  const num = parseFloat(decimal);
+  const wholeNumber = Math.floor(num);
+  const fractionalPart = num - wholeNumber;
+  
+  // If no fractional part, return whole number
+  if (fractionalPart === 0) {
+    return wholeNumber.toString();
+  }
+  
+  // Round to nearest common fraction
+  let fraction = '';
+  const tolerance = 0.04; // Tolerance for rounding
+  
+  // Check for halves
+  if (Math.abs(fractionalPart - 0.5) < tolerance) {
+    fraction = '1/2';
+  }
+  // Check for quarters
+  else if (Math.abs(fractionalPart - 0.25) < tolerance) {
+    fraction = '1/4';
+  }
+  else if (Math.abs(fractionalPart - 0.75) < tolerance) {
+    fraction = '3/4';
+  }
+  // Check for thirds
+  else if (Math.abs(fractionalPart - 0.333) < tolerance || Math.abs(fractionalPart - 0.33) < tolerance) {
+    fraction = '1/3';
+  }
+  else if (Math.abs(fractionalPart - 0.667) < tolerance || Math.abs(fractionalPart - 0.66) < tolerance) {
+    fraction = '2/3';
+  }
+  // If doesn't match common fractions, round to nearest quarter
+  else {
+    const rounded = Math.round(fractionalPart * 4) / 4;
+    if (rounded === 0.25) fraction = '1/4';
+    else if (rounded === 0.5) fraction = '1/2';
+    else if (rounded === 0.75) fraction = '3/4';
+    else if (rounded === 0) return wholeNumber.toString();
+    else if (rounded === 1) return (wholeNumber + 1).toString();
+  }
+  
+  // Return formatted result
+  if (wholeNumber === 0) {
+    return fraction;
+  } else {
+    return `${wholeNumber} ${fraction}`;
+  }
+}
+
 function displayPlanInfo(plan) {
   // Format dates manually from YYYY-MM-DD string
   const startDate = formatDateString(plan.start_date);
@@ -201,7 +253,7 @@ function createMealCard(mealType, recipe) {
   const ingredientsList = recipe.ingredients
     .map(
       (ing) =>
-        `<li class="ingredient-item">${ing.quantity} ${ing.unit} ${ing.name}${
+        `<li class="ingredient-item">${convertToMixedFraction(ing.quantity)} ${ing.unit === 'pcs' ? '' : ing.unit} ${ing.name}${
           ing.notes ? " (" + ing.notes + ")" : ""
         }</li>`
     )
