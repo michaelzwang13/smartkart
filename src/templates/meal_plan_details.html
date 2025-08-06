@@ -68,6 +68,13 @@
         margin-bottom: var(--spacing-2xl);
         display: flex;
         align-items: center;
+        justify-content: space-between;
+        gap: var(--spacing-lg);
+      }
+
+      .page-header-left {
+        display: flex;
+        align-items: center;
         gap: var(--spacing-lg);
       }
 
@@ -98,38 +105,35 @@
       /* Plan info */
       .plan-info {
         background: var(--bg-primary);
-        border-radius: var(--radius-xl);
-        padding: var(--spacing-xl);
-        margin-bottom: var(--spacing-2xl);
-        box-shadow: var(--shadow-md);
+        border-radius: var(--radius-lg);
+        padding: var(--spacing-lg);
+        margin-bottom: var(--spacing-xl);
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-light);
       }
 
-      .plan-header-content {
-        display: flex;
-        flex-direction: column;
-        gap: var(--spacing-lg);
-      }
 
       .plan-meta {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: var(--spacing-lg);
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--spacing-xl);
+        align-items: center;
       }
 
       .meta-item {
         display: flex;
         align-items: center;
-        gap: var(--spacing-sm);
+        gap: var(--spacing-md);
+        font-size: 1.25rem;
+        font-weight: 500;
+        color: var(--text-primary);
       }
 
       .meta-icon {
         color: var(--primary-color);
-      }
-
-      .plan-actions {
-        display: flex;
-        justify-content: flex-end;
-        gap: var(--spacing-md);
+        font-size: 1.125rem;
+        width: 20px;
+        flex-shrink: 0;
       }
 
       .btn {
@@ -678,8 +682,24 @@
           font-size: 2rem;
         }
 
+        .page-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: var(--spacing-md);
+        }
+
+        .page-header-left {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: var(--spacing-md);
+        }
+
         .plan-meta {
-          grid-template-columns: 1fr;
+          gap: var(--spacing-lg);
+        }
+
+        .meta-item {
+          font-size: 1.125rem;
         }
 
         .details-grid {
@@ -842,11 +862,16 @@
     <main class="main-content">
       <!-- Page Header -->
       <div class="page-header">
-        <a href="{{ url_for('shopping.meal_plans') }}" class="back-btn">
-          <i class="fas fa-arrow-left"></i>
-          Back to Meal Plans
-        </a>
-        <h1 class="page-title" id="planTitle">Meal Plan Details</h1>
+        <div class="page-header-left">
+          <a href="{{ url_for('shopping.meal_plans') }}" class="back-btn">
+            <i class="fas fa-arrow-left"></i>
+            Back to Meal Plans
+          </a>
+          <h1 class="page-title" id="planTitle">Meal Plan Details</h1>
+        </div>
+        <button class="btn btn-danger" id="deletePlanBtn" onclick="showDeleteConfirmation()">
+          <i class="fas fa-trash"></i> Delete Meal Plan
+        </button>
       </div>
 
       <!-- Loading State -->

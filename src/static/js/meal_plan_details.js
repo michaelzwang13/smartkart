@@ -168,39 +168,28 @@ function displayPlanInfo(plan) {
   const endDate = formatDateString(plan.end_date);
 
   document.getElementById("planInfo").innerHTML = `
-    <div class="plan-header-content">
-        <div class="plan-meta">
-            <div class="meta-item">
-            <i class="fas fa-calendar-alt meta-icon"></i>
-            <span>${startDate} - ${endDate}</span>
-            </div>
-            <div class="meta-item">
-            <i class="fas fa-clock meta-icon"></i>
-            <span>${plan.total_days} days</span>
-            </div>
-            <div class="meta-item">
-            <i class="fas fa-leaf meta-icon"></i>
-            <span>${plan.dietary_preference || "No restrictions"}</span>
-            </div>
-            <div class="meta-item">
-            <i class="fas fa-dollar-sign meta-icon"></i>
-            <span>${
-              plan.budget_limit ? "$" + plan.budget_limit : "No budget limit"
-            }</span>
-            </div>
-            <div class="meta-item">
-            <i class="fas fa-fire meta-icon"></i>
-            <span>Max ${plan.max_cooking_time} min/day</span>
-            </div>
-            <div class="meta-item">
-            <i class="fas fa-robot meta-icon"></i>
-            <span>Generated with ${plan.ai_model_used || "AI"}</span>
-            </div>
+    <div class="plan-meta">
+        <div class="meta-item">
+        <i class="fas fa-calendar-alt meta-icon"></i>
+        <span>${startDate} - ${endDate}</span>
         </div>
-        <div class="plan-actions">
-            <button class="btn btn-danger" id="deletePlanBtn" onclick="showDeleteConfirmation()">
-                <i class="fas fa-trash"></i> Delete Meal Plan
-            </button>
+        <div class="meta-item">
+        <i class="fas fa-clock meta-icon"></i>
+        <span>${plan.total_days} days</span>
+        </div>
+        <div class="meta-item">
+        <i class="fas fa-leaf meta-icon"></i>
+        <span>${plan.dietary_preference || "No restrictions"}</span>
+        </div>
+        <div class="meta-item">
+        <i class="fas fa-dollar-sign meta-icon"></i>
+        <span>${
+          plan.budget_limit ? "$" + plan.budget_limit : "No budget limit"
+        }</span>
+        </div>
+        <div class="meta-item">
+        <i class="fas fa-fire meta-icon"></i>
+        <span>Max ${plan.max_cooking_time} min/day</span>
         </div>
     </div>
     `;
