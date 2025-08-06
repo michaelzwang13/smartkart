@@ -1,8 +1,6 @@
 // Initialize charts and functionality
 let spendingChart;
 
-// Mock data removed for debugging - using real API data only
-
 // Initialize spending chart
 function initSpendingChart() {
   const ctx = document.getElementById("spendingChart").getContext("2d");
@@ -62,17 +60,6 @@ function initSpendingChart() {
       onClick: handleChartClick,
     },
   });
-}
-
-// Update chart based on time period (legacy function - now using loadSpendingTrends directly)
-function updateChart(period) {
-  loadSpendingTrends(period);
-
-  // Update active button
-  document.querySelectorAll(".chart-btn").forEach((btn) => {
-    btn.classList.remove("active");
-  });
-  document.querySelector(`[data-period="${period}"]`).classList.add("active");
 }
 
 // Update budget stats
@@ -181,17 +168,6 @@ async function loadSpendingTrends(period = "7d") {
   } catch (error) {
     console.error("Error loading spending trends:", error);
   }
-}
-
-// Update chart based on time period
-function updateChart(period) {
-  loadSpendingTrends(period);
-
-  // Update active button
-  document.querySelectorAll(".chart-btn").forEach((btn) => {
-    btn.classList.remove("active");
-  });
-  document.querySelector(`[data-period="${period}"]`).classList.add("active");
 }
 
 // Handle budget settings form

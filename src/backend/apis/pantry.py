@@ -1,10 +1,7 @@
 from flask import Blueprint, request, jsonify, session, current_app
-import requests
 from src.database import get_db
-from src import helper
 
 pantry_bp = Blueprint("pantry", __name__, url_prefix="/api")
-
 
 @pantry_bp.route("/pantry/items", methods=["GET"])
 def get_pantry_items():
@@ -1003,37 +1000,6 @@ def delete_pantry_item(item_id):
 
     except Exception as e:
         return jsonify({"success": False, "message": f"Database error: {str(e)}"})
-
-
-@pantry_bp.route("/pantry/test", methods=["GET"])
-def test_pantry():
-    """Test endpoint to check pantry functionality"""
-    if "user_ID" not in session:
-        return jsonify({"success": False, "message": "Not authenticated"})
-
-    user_ID = session["user_ID"]
-    db = get_db()
-    cursor = db.cursor()
-
-    try:
-        # Test basic connection and table access
-        cursor.execute(
-            "SELECT COUNT(*) as count FROM pantry_items WHERE user_id = %s", (user_ID,)
-        )
-        result = cursor.fetchone()
-
-        return jsonify(
-            {
-                "success": True,
-                "message": f'Pantry test successful. User {user_ID} has {result["count"]} items.',
-                "user_id": user_ID,
-            }
-        )
-
-    except Exception as e:
-        return jsonify({"success": False, "message": f"Pantry test failed: {str(e)}"})
-    finally:
-        cursor.close()
 
 
 @pantry_bp.route("/pantry/test-gemini", methods=["GET"])

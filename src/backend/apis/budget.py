@@ -3,8 +3,6 @@ from src.database import get_db
 
 budget_bp = Blueprint("budget", __name__, url_prefix="/api")
 
-# Budget API Routes
-
 @budget_bp.route("/budget/overview", methods=["GET"])
 def get_budget_overview():
     """Get budget overview with spending data"""
