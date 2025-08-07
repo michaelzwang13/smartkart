@@ -505,8 +505,8 @@
       }
 
       .shopping-categories {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        display: flex !important;
+        flex-direction: column !important;
         gap: var(--spacing-lg);
       }
 
@@ -514,6 +514,7 @@
         background: var(--bg-secondary);
         border-radius: var(--radius-lg);
         padding: var(--spacing-lg);
+        width: 100%;
       }
 
       .category-name {
@@ -526,14 +527,20 @@
 
       .shopping-items {
         list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xs);
       }
 
       .shopping-item {
-        padding: var(--spacing-xs) 0;
+        padding: var(--spacing-sm);
         color: var(--text-secondary);
         display: flex;
         justify-content: space-between;
         align-items: center;
+        background: var(--bg-tertiary);
+        border-radius: var(--radius-md);
+        width: 100%;
       }
 
       .item-cost {
@@ -741,7 +748,7 @@
         }
 
         .shopping-categories {
-          grid-template-columns: 1fr;
+          flex-direction: column;
         }
       }
 
