@@ -907,12 +907,15 @@ function createPlanCard(plan) {
   // Format dates manually from YYYY-MM-DD string
   const startDate = formatDateString(plan.start_date);
   const endDate = formatDateString(plan.end_date);
+  
+  // If it's a single day plan, only show the date once
+  const dateDisplay = plan.start_date === plan.end_date ? startDate : `${startDate} - ${endDate}`;
 
   card.innerHTML = `
     <div class="plan-header">
         <div>
         <h3 class="plan-name">${plan.plan_name}</h3>
-        <p class="plan-dates">${startDate} - ${endDate}</p>
+        <p class="plan-dates">${dateDisplay}</p>
         </div>
         <span class="plan-status status-${plan.status}">${plan.status}</span>
     </div>
@@ -1402,7 +1405,7 @@ function displayMealDetailsModal(meal) {
                 }
                 ${
                   meal.estimated_cost
-                    ? `<div class="info-item"><i class="fas fa-dollar-sign"></i> ~$${meal.estimated_cost}</div>`
+                    ? `<div class="info-item"><i class="fas fa-dollar-sign"></i> ${meal.estimated_cost}</div>`
                     : ""
                 }
                 ${

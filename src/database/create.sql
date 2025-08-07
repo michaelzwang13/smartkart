@@ -310,6 +310,7 @@ CREATE TABLE meal_plan_sessions (
     end_date DATE NOT NULL,
     total_days INT NOT NULL,
     dietary_preference VARCHAR(50) DEFAULT 'none', -- vegetarian, vegan, keto, paleo, etc.
+    budget_limit DECIMAL(10, 2),
     max_cooking_time INT NULL, -- minutes per day
     generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     status ENUM('active', 'completed', 'archived') DEFAULT 'active',

@@ -293,7 +293,7 @@ function createMealCard(mealType, recipe) {
             <div class="meal-meta">
                 <span><i class="fas fa-clock"></i> ${totalTime} min total</span>
                 <span><i class="fas fa-users"></i> ${recipe.servings} servings</span>
-                <span><i class="fas fa-dollar-sign"></i> $${recipe.estimated_cost || "0.00"}</span>
+                <span><i class="fas fa-dollar-sign"></i> ${recipe.estimated_cost || "0.00"}</span>
                 <span><i class="fas fa-signal"></i> ${recipe.difficulty}</span>
             </div>
         </div>
