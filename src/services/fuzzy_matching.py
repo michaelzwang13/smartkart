@@ -61,6 +61,68 @@ class FuzzyMatchingService:
         self.cursor = self.db.cursor()
         return self.db, self.cursor
     
+    def _convert_units(self, quantity: float, from_unit: str, to_unit: str) -> Optional[float]:
+        """
+        Convert between common cooking units
+        Returns None if conversion is not possible
+        """
+        if from_unit == to_unit:
+            return quantity
+        
+        # Normalize unit names (lowercase, remove plurals)
+        from_unit = from_unit.lower().rstrip('s')
+        to_unit = to_unit.lower().rstrip('s')
+        
+        if from_unit == to_unit:
+            return quantity
+        
+        # Basic unit conversion mappings
+        conversions = {
+            # Weight conversions (to grams)
+            'g': 1,
+            'gram': 1,
+            'kg': 1000,
+            'kilogram': 1000,
+            'lb': 453.592,
+            'pound': 453.592,
+            'oz': 28.3495,
+            'ounce': 28.3495,
+            
+            # Volume conversions (to ml)
+            'ml': 1,
+            'milliliter': 1,
+            'l': 1000,
+            'liter': 1000,
+            'cup': 240,
+            'tbsp': 15,
+            'tablespoon': 15,
+            'tsp': 5,
+            'teaspoon': 5,
+            'fl oz': 29.5735,
+            'fluid ounce': 29.5735,
+            'pint': 473.176,
+            'quart': 946.353,
+            'gallon': 3785.41,
+        }
+        
+        # Get conversion factors
+        from_factor = conversions.get(from_unit)
+        to_factor = conversions.get(to_unit)
+        
+        # If both units are in the same category (weight or volume), convert
+        if from_factor and to_factor:
+            # Convert from source unit to base unit, then to target unit
+            base_quantity = quantity * from_factor
+            return base_quantity / to_factor
+        
+        # Special case: pieces/count units
+        count_units = {'pc', 'pcs', 'piece', 'count', 'item', 'unit'}
+        if from_unit in count_units and to_unit in count_units:
+            return quantity
+            
+        # No conversion possible
+        return None
+
     def normalize_ingredient_name(self, ingredient_name: str) -> str:
         """Normalize ingredient name for better matching"""
         # Convert to lowercase
@@ -285,10 +347,19 @@ class FuzzyMatchingService:
         
         if best_match and best_match.match_type in ['auto', 'confirm']:
             # Calculate how much is still needed after using pantry item
-            # Note: This is a simplified calculation - in reality you'd need unit conversion
-            if best_match.available_unit == required_unit:
-                available = best_match.available_quantity
-                needs_to_buy = max(0, required_quantity - available)
+            available_in_required_unit = self._convert_units(
+                best_match.available_quantity, 
+                best_match.available_unit, 
+                required_unit
+            )
+            
+            if available_in_required_unit is not None:
+                needs_to_buy = max(0, required_quantity - available_in_required_unit)
+            else:
+                # If conversion fails, assume we need to buy the full amount
+                # but log this for improvement
+                logger.warning(f"Unit conversion failed: {best_match.available_unit} -> {required_unit}")
+                needs_to_buy = required_quantity
         
         return MatchingResult(
             ingredient_name=ingredient_name,

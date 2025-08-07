@@ -316,19 +316,24 @@ def delete_meal_plan(plan_id):
             return jsonify({"success": False, "message": "Meal plan not found or access denied"})
         
         # Delete in order to respect foreign key constraints
-        # 1. Delete custom ingredients for meals in this session
+        # 1. Delete shopping generation sessions (and their child records via CASCADE)
+        cursor.execute("""
+            DELETE FROM shopping_generation_sessions WHERE meal_plan_session_id = %s
+        """, (plan_id,))
+        
+        # 2. Delete custom ingredients for meals in this session
         cursor.execute("""
             DELETE rt FROM recipe_templates rt
             INNER JOIN meals m ON rt.template_id = m.recipe_template_id
             WHERE m.session_id = %s
         """, (plan_id,))
         
-        # 2. Delete meals in this session
+        # 3. Delete meals in this session
         cursor.execute("""
             DELETE FROM meals WHERE session_id = %s
         """, (plan_id,))
         
-        # 3. Delete meal plan session
+        # 4. Delete meal plan session
         cursor.execute("""
             DELETE FROM meal_plan_sessions WHERE session_id = %s
         """, (plan_id,))

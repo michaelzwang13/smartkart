@@ -758,8 +758,8 @@ def generate_session_shopping_list_with_fuzzy_matching(cursor, session_id, user_
                     "meals_using": []
                 }
 
-            consolidated[name]["total_quantity"] += ingredient["quantity"]
-            consolidated[name]["total_cost"] += ingredient["estimated_cost"] or 0
+            consolidated[name]["total_quantity"] += float(ingredient["quantity"] or 0)
+            consolidated[name]["total_cost"] += float(ingredient["estimated_cost"] or 0)
             
             # Track which meals use this ingredient
             for meal in session_meals:
@@ -801,6 +801,11 @@ def generate_session_shopping_list_with_fuzzy_matching(cursor, session_id, user_
             for i, result in enumerate(matching_results):
                 original_data = list(consolidated.values())[i]
                 
+                # Skip items with zero or negative required quantities
+                if result.required_quantity <= 0:
+                    print(f"DEBUG: Skipping zero-quantity ingredient: {result.ingredient_name}")
+                    continue
+                
                 # Store detailed matching result
                 cursor.execute("""
                     INSERT INTO generation_ingredient_matches 
@@ -841,7 +846,7 @@ def generate_session_shopping_list_with_fuzzy_matching(cursor, session_id, user_
                 cursor.execute(shopping_query, (
                     session_id,
                     result.ingredient_name,
-                    result.needs_to_buy,  # Only add what's needed after pantry check
+                    result.required_quantity,  # Show total required quantity, not just what's needed
                     result.required_unit,
                     original_data["total_cost"],
                     category,
@@ -877,6 +882,11 @@ def generate_session_shopping_list_basic(cursor, session_id, consolidated):
     try:
         # Insert consolidated shopping list items using basic method
         for item_data in consolidated.values():
+            # Skip items with zero or negative quantities
+            if item_data["total_quantity"] <= 0:
+                print(f"DEBUG: Skipping zero-quantity item: {item_data['name']}")
+                continue
+                
             category = categorize_ingredient(item_data["name"])
             
             shopping_query = """
