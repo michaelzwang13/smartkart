@@ -23,25 +23,50 @@ def get_meal_plans():
     cursor = db.cursor()
     
     try:
-        # Get meal plan sessions (replaces old meal_plans table)
+        # Get meal plan sessions with fuzzy matching summary (replaces old meal_plans table)
         query = """
-            SELECT session_id as plan_id, session_name as plan_name, 
-                   start_date, end_date, total_days,
-                   dietary_preference, budget_limit, max_cooking_time,
-                   generated_at, status
-            FROM meal_plan_sessions 
-            WHERE user_id = %s
-            ORDER BY ABS(DATEDIFF(start_date, CURDATE())), start_date ASC
+            SELECT mps.session_id as plan_id, mps.session_name as plan_name, 
+                   mps.start_date, mps.end_date, mps.total_days,
+                   mps.dietary_preference, mps.budget_limit, mps.max_cooking_time,
+                   mps.generated_at, mps.status,
+                   sgs.generation_id, sgs.auto_matched_count, sgs.confirm_needed_count, 
+                   sgs.missing_count, sgs.total_ingredients
+            FROM meal_plan_sessions mps
+            LEFT JOIN shopping_generation_sessions sgs ON mps.session_id = sgs.meal_plan_session_id
+                AND sgs.generation_id = (
+                    SELECT MAX(generation_id) FROM shopping_generation_sessions 
+                    WHERE meal_plan_session_id = mps.session_id
+                )
+            WHERE mps.user_id = %s
+            ORDER BY ABS(DATEDIFF(mps.start_date, CURDATE())), mps.start_date ASC
         """
         cursor.execute(query, (user_id,))
         plans = cursor.fetchall()
 
-        # Format dates as strings for consistency
+        # Format dates as strings and add fuzzy matching summary
         formatted_plans = []
         for plan in plans:
             plan_copy = dict(plan)
             plan_copy['start_date'] = plan['start_date'].strftime("%Y-%m-%d") if hasattr(plan['start_date'], 'strftime') else plan['start_date']
             plan_copy['end_date'] = plan['end_date'].strftime("%Y-%m-%d") if hasattr(plan['end_date'], 'strftime') else plan['end_date']
+            
+            # Add fuzzy matching summary if available
+            if plan.get('generation_id'):
+                plan_copy['fuzzy_matching_summary'] = {
+                    "auto_matched": plan['auto_matched_count'] or 0,
+                    "confirm_needed": plan['confirm_needed_count'] or 0,
+                    "missing": plan['missing_count'] or 0,
+                    "total_ingredients": plan['total_ingredients'] or 0,
+                    "pantry_utilization_rate": (plan['auto_matched_count'] / plan['total_ingredients'] * 100) if (plan['total_ingredients'] and plan['total_ingredients'] > 0) else 0
+                }
+            else:
+                plan_copy['fuzzy_matching_summary'] = None
+                
+            # Remove the generation fields from the main plan object
+            fields_to_remove = ['generation_id', 'auto_matched_count', 'confirm_needed_count', 'missing_count', 'total_ingredients']
+            for field in fields_to_remove:
+                plan_copy.pop(field, None)
+                
             formatted_plans.append(plan_copy)
 
         return jsonify({"success": True, "plans": formatted_plans})
@@ -169,7 +194,7 @@ def get_meal_plan_details(plan_id):
         cursor.execute(steps_query, (plan_id,))
         prep_steps = cursor.fetchall()
 
-        # Get shopping list
+        # Get shopping list with fuzzy matching data
         shopping_query = """
             SELECT * FROM session_shopping_lists 
             WHERE session_id = %s
@@ -177,6 +202,65 @@ def get_meal_plan_details(plan_id):
         """
         cursor.execute(shopping_query, (plan_id,))
         shopping_items = cursor.fetchall()
+        
+        # Get fuzzy matching results if they exist
+        fuzzy_matching_data = {}
+        generation_summary = None
+        
+        try:
+            # Get the latest generation session for this meal plan
+            generation_query = """
+                SELECT generation_id, auto_matched_count, confirm_needed_count, 
+                       missing_count, total_ingredients, generated_at
+                FROM shopping_generation_sessions 
+                WHERE meal_plan_session_id = %s 
+                ORDER BY generated_at DESC 
+                LIMIT 1
+            """
+            cursor.execute(generation_query, (plan_id,))
+            generation_session = cursor.fetchone()
+            
+            if generation_session:
+                generation_summary = {
+                    "generation_id": generation_session["generation_id"],
+                    "auto_matched": generation_session["auto_matched_count"],
+                    "confirm_needed": generation_session["confirm_needed_count"],
+                    "missing": generation_session["missing_count"],
+                    "total_ingredients": generation_session["total_ingredients"],
+                    "generated_at": generation_session["generated_at"].isoformat() if generation_session["generated_at"] else None,
+                    "pantry_utilization_rate": (generation_session["auto_matched_count"] / generation_session["total_ingredients"] * 100) if generation_session["total_ingredients"] > 0 else 0
+                }
+                
+                # Get detailed matching results
+                matches_query = """
+                    SELECT gim.*, pi.item_name as pantry_item_name, pi.storage_type, pi.expiration_date
+                    FROM generation_ingredient_matches gim
+                    LEFT JOIN pantry_items pi ON gim.pantry_item_id = pi.pantry_item_id
+                    WHERE gim.generation_id = %s
+                    ORDER BY gim.ingredient_name
+                """
+                cursor.execute(matches_query, (generation_session["generation_id"],))
+                matching_results = cursor.fetchall()
+                
+                # Organize matching data by ingredient name
+                for match in matching_results:
+                    fuzzy_matching_data[match["ingredient_name"]] = {
+                        "match_type": match["match_type"],
+                        "confidence": float(match["match_confidence"]) if match["match_confidence"] else None,
+                        "pantry_item": {
+                            "id": match["pantry_item_id"],
+                            "name": match.get("pantry_item_name"),
+                            "available_quantity": float(match["pantry_available_quantity"]) if match["pantry_available_quantity"] else None,
+                            "storage_type": match.get("storage_type"),
+                            "expiration_date": match.get("expiration_date").strftime("%Y-%m-%d") if match.get("expiration_date") else None
+                        } if match["pantry_item_id"] else None,
+                        "needs_to_buy": float(match["needs_to_buy_quantity"]),
+                        "is_user_confirmed": bool(match["is_user_confirmed"])
+                    }
+                    
+        except Exception as e:
+            print(f"DEBUG: Failed to get fuzzy matching data: {str(e)}")
+            # Continue without fuzzy matching data
 
         # Structure the response in old format (use raw dates from database)
         structured_plan = {
@@ -197,6 +281,10 @@ def get_meal_plan_details(plan_id):
             "recipes": organize_recipes_by_day(recipes_with_ingredients),
             "batch_prep": prep_steps,
             "shopping_list": shopping_items,
+            "fuzzy_matching": {
+                "summary": generation_summary,
+                "ingredient_matches": fuzzy_matching_data
+            } if generation_summary else None
         }
 
         return jsonify({"success": True, "meal_plan": structured_plan})

@@ -185,7 +185,7 @@ def generate_meal_plan():
                     })
 
         # Generate session shopping list and batch prep
-        generate_session_shopping_list(cursor, session_id, recipe_template_map)
+        generate_session_shopping_list_with_fuzzy_matching(cursor, session_id, user_id, recipe_template_map)
         generate_session_batch_prep(cursor, session_id, meal_plan_data.get("batch_prep", []))
 
         db.commit()
@@ -715,8 +715,8 @@ Generate the complete meal plan now:"""
         return None
 
 
-def generate_session_shopping_list(cursor, session_id, recipe_template_map):
-    """Generate shopping list for a meal plan session"""
+def generate_session_shopping_list_with_fuzzy_matching(cursor, session_id, user_id, recipe_template_map):
+    """Generate shopping list for a meal plan session with fuzzy matching integration"""
     try:
         # Get all meals in this session
         meals_query = """
@@ -766,7 +766,116 @@ def generate_session_shopping_list(cursor, session_id, recipe_template_map):
                 if meal['template_id'] == ingredient['template_id']:
                     consolidated[name]["meals_using"].append(meal['meal_id'])
 
-        # Insert consolidated shopping list items
+        # Use enhanced shopping generation with fuzzy matching
+        from src.services.enhanced_shopping_generation import enhanced_shopping_generator
+        
+        # Prepare ingredients for fuzzy matching
+        ingredients_for_matching = [
+            {
+                "ingredient_name": item_data["name"],
+                "quantity": item_data["total_quantity"],
+                "unit": item_data["unit"]
+            }
+            for item_data in consolidated.values()
+        ]
+        
+        # Perform fuzzy matching and get enhanced results
+        if ingredients_for_matching:
+            from src.services.fuzzy_matching import fuzzy_matching_service
+            matching_results = fuzzy_matching_service.batch_match_ingredients(user_id, ingredients_for_matching)
+            
+            # Create shopping generation session
+            cursor.execute("""
+                INSERT INTO shopping_generation_sessions 
+                (user_id, meal_plan_session_id, generation_type, total_ingredients)
+                VALUES (%s, %s, 'meal_plan', %s)
+            """, [user_id, session_id, len(matching_results)])
+            
+            generation_id = cursor.lastrowid
+            
+            # Process matching results and create shopping list entries
+            auto_matched = 0
+            confirm_needed = 0
+            missing = 0
+            
+            for i, result in enumerate(matching_results):
+                original_data = list(consolidated.values())[i]
+                
+                # Store detailed matching result
+                cursor.execute("""
+                    INSERT INTO generation_ingredient_matches 
+                    (generation_id, ingredient_name, required_quantity, required_unit, 
+                     pantry_item_id, pantry_available_quantity, match_confidence, 
+                     match_type, needs_to_buy_quantity, estimated_cost)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, [
+                    generation_id,
+                    result.ingredient_name,
+                    result.required_quantity,
+                    result.required_unit,
+                    result.best_match.pantry_item_id if result.best_match else None,
+                    result.best_match.available_quantity if result.best_match else None,
+                    result.best_match.confidence_score if result.best_match else None,
+                    result.match_type,
+                    result.needs_to_buy,
+                    original_data["total_cost"]
+                ])
+                
+                # Count match types
+                if result.match_type == "auto":
+                    auto_matched += 1
+                elif result.match_type == "confirm":
+                    confirm_needed += 1
+                else:
+                    missing += 1
+                
+                # Insert into session shopping list (original table for compatibility)
+                category = categorize_ingredient(result.ingredient_name)
+                
+                shopping_query = """
+                    INSERT INTO session_shopping_lists (
+                        session_id, ingredient_name, total_quantity, unit,
+                        estimated_cost, category, meals_using
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s)
+                """
+                cursor.execute(shopping_query, (
+                    session_id,
+                    result.ingredient_name,
+                    result.needs_to_buy,  # Only add what's needed after pantry check
+                    result.required_unit,
+                    original_data["total_cost"],
+                    category,
+                    json.dumps(original_data["meals_using"])
+                ))
+            
+            # Update generation session with summary
+            cursor.execute("""
+                UPDATE shopping_generation_sessions 
+                SET auto_matched_count = %s, confirm_needed_count = %s, 
+                    missing_count = %s, completed_at = NOW()
+                WHERE generation_id = %s
+            """, [auto_matched, confirm_needed, missing, generation_id])
+            
+            print(f"DEBUG: Enhanced shopping list generated - Auto: {auto_matched}, Confirm: {confirm_needed}, Missing: {missing}")
+        
+        else:
+            # No ingredients found, create empty session for tracking
+            cursor.execute("""
+                INSERT INTO shopping_generation_sessions 
+                (user_id, meal_plan_session_id, generation_type, total_ingredients, completed_at)
+                VALUES (%s, %s, 'meal_plan', 0, NOW())
+            """, [user_id, session_id])
+
+    except Exception as e:
+        print(f"ERROR: Failed to generate enhanced shopping list: {str(e)}")
+        # Fallback to basic generation if fuzzy matching fails
+        generate_session_shopping_list_basic(cursor, session_id, consolidated if 'consolidated' in locals() else {})
+
+
+def generate_session_shopping_list_basic(cursor, session_id, consolidated):
+    """Fallback basic shopping list generation without fuzzy matching"""
+    try:
+        # Insert consolidated shopping list items using basic method
         for item_data in consolidated.values():
             category = categorize_ingredient(item_data["name"])
             
@@ -785,9 +894,11 @@ def generate_session_shopping_list(cursor, session_id, recipe_template_map):
                 category,
                 json.dumps(item_data["meals_using"])
             ))
-
+            
+        print(f"DEBUG: Basic shopping list generated with {len(consolidated)} items")
+        
     except Exception as e:
-        print(f"ERROR: Failed to generate shopping list: {str(e)}")
+        print(f"ERROR: Failed to generate basic shopping list: {str(e)}")
 
 
 def generate_session_batch_prep(cursor, session_id, batch_prep_data):

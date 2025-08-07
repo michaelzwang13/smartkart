@@ -81,13 +81,13 @@ async function loadMealPlanDetails() {
 }
 
 async function displayMealPlan(mealPlan) {
-  const { plan_info, recipes, batch_prep, shopping_list } = mealPlan;
+  const { plan_info, recipes, batch_prep, shopping_list, fuzzy_matching } = mealPlan;
 
   // Update page title
   document.getElementById("planTitle").textContent = plan_info.plan_name;
 
-  // Display plan info
-  displayPlanInfo(plan_info);
+  // Display plan info with fuzzy matching summary
+  displayPlanInfo(plan_info, fuzzy_matching?.summary);
 
   // Display recipes by day
   await displayRecipes(recipes, plan_info.start_date);
@@ -97,10 +97,13 @@ async function displayMealPlan(mealPlan) {
     displayBatchPrep(batch_prep);
   }
 
-  // Display shopping list
+  // Display shopping list with fuzzy matching data
   if (shopping_list && shopping_list.length > 0) {
-    displayShoppingList(shopping_list);
+    displayShoppingList(shopping_list, fuzzy_matching?.ingredient_matches);
   }
+  
+  // Store fuzzy matching data globally for confirmation functions
+  window.fuzzyMatchingData = fuzzy_matching;
 }
 
 function formatDateString(dateString) {
@@ -162,10 +165,43 @@ function convertToMixedFraction(decimal) {
   }
 }
 
-function displayPlanInfo(plan) {
+function displayPlanInfo(plan, fuzzyMatchingSummary) {
   // Format dates manually from YYYY-MM-DD string
   const startDate = formatDateString(plan.start_date);
   const endDate = formatDateString(plan.end_date);
+
+  let fuzzyMatchingHtml = '';
+  if (fuzzyMatchingSummary) {
+    const utilizationRate = fuzzyMatchingSummary.pantry_utilization_rate || 0;
+    const utilizationColor = utilizationRate >= 70 ? 'success' : utilizationRate >= 50 ? 'warning' : 'error';
+    
+    fuzzyMatchingHtml = `
+      <div class="fuzzy-matching-summary">
+        <div class="summary-header">
+          <i class="fas fa-brain meta-icon"></i>
+          <span>Smart Pantry Analysis</span>
+        </div>
+        <div class="summary-stats">
+          <div class="stat-item success">
+            <i class="fas fa-check"></i>
+            <span>${fuzzyMatchingSummary.auto_matched} auto-matched</span>
+          </div>
+          <div class="stat-item warning">
+            <i class="fas fa-question"></i>
+            <span>${fuzzyMatchingSummary.confirm_needed} need confirmation</span>
+          </div>
+          <div class="stat-item error">
+            <i class="fas fa-exclamation"></i>
+            <span>${fuzzyMatchingSummary.missing} missing</span>
+          </div>
+        </div>
+        <div class="utilization-rate">
+          <span class="rate-label">Pantry utilization:</span>
+          <span class="rate-value ${utilizationColor}">${utilizationRate.toFixed(1)}%</span>
+        </div>
+      </div>
+    `;
+  }
 
   document.getElementById("planInfo").innerHTML = `
     <div class="plan-meta">
@@ -192,6 +228,7 @@ function displayPlanInfo(plan) {
         <span>Max ${plan.max_cooking_time} min/day</span>
         </div>
     </div>
+    ${fuzzyMatchingHtml}
     `;
 }
 
@@ -367,7 +404,7 @@ function displayBatchPrep(prepSteps) {
   });
 }
 
-function displayShoppingList(items) {
+function displayShoppingList(items, fuzzyMatches = {}) {
   document.getElementById("shoppingList").style.display = "block";
   const categoriesContainer = document.getElementById("shoppingCategories");
   categoriesContainer.innerHTML = "";
@@ -382,19 +419,31 @@ function displayShoppingList(items) {
     categories[category].push(item);
   });
 
-  // Create category cards
+  // Create category cards with fuzzy matching indicators
   Object.keys(categories).forEach((categoryName) => {
     const categoryCard = document.createElement("div");
     categoryCard.className = "category-card";
 
     const itemsList = categories[categoryName]
-      .map(
-        (item) =>
-          `<li class="shopping-item">
-        <span>${item.total_quantity} ${item.unit} ${item.ingredient_name}</span>
-        <span class="item-cost">$${item.estimated_cost || "0.00"}</span>
-        </li>`
-      )
+      .map((item) => {
+        const matchData = fuzzyMatches[item.ingredient_name];
+        const matchIndicator = createMatchIndicator(matchData);
+        const pantryInfo = createPantryInfo(matchData);
+        
+        return `
+          <li class="shopping-item ${matchData ? 'has-match-data' : ''}">
+            <div class="item-main">
+              <div class="item-header">
+                ${matchIndicator}
+                <span class="item-details">${item.total_quantity} ${item.unit} ${item.ingredient_name}</span>
+                <span class="item-cost">$${item.estimated_cost || "0.00"}</span>
+              </div>
+              ${pantryInfo}
+              ${matchData && matchData.match_type === 'confirm' ? createConfirmationButtons(item.ingredient_name) : ''}
+            </div>
+          </li>
+        `;
+      })
       .join("");
 
     categoryCard.innerHTML = `
@@ -406,6 +455,170 @@ function displayShoppingList(items) {
 
     categoriesContainer.appendChild(categoryCard);
   });
+}
+
+function createMatchIndicator(matchData) {
+  if (!matchData) {
+    return '<span class="match-indicator no-data" title="No pantry data available"><i class="fas fa-question"></i></span>';
+  }
+  
+  const { match_type, confidence } = matchData;
+  
+  switch (match_type) {
+    case 'auto':
+      return `<span class="match-indicator auto-match" title="Automatically matched (${confidence?.toFixed(1)}% confidence)">
+                <i class="fas fa-check"></i>
+              </span>`;
+    case 'confirm':
+      return `<span class="match-indicator confirm-match" title="Needs confirmation (${confidence?.toFixed(1)}% confidence)">
+                <i class="fas fa-question"></i>
+              </span>`;
+    case 'missing':
+      return '<span class="match-indicator missing" title="Not found in pantry"><i class="fas fa-exclamation"></i></span>';
+    default:
+      return '<span class="match-indicator unknown" title="Unknown match status"><i class="fas fa-question"></i></span>';
+  }
+}
+
+function createPantryInfo(matchData) {
+  if (!matchData || !matchData.pantry_item) {
+    return '';
+  }
+  
+  const { pantry_item, needs_to_buy } = matchData;
+  const expirationText = pantry_item.expiration_date ? 
+    `Expires: ${formatDateString(pantry_item.expiration_date)}` : 'No expiration date';
+  
+  return `
+    <div class="pantry-info">
+      <div class="pantry-match">
+        <i class="fas fa-warehouse"></i>
+        <span>Found: ${pantry_item.available_quantity} ${pantry_item.name}</span>
+        <span class="storage-type">(${pantry_item.storage_type})</span>
+      </div>
+      <div class="pantry-details">
+        <span class="expiration">${expirationText}</span>
+        ${needs_to_buy > 0 ? `<span class="still-need">Still need: ${needs_to_buy}</span>` : '<span class="fully-covered">✓ Fully covered</span>'}
+      </div>
+    </div>
+  `;
+}
+
+function createConfirmationButtons(ingredientName) {
+  return `
+    <div class="confirmation-buttons">
+      <button class="btn btn-sm btn-success" onclick="confirmMatch('${ingredientName}', true)" title="Confirm this match">
+        <i class="fas fa-check"></i> Confirm
+      </button>
+      <button class="btn btn-sm btn-danger" onclick="confirmMatch('${ingredientName}', false)" title="Reject this match">
+        <i class="fas fa-times"></i> Reject
+      </button>
+    </div>
+  `;
+}
+
+async function confirmMatch(ingredientName, isConfirmed) {
+  if (!window.fuzzyMatchingData?.summary?.generation_id) {
+    alert('No fuzzy matching data available');
+    return;
+  }
+  
+  const generationId = window.fuzzyMatchingData.summary.generation_id;
+  const matchData = window.fuzzyMatchingData.ingredient_matches[ingredientName];
+  
+  try {
+    const response = await fetch('/api/shopping/confirm-match', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        generation_id: generationId,
+        ingredient_name: ingredientName,
+        pantry_item_id: isConfirmed && matchData?.pantry_item ? matchData.pantry_item.id : null
+      })
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      // Update the UI to reflect the confirmation
+      updateMatchConfirmation(ingredientName, isConfirmed);
+      
+      // Show feedback message
+      showNotification(
+        isConfirmed ? 'Match confirmed successfully' : 'Match rejected successfully',
+        'success'
+      );
+    } else {
+      throw new Error(result.message || 'Failed to confirm match');
+    }
+  } catch (error) {
+    console.error('Error confirming match:', error);
+    showNotification('Failed to confirm match: ' + error.message, 'error');
+  }
+}
+
+function updateMatchConfirmation(ingredientName, isConfirmed) {
+  // Find the shopping item element for this ingredient
+  const shoppingItems = document.querySelectorAll('.shopping-item');
+  
+  shoppingItems.forEach(item => {
+    const itemDetails = item.querySelector('.item-details');
+    if (itemDetails && itemDetails.textContent.includes(ingredientName)) {
+      // Update the match indicator
+      const matchIndicator = item.querySelector('.match-indicator');
+      if (matchIndicator) {
+        if (isConfirmed) {
+          matchIndicator.className = 'match-indicator auto-match';
+          matchIndicator.innerHTML = '<i class="fas fa-check"></i>';
+          matchIndicator.title = 'Confirmed by user';
+        } else {
+          matchIndicator.className = 'match-indicator missing';
+          matchIndicator.innerHTML = '<i class="fas fa-exclamation"></i>';
+          matchIndicator.title = 'Rejected by user';
+        }
+      }
+      
+      // Hide confirmation buttons
+      const confirmButtons = item.querySelector('.confirmation-buttons');
+      if (confirmButtons) {
+        confirmButtons.style.display = 'none';
+      }
+      
+      // Add confirmation badge
+      const itemHeader = item.querySelector('.item-header');
+      if (itemHeader && !itemHeader.querySelector('.user-confirmed')) {
+        const confirmBadge = document.createElement('span');
+        confirmBadge.className = 'user-confirmed';
+        confirmBadge.innerHTML = '<i class="fas fa-user-check"></i>';
+        confirmBadge.title = 'User confirmed';
+        itemHeader.appendChild(confirmBadge);
+      }
+    }
+  });
+}
+
+function showNotification(message, type = 'info') {
+  // Create notification element
+  const notification = document.createElement('div');
+  notification.className = `notification ${type}`;
+  notification.innerHTML = `
+    <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation-triangle' : 'info'}"></i>
+    <span>${message}</span>
+  `;
+  
+  // Add to page
+  document.body.appendChild(notification);
+  
+  // Show notification
+  setTimeout(() => notification.classList.add('show'), 100);
+  
+  // Auto-hide after 3 seconds
+  setTimeout(() => {
+    notification.classList.remove('show');
+    setTimeout(() => document.body.removeChild(notification), 300);
+  }, 3000);
 }
 
 function getMealIcon(mealType) {
