@@ -268,7 +268,7 @@ async function displayRecipes(recipes, startDate) {
 
 function createMealCard(mealType, recipe) {
   const mealRow = document.createElement("div");
-  mealRow.className = "meal-row";
+  mealRow.className = `meal-row ${mealType}`;
   mealRow.setAttribute("data-meal-type", mealType);
 
   const ingredientsList = recipe.ingredients

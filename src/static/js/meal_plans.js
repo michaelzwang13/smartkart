@@ -1361,7 +1361,7 @@ async function showMealDetails(meal) {
 function displayMealDetailsModal(meal) {
   const modalHTML = `
     <div id="mealDetailsModal" class="modal-overlay">
-        <div class="modal-content meal-details-modal">
+        <div class="modal-content meal-details-modal ${meal.type}">
         <div class="modal-header">
             <div>
             <h3>${meal.name}</h3>
