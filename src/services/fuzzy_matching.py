@@ -56,9 +56,9 @@ class FuzzyMatchingService:
     
     def _get_db_connection(self):
         """Get database connection and cursor"""
-        if not self.db:
-            self.db = get_db()
-            self.cursor = self.db.cursor()
+        # Always get fresh connection from Flask's g context
+        self.db = get_db()
+        self.cursor = self.db.cursor()
         return self.db, self.cursor
     
     def normalize_ingredient_name(self, ingredient_name: str) -> str:
@@ -128,33 +128,41 @@ class FuzzyMatchingService:
     
     def get_cached_suggestions(self, user_id: str, ingredient_name: str) -> Optional[List[Dict]]:
         """Get cached fuzzy match suggestions for an ingredient"""
-        db, cursor = self._get_db_connection()
-        
-        # Check for non-stale cached suggestions
-        query = """
-            SELECT suggested_matches, computed_at 
-            FROM ingredient_match_suggestions 
-            WHERE user_id = %s AND ingredient_name = %s 
-              AND is_stale = FALSE 
-              AND (expires_at IS NULL OR expires_at > NOW())
-            ORDER BY computed_at DESC 
-            LIMIT 1
-        """
-        
-        cursor.execute(query, [user_id, ingredient_name])
-        result = cursor.fetchone()
-        
-        if result:
-            try:
-                suggestions = json.loads(result['suggested_matches'])
-                logger.debug(f"Found cached suggestions for {ingredient_name}", 
-                           extra={'user_id': user_id, 'ingredient': ingredient_name})
-                return suggestions
-            except json.JSONDecodeError:
-                logger.warning(f"Failed to parse cached suggestions for {ingredient_name}")
-                return None
-        
-        return None
+        try:
+            db, cursor = self._get_db_connection()
+            
+            # Check for non-stale cached suggestions
+            query = """
+                SELECT suggested_matches, computed_at 
+                FROM ingredient_match_suggestions 
+                WHERE user_id = %s AND ingredient_name = %s 
+                  AND is_stale = FALSE 
+                  AND (expires_at IS NULL OR expires_at > NOW())
+                ORDER BY computed_at DESC 
+                LIMIT 1
+            """
+            
+            logger.debug(f"Executing cache query for user_id={user_id}, ingredient={ingredient_name}")
+            cursor.execute(query, [user_id, ingredient_name])
+            result = cursor.fetchone()
+            
+            logger.debug(f"Cache query result type: {type(result)}, value: {result}")
+            
+            if result:
+                try:
+                    suggestions = json.loads(result['suggested_matches'])
+                    logger.debug(f"Found cached suggestions for {ingredient_name}", 
+                               extra={'user_id': user_id, 'ingredient': ingredient_name})
+                    return suggestions
+                except (json.JSONDecodeError, KeyError, TypeError) as e:
+                    logger.warning(f"Failed to parse cached suggestions for {ingredient_name}: {e}")
+                    return None
+            
+            return None
+            
+        except Exception as e:
+            logger.error(f"Error in get_cached_suggestions: {e}", exc_info=True)
+            return None
     
     def cache_suggestions(self, user_id: str, ingredient_name: str, suggestions: List[Dict]):
         """Cache fuzzy match suggestions for future use"""
