@@ -99,7 +99,7 @@ async function displayMealPlan(mealPlan) {
 
   // Display shopping list with fuzzy matching data
   if (shopping_list && shopping_list.length > 0) {
-    displayShoppingList(shopping_list, fuzzy_matching?.ingredient_matches);
+    displayShoppingList(shopping_list, fuzzy_matching?.ingredient_matches, plan_info);
   }
   
   // Store fuzzy matching data globally for confirmation functions
@@ -111,6 +111,39 @@ function formatDateString(dateString) {
   const [year, month, day] = dateString.split('-');
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   return `${months[parseInt(month) - 1]} ${parseInt(day)}`;
+}
+
+function formatFullExpirationDate(dateString, planInfo = {}) {
+  if (!dateString) {
+    return { text: 'No expiration date', cssClass: '' };
+  }
+  
+  // Parse dates
+  const expirationDate = new Date(dateString + 'T00:00:00');
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const planStartDate = planInfo.start_date ? new Date(planInfo.start_date + 'T00:00:00') : null;
+  const planEndDate = planInfo.end_date ? new Date(planInfo.end_date + 'T00:00:00') : null;
+  
+  // Format full date
+  const options = { year: 'numeric', month: 'short', day: 'numeric' };
+  const fullDateText = `Expires: ${expirationDate.toLocaleDateString('en-US', options)}`;
+  
+  // Determine color coding
+  let cssClass = '';
+  
+  if (expirationDate < today) {
+    // Already expired - red
+    cssClass = 'expired';
+  } else if (planStartDate && planEndDate && 
+             expirationDate >= planStartDate && expirationDate <= planEndDate) {
+    // Expires during meal plan session - yellow warning
+    cssClass = 'expires-during-plan';
+  }
+  // If expires after plan or no plan dates - no special styling (default)
+  
+  return { text: fullDateText, cssClass };
 }
 
 function convertToMixedFraction(decimal) {
@@ -404,7 +437,7 @@ function displayBatchPrep(prepSteps) {
   });
 }
 
-function displayShoppingList(items, fuzzyMatches = {}) {
+function displayShoppingList(items, fuzzyMatches = {}, planInfo = {}) {
   document.getElementById("shoppingList").style.display = "block";
   const categoriesContainer = document.getElementById("shoppingCategories");
   categoriesContainer.innerHTML = "";
@@ -428,7 +461,7 @@ function displayShoppingList(items, fuzzyMatches = {}) {
       .map((item) => {
         const matchData = fuzzyMatches[item.ingredient_name];
         const matchIndicator = createMatchIndicator(matchData);
-        const pantryInfo = createPantryInfo(matchData);
+        const pantryInfo = createPantryInfo(matchData, planInfo);
         
         return `
           <li class="shopping-item ${matchData ? 'has-match-data' : ''}">
@@ -480,14 +513,13 @@ function createMatchIndicator(matchData) {
   }
 }
 
-function createPantryInfo(matchData) {
+function createPantryInfo(matchData, planInfo = {}) {
   if (!matchData || !matchData.pantry_item) {
     return '';
   }
   
   const { pantry_item, needs_to_buy } = matchData;
-  const expirationText = pantry_item.expiration_date ? 
-    `Expires: ${formatDateString(pantry_item.expiration_date)}` : 'No expiration date';
+  const expirationInfo = formatFullExpirationDate(pantry_item.expiration_date, planInfo);
   
   return `
     <div class="pantry-info">
@@ -497,7 +529,7 @@ function createPantryInfo(matchData) {
         <span class="storage-type">(${pantry_item.storage_type})</span>
       </div>
       <div class="pantry-details">
-        <span class="expiration">${expirationText}</span>
+        <span class="expiration ${expirationInfo.cssClass}">${expirationInfo.text}</span>
         ${needs_to_buy > 0 ? `<span class="still-need">Still need: ${needs_to_buy}</span>` : '<span class="fully-covered">✓ Fully covered</span>'}
       </div>
     </div>
