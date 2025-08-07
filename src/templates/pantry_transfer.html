@@ -259,20 +259,12 @@
             <li><a href="{{ url_for('shopping.budget') }}" class="nav-link">
                 <i class="fas fa-chart-line" style="margin-right: 6px; font-size: 0.85em;"></i>Analytics
             </a></li>
-            <li class="nav-dropdown">
-                <a href="#" class="nav-link dropdown-toggle" style="color: var(--primary-color);">
-                <i class="fas fa-utensils" style="margin-right: 6px; font-size: 0.85em;"></i>Kitchen
-                <i class="fas fa-chevron-down dropdown-arrow" style="margin-left: 6px; font-size: 0.7em;"></i>
-                </a>
-                <ul class="dropdown-menu">
-                <li><a href="{{ url_for('shopping.pantry') }}" class="dropdown-link">
-                    <i class="fas fa-warehouse"></i>My Pantry
-                </a></li>
-                <li><a href="{{ url_for('shopping.meal_plans') }}" class="dropdown-link">
-                    <i class="fas fa-calendar-alt"></i>Meal Plans
-                </a></li>
-                </ul>
-            </li>
+            <li><a href="{{ url_for('shopping.pantry') }}" class="nav-link" style="color: var(--primary-color);">
+                <i class="fas fa-warehouse" style="margin-right: 6px; font-size: 0.85em;"></i>Pantry
+            </a></li>
+            <li><a href="{{ url_for('shopping.meal_plans') }}" class="nav-link">
+                <i class="fas fa-calendar-alt" style="margin-right: 6px; font-size: 0.85em;"></i>Meal Plans
+            </a></li>
             <li class="nav-dropdown">
                 <a href="#" class="nav-link dropdown-toggle">
                 <i class="fas fa-user" style="margin-right: 6px; font-size: 0.85em;"></i>Account
