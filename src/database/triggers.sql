@@ -20,6 +20,15 @@ BEGIN
     WHERE gim.pantry_item_id = OLD.pantry_item_id
         AND sgs.user_id = OLD.user_id;
     
+    -- Create notifications for affected meal plans
+    INSERT INTO pantry_change_notifications (user_id, meal_plan_session_id, change_type, affected_item_name)
+    SELECT DISTINCT OLD.user_id, sgs.meal_plan_session_id, 'item_deleted', OLD.item_name
+    FROM generation_ingredient_matches gim
+    INNER JOIN shopping_generation_sessions sgs ON gim.generation_id = sgs.generation_id
+    WHERE gim.pantry_item_id = OLD.pantry_item_id
+        AND sgs.meal_plan_session_id IS NOT NULL
+        AND sgs.user_id = OLD.user_id;
+    
     -- Update the shopping generation session counts
     UPDATE shopping_generation_sessions sgs
     SET 

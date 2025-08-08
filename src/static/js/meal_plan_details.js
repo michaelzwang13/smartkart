@@ -65,6 +65,9 @@ async function loadMealPlanDetails() {
       await displayMealPlan(data.meal_plan);
       document.getElementById("loadingState").style.display = "none";
       document.getElementById("planContent").style.display = "block";
+      
+      // Check for pantry change notifications after loading
+      await checkPantryChangeNotifications();
     } else {
       throw new Error(data.message || "Failed to load meal plan");
     }
@@ -128,20 +131,24 @@ function formatFullExpirationDate(dateString, planInfo = {}) {
   
   // Format full date
   const options = { year: 'numeric', month: 'short', day: 'numeric' };
-  const fullDateText = `Expires: ${expirationDate.toLocaleDateString('en-US', options)}`;
+  const formattedDate = expirationDate.toLocaleDateString('en-US', options);
   
-  // Determine color coding
-  let cssClass = '';
+  // Determine text and color coding
+  let fullDateText, cssClass = '';
   
   if (expirationDate < today) {
     // Already expired - red
+    fullDateText = `Expired: ${formattedDate}`;
     cssClass = 'expired';
   } else if (planStartDate && planEndDate && 
              expirationDate >= planStartDate && expirationDate <= planEndDate) {
     // Expires during meal plan session - yellow warning
+    fullDateText = `Expires: ${formattedDate}`;
     cssClass = 'expires-during-plan';
+  } else {
+    // Expires after plan or no plan dates - no special styling (default)
+    fullDateText = `Expires: ${formattedDate}`;
   }
-  // If expires after plan or no plan dates - no special styling (default)
   
   return { text: fullDateText, cssClass };
 }
@@ -917,4 +924,83 @@ async function refreshPantryMatches() {
       refreshBtn.disabled = false;
     }, 2000);
   }
+}
+
+async function checkPantryChangeNotifications() {
+  if (!window.fuzzyMatchingData?.ingredient_matches) {
+    return; // No fuzzy matching data to check
+  }
+  
+  const matchData = window.fuzzyMatchingData.ingredient_matches;
+  const recentlyDeleted = [];
+  
+  // Check for items that have match_type 'auto' but pantry_item is null
+  // This indicates the pantry item was deleted after fuzzy matching
+  for (const [ingredientName, match] of Object.entries(matchData)) {
+    // If match_type is still 'auto' but pantry_item is null,
+    // it means the item was matched before but the pantry item was deleted
+    if (match.match_type === 'auto' && (!match.pantry_item || match.pantry_item.id === null)) {
+      // We need the original pantry item name, but since it's null, we'll use a generic message
+      // or we could store the ingredient name as a fallback
+      recentlyDeleted.push({
+        ingredient_name: ingredientName,
+        item_name: ingredientName // Fallback to ingredient name since pantry item data is gone
+      });
+    }
+  }
+  
+  if (recentlyDeleted.length > 0) {
+    displayPantryChangeNotifications(recentlyDeleted);
+  }
+}
+
+function displayPantryChangeNotifications(notifications) {
+  // Create a notification banner
+  const existingBanner = document.getElementById('pantry-change-banner');
+  if (existingBanner) {
+    existingBanner.remove();
+  }
+  
+  const itemNames = notifications.map(n => n.item_name).join(', ');
+  const itemCount = notifications.length;
+  
+  const banner = document.createElement('div');
+  banner.id = 'pantry-change-banner';
+  banner.className = 'pantry-change-notification';
+  banner.innerHTML = `
+    <div class="notification-content">
+      <i class="fas fa-exclamation-circle"></i>
+      <div class="notification-text">
+        <strong>Pantry Changes Detected</strong>
+        <span>${itemCount} item${itemCount > 1 ? 's' : ''} used in this meal plan ${itemCount > 1 ? 'have' : 'has'} been deleted: ${itemNames}</span>
+      </div>
+      <div class="notification-actions">
+        <button class="btn btn-primary btn-sm" onclick="refreshPantryMatches()">
+          <i class="fas fa-sync-alt"></i> Refresh Matches
+        </button>
+        <button class="btn btn-secondary btn-sm" onclick="dismissPantryNotifications()">
+          <i class="fas fa-times"></i> Dismiss
+        </button>
+      </div>
+    </div>
+  `;
+  
+  // Insert banner at the top of the main content
+  const mainContent = document.querySelector('.main-content');
+  const pageHeader = document.querySelector('.page-header');
+  mainContent.insertBefore(banner, pageHeader.nextSibling);
+  
+  // Store notification data for dismissal (simplified - no need for database IDs)
+  banner.dataset.notifications = JSON.stringify(notifications);
+}
+
+function dismissPantryNotifications() {
+  const banner = document.getElementById('pantry-change-banner');
+  if (!banner) return;
+  
+  // Simple dismissal - just remove the banner with animation
+  banner.style.animation = 'slideUp 0.3s ease';
+  setTimeout(() => {
+    banner.remove();
+  }, 300);
 }

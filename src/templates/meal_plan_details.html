@@ -869,6 +869,93 @@
         color: var(--primary-color-dark);
       }
 
+      /* Pantry Change Notification Banner */
+      .pantry-change-notification {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        border: 1px solid #f59e0b;
+        border-radius: var(--radius-lg);
+        margin: var(--spacing-lg) 0;
+        padding: var(--spacing-lg);
+        box-shadow: var(--shadow-sm);
+        animation: slideDown 0.3s ease;
+      }
+
+      .notification-content {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+      }
+
+      .notification-content i {
+        color: #f59e0b;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+      }
+
+      .notification-text {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xs);
+      }
+
+      .notification-text strong {
+        color: #92400e;
+        font-size: 1rem;
+      }
+
+      .notification-text span {
+        color: #92400e;
+        font-size: 0.875rem;
+        line-height: 1.4;
+      }
+
+      .notification-actions {
+        display: flex;
+        gap: var(--spacing-sm);
+        flex-shrink: 0;
+      }
+
+      @keyframes slideDown {
+        from {
+          opacity: 0;
+          transform: translateY(-20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes slideUp {
+        from {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        to {
+          opacity: 0;
+          transform: translateY(-20px);
+        }
+      }
+
+      @media (max-width: 768px) {
+        .notification-content {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: var(--spacing-md);
+        }
+
+        .notification-actions {
+          flex-direction: column;
+          width: 100%;
+        }
+
+        .notification-actions .btn {
+          width: 100%;
+          justify-content: center;
+        }
+      }
+
       /* Shopping Item Match Indicators */
       .shopping-item.has-match-data {
         border-left: 3px solid var(--border-light);
