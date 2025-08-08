@@ -531,7 +531,7 @@ function createPantryInfo(matchData, planInfo = {}) {
     <div class="pantry-info">
       <div class="pantry-match">
         <i class="fas fa-warehouse"></i>
-        <span>Found: ${pantry_item.available_quantity} ${pantry_item.name}</span>
+        <span>Found: ${convertToMixedFraction(pantry_item.available_quantity)} ${pantry_item.available_unit && pantry_item.available_unit !== 'pcs' && pantry_item.available_unit !== 'pc' ? pantry_item.available_unit + ' ' : ''}${pantry_item.name}</span>
         <span class="storage-type">(${pantry_item.storage_type})</span>
       </div>
       <div class="pantry-details">
