@@ -533,8 +533,29 @@
       .toggle-label input[type="checkbox"] {
         width: 18px;
         height: 18px;
-        accent-color: var(--primary-color);
+        accent-color: var(--error-color);
         cursor: pointer;
+        appearance: none;
+        border: 2px solid var(--border-medium);
+        border-radius: 3px;
+        position: relative;
+        background: var(--bg-primary);
+      }
+
+      .toggle-label input[type="checkbox"]:checked {
+        background: var(--error-color);
+        border-color: var(--error-color);
+      }
+
+      .toggle-label input[type="checkbox"]:checked::after {
+        content: '✓';
+        position: absolute;
+        color: white;
+        font-size: 12px;
+        font-weight: bold;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
       }
 
       .toggle-text {
@@ -1013,6 +1034,14 @@
 
       .shopping-item.has-match-data:hover {
         border-left-color: var(--primary-color);
+      }
+
+      .shopping-item.missing-item {
+        border-left: 3px solid var(--error-color);
+      }
+
+      .shopping-item.missing-item:hover {
+        border-left-color: var(--error-color);
       }
 
       .item-header {

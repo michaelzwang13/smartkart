@@ -528,14 +528,22 @@ function displayShoppingList(items, fuzzyMatches = {}, planInfo = {}) {
         const matchIndicator = createMatchIndicator(matchData);
         const pantryInfo = createPantryInfo(matchData, planInfo);
         
+        // Check if item is fully covered (don't show cost if so)
+        const isFullyCovered = matchData && matchData.needs_to_buy <= 0;
+        const costDisplay = isFullyCovered ? '' : `<span class="item-cost">$${item.estimated_cost || "0.00"}</span>`;
+        
+        // Check if item is missing for styling
+        const isMissing = isMissingItem(matchData);
+        const missingClass = isMissing ? 'missing-item' : '';
+        
         return `
-          <li class="shopping-item ${matchData ? 'has-match-data' : ''}">
+          <li class="shopping-item ${matchData ? 'has-match-data' : ''} ${missingClass}">
             <div class="item-row">
               <div class="item-main">
                 <div class="item-header">
                   ${matchIndicator}
                   <span class="item-details">${convertToMixedFraction(item.total_quantity)} ${item.unit === 'pcs' || item.unit === 'pc' ? '' : item.unit} ${item.ingredient_name}</span>
-                  <span class="item-cost">$${item.estimated_cost || "0.00"}</span>
+                  ${costDisplay}
                 </div>
                 ${matchData && matchData.match_type === 'confirm' ? createConfirmationButtons(item.ingredient_name) : ''}
               </div>
