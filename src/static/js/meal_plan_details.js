@@ -895,6 +895,15 @@ async function refreshPantryMatches() {
       setTimeout(async () => {
         await loadMealPlanDetails();
         
+        // Dismiss the notification banner since matches are now refreshed
+        const banner = document.getElementById('pantry-change-banner');
+        if (banner) {
+          banner.style.animation = 'slideUp 0.3s ease';
+          setTimeout(() => {
+            banner.remove();
+          }, 300);
+        }
+        
         // Reset button
         refreshBtn.innerHTML = originalContent;
         refreshBtn.style.background = "";
