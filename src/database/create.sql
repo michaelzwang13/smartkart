@@ -23,8 +23,13 @@ CREATE TABLE shopping_lists (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     is_active BOOLEAN DEFAULT TRUE,
+    meal_plan_session_id INT NULL,
+    is_meal_plan_list BOOLEAN DEFAULT FALSE,
     PRIMARY KEY (list_id),
-    FOREIGN KEY (user_id) REFERENCES user_account(user_ID)
+    FOREIGN KEY (user_id) REFERENCES user_account(user_ID),
+    FOREIGN KEY (meal_plan_session_id) REFERENCES meal_plan_sessions(session_id) ON DELETE SET NULL,
+    INDEX idx_shopping_list_meal_plan (meal_plan_session_id),
+    CONSTRAINT unique_meal_plan_shopping_list UNIQUE (meal_plan_session_id, is_meal_plan_list)
 );
 
 -- Create the shopping_cart table

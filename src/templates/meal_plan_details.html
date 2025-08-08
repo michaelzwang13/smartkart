@@ -515,6 +515,13 @@
         display: flex;
         align-items: center;
         gap: var(--spacing-lg);
+        flex-wrap: wrap;
+      }
+
+      .shopping-list-controls {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
       }
 
       .toggle-control {
@@ -1051,6 +1058,50 @@
         width: 100%;
       }
 
+      .item-checkbox-container {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        margin-right: var(--spacing-xs);
+      }
+
+      .item-checkbox {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+      }
+
+      .checkbox-custom {
+        height: 18px;
+        width: 18px;
+        background-color: var(--bg-primary);
+        border: 2px solid var(--border-medium);
+        border-radius: 3px;
+        position: relative;
+        display: inline-block;
+        transition: all 0.3s ease;
+      }
+
+      .item-checkbox:checked + .checkbox-custom {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+      }
+
+      .item-checkbox:checked + .checkbox-custom::after {
+        content: '✓';
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-size: 12px;
+        font-weight: bold;
+      }
+
+      .item-checkbox-container:hover .checkbox-custom {
+        border-color: var(--primary-color);
+      }
+
       .item-details {
         flex: 1;
         font-size: 1.5rem;
@@ -1276,6 +1327,17 @@
           align-items: flex-start;
         }
 
+        .shopping-list-controls {
+          flex-direction: column;
+          width: 100%;
+          gap: var(--spacing-sm);
+        }
+
+        .shopping-list-controls .btn {
+          width: 100%;
+          justify-content: center;
+        }
+
         .toggle-control {
           width: 100%;
           justify-content: flex-start;
@@ -1459,6 +1521,11 @@
                   <input type="checkbox" id="prioritizeMissingToggle" onchange="toggleMissingPriority()">
                   <span class="toggle-text">Missing items first</span>
                 </label>
+              </div>
+              <div class="shopping-list-controls">
+                <button class="btn btn-primary" id="addToShoppingListBtn" onclick="addSelectedToShoppingList()" title="Add selected items to shopping list">
+                  <i class="fas fa-plus"></i> Add to Shopping List (<span id="selectedCount">0</span>)
+                </button>
               </div>
               <button class="btn btn-secondary" id="refreshMatchesBtn" onclick="refreshPantryMatches()" title="Refresh pantry matches">
                 <i class="fas fa-sync-alt"></i> Refresh Matches

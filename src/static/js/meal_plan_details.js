@@ -541,6 +541,10 @@ function displayShoppingList(items, fuzzyMatches = {}, planInfo = {}) {
             <div class="item-row">
               <div class="item-main">
                 <div class="item-header">
+                  <label class="item-checkbox-container">
+                    <input type="checkbox" class="item-checkbox" data-ingredient="${item.ingredient_name}" data-quantity="${item.total_quantity}" data-unit="${item.unit}" data-cost="${item.estimated_cost || 0}" ${isMissing ? 'checked' : ''}>
+                    <span class="checkbox-custom"></span>
+                  </label>
                   ${matchIndicator}
                   <span class="item-details">${convertToMixedFraction(item.total_quantity)} ${item.unit === 'pcs' || item.unit === 'pc' ? '' : item.unit} ${item.ingredient_name}</span>
                   ${costDisplay}
@@ -563,6 +567,9 @@ function displayShoppingList(items, fuzzyMatches = {}, planInfo = {}) {
 
     categoriesContainer.appendChild(categoryCard);
   });
+  
+  // Initialize shopping list controls after all checkboxes are rendered
+  initializeShoppingListControls();
 }
 
 function createMatchIndicator(matchData) {
@@ -1084,4 +1091,92 @@ function isMissingItem(matchData) {
   // 2. match_type is 'auto' but pantry_item is null (recently deleted)
   return matchData.match_type === 'missing' || 
          (matchData.match_type === 'auto' && (!matchData.pantry_item || matchData.pantry_item.id === null));
+}
+
+function initializeShoppingListControls() {
+  // Add event listeners to all checkboxes
+  const checkboxes = document.querySelectorAll('.item-checkbox');
+  checkboxes.forEach(checkbox => {
+    checkbox.addEventListener('change', updateSelectedCount);
+  });
+  
+  // Initialize selected count
+  updateSelectedCount();
+}
+
+function updateSelectedCount() {
+  const selectedCheckboxes = document.querySelectorAll('.item-checkbox:checked');
+  const count = selectedCheckboxes.length;
+  
+  const countSpan = document.getElementById('selectedCount');
+  const addButton = document.getElementById('addToShoppingListBtn');
+  
+  if (countSpan) {
+    countSpan.textContent = count;
+  }
+  
+  if (addButton) {
+    addButton.disabled = count === 0;
+    if (count === 0) {
+      addButton.classList.add('disabled');
+    } else {
+      addButton.classList.remove('disabled');
+    }
+  }
+}
+
+
+async function addSelectedToShoppingList() {
+  const selectedCheckboxes = document.querySelectorAll('.item-checkbox:checked');
+  
+  if (selectedCheckboxes.length === 0) {
+    showNotification('Please select at least one item to add to shopping list', 'warning');
+    return;
+  }
+  
+  const selectedItems = Array.from(selectedCheckboxes).map(checkbox => ({
+    ingredient_name: checkbox.dataset.ingredient,
+    quantity: parseFloat(checkbox.dataset.quantity),
+    unit: checkbox.dataset.unit,
+    estimated_cost: parseFloat(checkbox.dataset.cost)
+  }));
+  
+  const addButton = document.getElementById('addToShoppingListBtn');
+  const originalContent = addButton.innerHTML;
+  addButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+  addButton.disabled = true;
+  
+  try {
+    const response = await fetch(`/api/meal-plans/${planId}/shopping-list`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        items: selectedItems
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      showNotification(`Added ${selectedItems.length} items to shopping list`, 'success');
+      
+      // Uncheck selected items
+      selectedCheckboxes.forEach(checkbox => {
+        checkbox.checked = false;
+      });
+      updateSelectedCount();
+      
+    } else {
+      throw new Error(data.message || 'Failed to add items to shopping list');
+    }
+    
+  } catch (error) {
+    console.error('Error adding to shopping list:', error);
+    showNotification('Failed to add items: ' + error.message, 'error');
+  } finally {
+    addButton.innerHTML = originalContent;
+    addButton.disabled = false;
+  }
 }

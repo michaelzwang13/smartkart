@@ -506,6 +506,109 @@ def refresh_pantry_matches(plan_id):
         cursor.close()
 
 
+@meal_plan_compat_bp.route("/meal-plans/<int:plan_id>/shopping-list", methods=["POST"])
+def add_items_to_shopping_list(plan_id):
+    """Add selected meal plan items to shopping list"""
+    if "user_ID" not in session:
+        return jsonify({"success": False, "message": "Not authenticated"})
+
+    user_id = session["user_ID"]
+    data = request.get_json()
+    items = data.get("items", [])
+    
+    if not items:
+        return jsonify({"success": False, "message": "No items provided"})
+    
+    db = get_db()
+    cursor = db.cursor()
+    
+    try:
+        # First verify the meal plan belongs to the current user
+        cursor.execute("""
+            SELECT session_name FROM meal_plan_sessions 
+            WHERE session_id = %s AND user_id = %s
+        """, (plan_id, user_id))
+        
+        meal_plan = cursor.fetchone()
+        if not meal_plan:
+            return jsonify({"success": False, "message": "Meal plan not found or access denied"})
+        
+        # Check if there's already a shopping list for this meal plan
+        cursor.execute("""
+            SELECT list_id FROM shopping_lists 
+            WHERE user_id = %s AND meal_plan_session_id = %s AND is_meal_plan_list = TRUE
+        """, (user_id, plan_id))
+        
+        existing_list = cursor.fetchone()
+        
+        if existing_list:
+            list_id = existing_list["list_id"]
+        else:
+            # Create new shopping list for this meal plan
+            list_name = f"Shopping List - {meal_plan['session_name']}"
+            cursor.execute("""
+                INSERT INTO shopping_lists (user_id, list_name, meal_plan_session_id, is_meal_plan_list, description)
+                VALUES (%s, %s, %s, TRUE, 'Generated from meal plan ingredients')
+            """, (user_id, list_name, plan_id))
+            list_id = cursor.lastrowid
+        
+        # Add items to the shopping list
+        added_count = 0
+        for item in items:
+            # Check if item already exists in the list
+            cursor.execute("""
+                SELECT item_id FROM shopping_list_items 
+                WHERE list_id = %s AND item_name = %s
+            """, (list_id, item["ingredient_name"]))
+            
+            existing_item = cursor.fetchone()
+            
+            if existing_item:
+                # Update quantity if item exists
+                cursor.execute("""
+                    UPDATE shopping_list_items 
+                    SET quantity = quantity + %s,
+                        notes = CASE 
+                            WHEN notes IS NULL THEN CONCAT(%s, ' ', %s)
+                            ELSE CONCAT(notes, ', ', %s, ' ', %s)
+                        END,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE item_id = %s
+                """, (
+                    int(item["quantity"]),
+                    item["quantity"], item["unit"],
+                    item["quantity"], item["unit"],
+                    existing_item["item_id"]
+                ))
+            else:
+                # Add new item
+                notes = f"{item['quantity']} {item['unit']}" if item.get('unit') else str(item["quantity"])
+                cursor.execute("""
+                    INSERT INTO shopping_list_items (list_id, item_name, quantity, notes)
+                    VALUES (%s, %s, %s, %s)
+                """, (list_id, item["ingredient_name"], int(item["quantity"]), notes))
+                
+            added_count += 1
+        
+        db.commit()
+        
+        return jsonify({
+            "success": True,
+            "message": f"Added {added_count} items to shopping list",
+            "list_id": list_id,
+            "added_count": added_count
+        })
+
+    except Exception as e:
+        db.rollback()
+        return jsonify({
+            "success": False, 
+            "message": f"Failed to add items to shopping list: {str(e)}"
+        })
+    finally:
+        cursor.close()
+
+
 def organize_recipes_by_day(recipe_data):
     """Organize recipe data by day and meal type (backward compatibility)"""
     organized = {}
