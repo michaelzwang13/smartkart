@@ -469,7 +469,7 @@ function displayShoppingList(items, fuzzyMatches = {}, planInfo = {}) {
               <div class="item-main">
                 <div class="item-header">
                   ${matchIndicator}
-                  <span class="item-details">${item.total_quantity} ${item.unit} ${item.ingredient_name}</span>
+                  <span class="item-details">${convertToMixedFraction(item.total_quantity)} ${item.unit === 'pcs' || item.unit === 'pc' ? '' : item.unit} ${item.ingredient_name}</span>
                   <span class="item-cost">$${item.estimated_cost || "0.00"}</span>
                 </div>
                 ${matchData && matchData.match_type === 'confirm' ? createConfirmationButtons(item.ingredient_name) : ''}
