@@ -103,13 +103,6 @@
       }
 
       /* Editable Title Styles */
-      .title-container {
-        position: relative;
-        display: flex;
-        align-items: center;
-        gap: var(--spacing-sm);
-      }
-
       .title-editable {
         background: transparent;
         border: 2px solid transparent;
@@ -123,6 +116,8 @@
         cursor: pointer;
         outline: none;
         max-width: 100%;
+        width: auto;
+        min-width: 200px;
       }
 
       .title-editable:hover {
@@ -136,44 +131,6 @@
         cursor: text;
       }
 
-      .edit-icon {
-        color: var(--text-secondary);
-        font-size: 1.25rem;
-        cursor: pointer;
-        opacity: 0.7;
-        transition: all 0.3s ease;
-        padding: var(--spacing-xs);
-        border-radius: var(--radius-sm);
-      }
-
-      .edit-icon:hover {
-        opacity: 1;
-        background: var(--bg-tertiary);
-        color: var(--primary-color);
-      }
-
-      .character-counter {
-        font-size: 0.75rem;
-        color: var(--text-secondary);
-        position: absolute;
-        bottom: -20px;
-        right: 0;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-      }
-
-      .title-editable:focus + .edit-icon + .character-counter,
-      .title-container:hover .character-counter {
-        opacity: 1;
-      }
-
-      .character-counter.warning {
-        color: var(--warning-color);
-      }
-
-      .character-counter.error {
-        color: var(--error-color);
-      }
 
       /* Plan info */
       .plan-info {
@@ -1549,11 +1506,7 @@
             <i class="fas fa-arrow-left"></i>
             Back to Meal Plans
           </a>
-          <div class="title-container">
-            <input type="text" class="title-editable" id="planTitle" value="Meal Plan Details" maxlength="21" placeholder="Enter meal plan name">
-            <i class="fas fa-edit edit-icon" title="Click to edit plan name"></i>
-            <div class="character-counter" id="characterCounter">0/21</div>
-          </div>
+          <input type="text" class="title-editable" id="planTitle" value="Meal Plan Details" maxlength="21" placeholder="Enter meal plan name">
         </div>
         <button class="btn btn-danger" id="deletePlanBtn" onclick="showDeleteConfirmation()">
           <i class="fas fa-trash"></i> Delete Meal Plan

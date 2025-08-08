@@ -137,7 +137,7 @@ def generate_meal_plan():
             return jsonify({"success": False, "message": "Failed to generate meal plan. Please try again."})
 
         # Create meal plan session
-        session_name = f"AI Meal Plan - {start_date.strftime('%b %d')}"
+        session_name = f"Meal Plan - {start_date.strftime('%b %d')}"
         generation_prompt = f"Generated plan for {days} days with {len(ingredients)} ingredients, {dietary_preference} diet, ${budget} budget, {cooking_time}min cooking time"
 
         session_query = """

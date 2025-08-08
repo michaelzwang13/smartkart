@@ -90,7 +90,6 @@ async function displayMealPlan(mealPlan) {
   const titleInput = document.getElementById("planTitle");
   titleInput.value = plan_info.plan_name;
   titleInput.dataset.originalValue = plan_info.plan_name;
-  updateCharacterCounter();
 
   // Display plan info with fuzzy matching summary
   displayPlanInfo(plan_info, fuzzy_matching?.summary);
@@ -1187,38 +1186,12 @@ async function addSelectedToShoppingList() {
 // Editable Title Functions
 function initializeEditableTitle() {
   const titleInput = document.getElementById('planTitle');
-  const characterCounter = document.getElementById('characterCounter');
   
-  if (!titleInput || !characterCounter) return;
+  if (!titleInput) return;
   
   // Add event listeners
-  titleInput.addEventListener('input', updateCharacterCounter);
   titleInput.addEventListener('blur', savePlanName);
   titleInput.addEventListener('keydown', handleTitleKeydown);
-  
-  // Initialize character counter
-  updateCharacterCounter();
-}
-
-function updateCharacterCounter() {
-  const titleInput = document.getElementById('planTitle');
-  const characterCounter = document.getElementById('characterCounter');
-  
-  if (!titleInput || !characterCounter) return;
-  
-  const currentLength = titleInput.value.length;
-  const maxLength = 21;
-  
-  characterCounter.textContent = `${currentLength}/${maxLength}`;
-  
-  // Update counter styling based on length
-  characterCounter.classList.remove('warning', 'error');
-  if (currentLength > 18) {
-    characterCounter.classList.add('warning');
-  }
-  if (currentLength >= maxLength) {
-    characterCounter.classList.add('error');
-  }
 }
 
 function handleTitleKeydown(event) {
@@ -1233,7 +1206,6 @@ function handleTitleKeydown(event) {
     const originalName = event.target.dataset.originalValue || '';
     event.target.value = originalName;
     event.target.blur();
-    updateCharacterCounter();
   }
 }
 
@@ -1248,7 +1220,6 @@ async function savePlanName() {
   if (!newName || newName === originalName) {
     if (!newName) {
       titleInput.value = originalName; // Restore original if empty
-      updateCharacterCounter();
     }
     return;
   }
@@ -1257,7 +1228,6 @@ async function savePlanName() {
   if (newName.length > 21) {
     showNotification('Plan name must be 21 characters or less', 'error');
     titleInput.value = originalName;
-    updateCharacterCounter();
     return;
   }
   
@@ -1292,7 +1262,6 @@ async function savePlanName() {
     
     // Restore original name on error
     titleInput.value = originalName;
-    updateCharacterCounter();
     
   } finally {
     // Restore input state
