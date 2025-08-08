@@ -465,14 +465,16 @@ function displayShoppingList(items, fuzzyMatches = {}, planInfo = {}) {
         
         return `
           <li class="shopping-item ${matchData ? 'has-match-data' : ''}">
-            <div class="item-main">
-              <div class="item-header">
-                ${matchIndicator}
-                <span class="item-details">${item.total_quantity} ${item.unit} ${item.ingredient_name}</span>
-                <span class="item-cost">$${item.estimated_cost || "0.00"}</span>
+            <div class="item-row">
+              <div class="item-main">
+                <div class="item-header">
+                  ${matchIndicator}
+                  <span class="item-details">${item.total_quantity} ${item.unit} ${item.ingredient_name}</span>
+                  <span class="item-cost">$${item.estimated_cost || "0.00"}</span>
+                </div>
+                ${matchData && matchData.match_type === 'confirm' ? createConfirmationButtons(item.ingredient_name) : ''}
               </div>
               ${pantryInfo}
-              ${matchData && matchData.match_type === 'confirm' ? createConfirmationButtons(item.ingredient_name) : ''}
             </div>
           </li>
         `;

@@ -535,12 +535,22 @@
       .shopping-item {
         padding: var(--spacing-sm);
         color: var(--text-secondary);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
         background: var(--bg-tertiary);
         border-radius: var(--radius-md);
         width: 100%;
+      }
+
+      .item-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: var(--spacing-md);
+        width: 100%;
+      }
+
+      .item-main {
+        flex: 1;
+        min-width: 0; /* Allows flex item to shrink below content size */
       }
 
       .item-cost {
@@ -873,11 +883,13 @@
       }
 
       .pantry-info {
-        margin-top: var(--spacing-sm);
         padding: var(--spacing-sm);
         background: rgba(16, 185, 129, 0.05);
         border-radius: var(--radius-md);
         font-size: 0.875rem;
+        flex-shrink: 0;
+        min-width: 300px;
+        max-width: 450px;
       }
 
       .pantry-match {
@@ -907,8 +919,11 @@
       .pantry-details {
         display: flex;
         justify-content: space-between;
+        align-items: center;
+        gap: var(--spacing-md);
         font-size: 0.8rem;
         color: var(--text-secondary);
+        flex-wrap: wrap;
       }
 
       .still-need {
@@ -1010,6 +1025,23 @@
 
         .confirmation-buttons {
           flex-direction: column;
+        }
+
+        .item-row {
+          flex-direction: column;
+          gap: var(--spacing-sm);
+        }
+
+        .pantry-info {
+          min-width: unset;
+          max-width: unset;
+          width: 100%;
+        }
+
+        .pantry-details {
+          flex-direction: column;
+          gap: var(--spacing-xs);
+          align-items: flex-start;
         }
 
         .notification {
