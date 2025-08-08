@@ -192,9 +192,9 @@ function convertToMixedFraction(decimal) {
   
   // Return formatted result
   if (wholeNumber === 0) {
-    return fraction;
+    return fraction; // Pure fractions stay normal size
   } else {
-    return `${wholeNumber} ${fraction}`;
+    return `${wholeNumber}&nbsp;<span class="mixed-fraction">${fraction}</span>`;
   }
 }
 
