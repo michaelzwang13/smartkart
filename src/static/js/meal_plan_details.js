@@ -65,6 +65,9 @@ async function loadMealPlanDetails() {
       await displayMealPlan(data.meal_plan);
       document.getElementById("loadingState").style.display = "none";
       document.getElementById("planContent").style.display = "block";
+      
+      // Check for pantry change notifications after loading
+      await checkPantryChangeNotifications();
     } else {
       throw new Error(data.message || "Failed to load meal plan");
     }
@@ -81,13 +84,13 @@ async function loadMealPlanDetails() {
 }
 
 async function displayMealPlan(mealPlan) {
-  const { plan_info, recipes, batch_prep, shopping_list } = mealPlan;
+  const { plan_info, recipes, batch_prep, shopping_list, fuzzy_matching } = mealPlan;
 
   // Update page title
   document.getElementById("planTitle").textContent = plan_info.plan_name;
 
-  // Display plan info
-  displayPlanInfo(plan_info);
+  // Display plan info with fuzzy matching summary
+  displayPlanInfo(plan_info, fuzzy_matching?.summary);
 
   // Display recipes by day
   await displayRecipes(recipes, plan_info.start_date);
@@ -97,10 +100,13 @@ async function displayMealPlan(mealPlan) {
     displayBatchPrep(batch_prep);
   }
 
-  // Display shopping list
+  // Display shopping list with fuzzy matching data
   if (shopping_list && shopping_list.length > 0) {
-    displayShoppingList(shopping_list);
+    displayShoppingList(shopping_list, fuzzy_matching?.ingredient_matches, plan_info);
   }
+  
+  // Store fuzzy matching data globally for confirmation functions
+  window.fuzzyMatchingData = fuzzy_matching;
 }
 
 function formatDateString(dateString) {
@@ -108,6 +114,43 @@ function formatDateString(dateString) {
   const [year, month, day] = dateString.split('-');
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   return `${months[parseInt(month) - 1]} ${parseInt(day)}`;
+}
+
+function formatFullExpirationDate(dateString, planInfo = {}) {
+  if (!dateString) {
+    return { text: 'No expiration date', cssClass: '' };
+  }
+  
+  // Parse dates
+  const expirationDate = new Date(dateString + 'T00:00:00');
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const planStartDate = planInfo.start_date ? new Date(planInfo.start_date + 'T00:00:00') : null;
+  const planEndDate = planInfo.end_date ? new Date(planInfo.end_date + 'T00:00:00') : null;
+  
+  // Format full date
+  const options = { year: 'numeric', month: 'short', day: 'numeric' };
+  const formattedDate = expirationDate.toLocaleDateString('en-US', options);
+  
+  // Determine text and color coding
+  let fullDateText, cssClass = '';
+  
+  if (expirationDate < today) {
+    // Already expired - red
+    fullDateText = `Expired: ${formattedDate}`;
+    cssClass = 'expired';
+  } else if (planStartDate && planEndDate && 
+             expirationDate >= planStartDate && expirationDate <= planEndDate) {
+    // Expires during meal plan session - yellow warning
+    fullDateText = `Expires: ${formattedDate}`;
+    cssClass = 'expires-during-plan';
+  } else {
+    // Expires after plan or no plan dates - no special styling (default)
+    fullDateText = `Expires: ${formattedDate}`;
+  }
+  
+  return { text: fullDateText, cssClass };
 }
 
 function convertToMixedFraction(decimal) {
@@ -156,26 +199,81 @@ function convertToMixedFraction(decimal) {
   
   // Return formatted result
   if (wholeNumber === 0) {
-    return fraction;
+    return fraction; // Pure fractions stay normal size
   } else {
-    return `${wholeNumber} ${fraction}`;
+    return `${wholeNumber}&nbsp;<span class="mixed-fraction">${fraction}</span>`;
   }
 }
 
-function displayPlanInfo(plan) {
+function displayPlanInfo(plan, fuzzyMatchingSummary) {
   // Format dates manually from YYYY-MM-DD string
   const startDate = formatDateString(plan.start_date);
   const endDate = formatDateString(plan.end_date);
+  
+  // Handle single day vs multi-day display
+  const dateDisplay = plan.total_days === 1 ? startDate : `${startDate} - ${endDate}`;
+  const daysDisplay = plan.total_days === 1 ? '1 day' : `${plan.total_days} days`;
+
+  let fuzzyMatchingHtml = '';
+  if (fuzzyMatchingSummary) {
+    const utilizationRate = fuzzyMatchingSummary.pantry_utilization_rate || 0;
+    const utilizationColor = utilizationRate >= 70 ? 'success' : utilizationRate >= 50 ? 'warning' : 'error';
+    
+    // Check if data might be outdated (simple heuristic based on generated time)
+    const generatedAt = new Date(fuzzyMatchingSummary.generated_at);
+    const now = new Date();
+    const hoursSinceGenerated = (now - generatedAt) / (1000 * 60 * 60);
+    const isStale = hoursSinceGenerated > 24; // Consider stale after 24 hours
+    
+    let staleWarning = '';
+    if (isStale) {
+      staleWarning = `
+        <div class="stale-warning">
+          <i class="fas fa-exclamation-triangle"></i>
+          <span>Pantry analysis is ${Math.floor(hoursSinceGenerated)} hours old. Consider refreshing for accurate results.</span>
+          <button class="btn-link refresh-suggestion" onclick="refreshPantryMatches()">Refresh now</button>
+        </div>
+      `;
+    }
+    
+    fuzzyMatchingHtml = `
+      <div class="fuzzy-matching-summary">
+        <div class="summary-header">
+          <i class="fas fa-brain meta-icon"></i>
+          <span>Smart Pantry Analysis</span>
+        </div>
+        ${staleWarning}
+        <div class="summary-stats">
+          <div class="stat-item success">
+            <i class="fas fa-check"></i>
+            <span>${fuzzyMatchingSummary.auto_matched} auto-matched</span>
+          </div>
+          <div class="stat-item warning">
+            <i class="fas fa-question"></i>
+            <span>${fuzzyMatchingSummary.confirm_needed} need confirmation</span>
+          </div>
+          <div class="stat-item error">
+            <i class="fas fa-exclamation"></i>
+            <span>${fuzzyMatchingSummary.missing} missing</span>
+          </div>
+        </div>
+        <div class="utilization-rate">
+          <span class="rate-label">Pantry utilization:</span>
+          <span class="rate-value ${utilizationColor}">${utilizationRate.toFixed(1)}%</span>
+        </div>
+      </div>
+    `;
+  }
 
   document.getElementById("planInfo").innerHTML = `
     <div class="plan-meta">
         <div class="meta-item">
         <i class="fas fa-calendar-alt meta-icon"></i>
-        <span>${startDate} - ${endDate}</span>
+        <span>${dateDisplay}</span>
         </div>
         <div class="meta-item">
         <i class="fas fa-clock meta-icon"></i>
-        <span>${plan.total_days} days</span>
+        <span>${daysDisplay}</span>
         </div>
         <div class="meta-item">
         <i class="fas fa-leaf meta-icon"></i>
@@ -192,6 +290,7 @@ function displayPlanInfo(plan) {
         <span>Max ${plan.max_cooking_time} min/day</span>
         </div>
     </div>
+    ${fuzzyMatchingHtml}
     `;
 }
 
@@ -367,34 +466,96 @@ function displayBatchPrep(prepSteps) {
   });
 }
 
-function displayShoppingList(items) {
+function displayShoppingList(items, fuzzyMatches = {}, planInfo = {}) {
   document.getElementById("shoppingList").style.display = "block";
   const categoriesContainer = document.getElementById("shoppingCategories");
   categoriesContainer.innerHTML = "";
 
-  // Group items by category
+  // Store data globally for re-sorting
+  window.currentShoppingData = { items, fuzzyMatches, planInfo };
+  
+  // Load user preference for missing items priority
+  const prioritizeMissing = localStorage.getItem('prioritizeMissingIngredients') === 'true';
+  const toggle = document.getElementById('prioritizeMissingToggle');
+  if (toggle) {
+    toggle.checked = prioritizeMissing;
+  }
+
+  // Group items by category, with special handling for missing items
   const categories = {};
+  const missingItems = [];
+  
   items.forEach((item) => {
-    const category = item.category || "Other";
-    if (!categories[category]) {
-      categories[category] = [];
+    const matchData = fuzzyMatches[item.ingredient_name];
+    const isMissing = isMissingItem(matchData);
+    
+    if (prioritizeMissing && isMissing) {
+      // Put missing items in their own category
+      missingItems.push(item);
+    } else {
+      // Put non-missing items in their regular categories
+      const category = item.category || "Other";
+      if (!categories[category]) {
+        categories[category] = [];
+      }
+      categories[category].push(item);
     }
-    categories[category].push(item);
   });
 
-  // Create category cards
-  Object.keys(categories).forEach((categoryName) => {
+  // Create sorted category names
+  let sortedCategoryNames = Object.keys(categories).sort();
+  
+  // If we have missing items, add the Missing category at the top
+  if (prioritizeMissing && missingItems.length > 0) {
+    categories["Missing Items"] = missingItems;
+    sortedCategoryNames = ["Missing Items", ...sortedCategoryNames];
+  }
+
+  // Create category cards with fuzzy matching indicators
+  sortedCategoryNames.forEach((categoryName) => {
     const categoryCard = document.createElement("div");
     categoryCard.className = "category-card";
 
-    const itemsList = categories[categoryName]
-      .map(
-        (item) =>
-          `<li class="shopping-item">
-        <span>${item.total_quantity} ${item.unit} ${item.ingredient_name}</span>
-        <span class="item-cost">$${item.estimated_cost || "0.00"}</span>
-        </li>`
-      )
+    // For the Missing Items category, add special styling
+    if (categoryName === "Missing Items") {
+      categoryCard.classList.add("missing-category");
+    }
+
+    const categoryItems = categories[categoryName];
+    const itemsList = categoryItems
+      .map((item) => {
+        const matchData = fuzzyMatches[item.ingredient_name];
+        const matchIndicator = createMatchIndicator(matchData);
+        const pantryInfo = createPantryInfo(matchData, planInfo);
+        
+        // Check if item is fully covered (don't show cost if so)
+        const isFullyCovered = matchData && matchData.needs_to_buy <= 0;
+        const costDisplay = isFullyCovered ? '' : `<span class="item-cost">$${item.estimated_cost || "0.00"}</span>`;
+        
+        // Check if item is missing for styling
+        const isMissing = isMissingItem(matchData);
+        const missingClass = isMissing ? 'missing-item' : '';
+        
+        return `
+          <li class="shopping-item ${matchData ? 'has-match-data' : ''} ${missingClass}">
+            <div class="item-row">
+              <div class="item-main">
+                <div class="item-header">
+                  <label class="item-checkbox-container">
+                    <input type="checkbox" class="item-checkbox" data-ingredient="${item.ingredient_name}" data-quantity="${item.total_quantity}" data-unit="${item.unit}" data-cost="${item.estimated_cost || 0}" ${isMissing ? 'checked' : ''}>
+                    <span class="checkbox-custom"></span>
+                  </label>
+                  ${matchIndicator}
+                  <span class="item-details">${convertToMixedFraction(item.total_quantity)} ${item.unit === 'pcs' || item.unit === 'pc' ? '' : item.unit} ${item.ingredient_name}</span>
+                  ${costDisplay}
+                </div>
+                ${matchData && matchData.match_type === 'confirm' ? createConfirmationButtons(item.ingredient_name) : ''}
+              </div>
+              ${pantryInfo}
+            </div>
+          </li>
+        `;
+      })
       .join("");
 
     categoryCard.innerHTML = `
@@ -406,6 +567,172 @@ function displayShoppingList(items) {
 
     categoriesContainer.appendChild(categoryCard);
   });
+  
+  // Initialize shopping list controls after all checkboxes are rendered
+  initializeShoppingListControls();
+}
+
+function createMatchIndicator(matchData) {
+  if (!matchData) {
+    return '<span class="match-indicator no-data" title="No pantry data available"><i class="fas fa-question"></i></span>';
+  }
+  
+  const { match_type, confidence } = matchData;
+  
+  switch (match_type) {
+    case 'auto':
+      return `<span class="match-indicator auto-match" title="Automatically matched (${confidence?.toFixed(1)}% confidence)">
+                <i class="fas fa-check"></i>
+              </span>`;
+    case 'confirm':
+      return `<span class="match-indicator confirm-match" title="Needs confirmation (${confidence?.toFixed(1)}% confidence)">
+                <i class="fas fa-question"></i>
+              </span>`;
+    case 'missing':
+      return '<span class="match-indicator missing" title="Not found in pantry"><i class="fas fa-exclamation"></i></span>';
+    default:
+      return '<span class="match-indicator unknown" title="Unknown match status"><i class="fas fa-question"></i></span>';
+  }
+}
+
+function createPantryInfo(matchData, planInfo = {}) {
+  if (!matchData || !matchData.pantry_item) {
+    return '';
+  }
+  
+  const { pantry_item, needs_to_buy } = matchData;
+  const expirationInfo = formatFullExpirationDate(pantry_item.expiration_date, planInfo);
+  
+  return `
+    <div class="pantry-info">
+      <div class="pantry-match">
+        <i class="fas fa-warehouse"></i>
+        <span>Found: ${convertToMixedFraction(pantry_item.available_quantity)} ${pantry_item.available_unit && pantry_item.available_unit !== 'pcs' && pantry_item.available_unit !== 'pc' ? pantry_item.available_unit + ' ' : ''}${pantry_item.name}</span>
+        <span class="storage-type">(${pantry_item.storage_type})</span>
+      </div>
+      <div class="pantry-details">
+        <span class="expiration ${expirationInfo.cssClass}">${expirationInfo.text}</span>
+        ${needs_to_buy > 0 ? `<span class="still-need">Still need: ${needs_to_buy}</span>` : '<span class="fully-covered">✓ Fully covered</span>'}
+      </div>
+    </div>
+  `;
+}
+
+function createConfirmationButtons(ingredientName) {
+  return `
+    <div class="confirmation-buttons">
+      <button class="btn btn-sm btn-success" onclick="confirmMatch('${ingredientName}', true)" title="Confirm this match">
+        <i class="fas fa-check"></i> Confirm
+      </button>
+      <button class="btn btn-sm btn-danger" onclick="confirmMatch('${ingredientName}', false)" title="Reject this match">
+        <i class="fas fa-times"></i> Reject
+      </button>
+    </div>
+  `;
+}
+
+async function confirmMatch(ingredientName, isConfirmed) {
+  if (!window.fuzzyMatchingData?.summary?.generation_id) {
+    alert('No fuzzy matching data available');
+    return;
+  }
+  
+  const generationId = window.fuzzyMatchingData.summary.generation_id;
+  const matchData = window.fuzzyMatchingData.ingredient_matches[ingredientName];
+  
+  try {
+    const response = await fetch('/api/shopping/confirm-match', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        generation_id: generationId,
+        ingredient_name: ingredientName,
+        pantry_item_id: isConfirmed && matchData?.pantry_item ? matchData.pantry_item.id : null
+      })
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      // Update the UI to reflect the confirmation
+      updateMatchConfirmation(ingredientName, isConfirmed);
+      
+      // Show feedback message
+      showNotification(
+        isConfirmed ? 'Match confirmed successfully' : 'Match rejected successfully',
+        'success'
+      );
+    } else {
+      throw new Error(result.message || 'Failed to confirm match');
+    }
+  } catch (error) {
+    console.error('Error confirming match:', error);
+    showNotification('Failed to confirm match: ' + error.message, 'error');
+  }
+}
+
+function updateMatchConfirmation(ingredientName, isConfirmed) {
+  // Find the shopping item element for this ingredient
+  const shoppingItems = document.querySelectorAll('.shopping-item');
+  
+  shoppingItems.forEach(item => {
+    const itemDetails = item.querySelector('.item-details');
+    if (itemDetails && itemDetails.textContent.includes(ingredientName)) {
+      // Update the match indicator
+      const matchIndicator = item.querySelector('.match-indicator');
+      if (matchIndicator) {
+        if (isConfirmed) {
+          matchIndicator.className = 'match-indicator auto-match';
+          matchIndicator.innerHTML = '<i class="fas fa-check"></i>';
+          matchIndicator.title = 'Confirmed by user';
+        } else {
+          matchIndicator.className = 'match-indicator missing';
+          matchIndicator.innerHTML = '<i class="fas fa-exclamation"></i>';
+          matchIndicator.title = 'Rejected by user';
+        }
+      }
+      
+      // Hide confirmation buttons
+      const confirmButtons = item.querySelector('.confirmation-buttons');
+      if (confirmButtons) {
+        confirmButtons.style.display = 'none';
+      }
+      
+      // Add confirmation badge
+      const itemHeader = item.querySelector('.item-header');
+      if (itemHeader && !itemHeader.querySelector('.user-confirmed')) {
+        const confirmBadge = document.createElement('span');
+        confirmBadge.className = 'user-confirmed';
+        confirmBadge.innerHTML = '<i class="fas fa-user-check"></i>';
+        confirmBadge.title = 'User confirmed';
+        itemHeader.appendChild(confirmBadge);
+      }
+    }
+  });
+}
+
+function showNotification(message, type = 'info') {
+  // Create notification element
+  const notification = document.createElement('div');
+  notification.className = `notification ${type}`;
+  notification.innerHTML = `
+    <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation-triangle' : 'info'}"></i>
+    <span>${message}</span>
+  `;
+  
+  // Add to page
+  document.body.appendChild(notification);
+  
+  // Show notification
+  setTimeout(() => notification.classList.add('show'), 100);
+  
+  // Auto-hide after 3 seconds
+  setTimeout(() => {
+    notification.classList.remove('show');
+    setTimeout(() => document.body.removeChild(notification), 300);
+  }, 3000);
 }
 
 function getMealIcon(mealType) {
@@ -582,5 +909,274 @@ async function deleteMealPlan() {
     }, 2000);
 
     alert("Failed to delete meal plan: " + error.message);
+  }
+}
+
+async function refreshPantryMatches() {
+  const refreshBtn = document.getElementById("refreshMatchesBtn");
+  
+  // Show loading state
+  const originalContent = refreshBtn.innerHTML;
+  refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
+  refreshBtn.disabled = true;
+  
+  try {
+    const response = await fetch(`/api/meal-plans/${planId}/refresh-matches`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      // Show success message briefly
+      refreshBtn.innerHTML = '<i class="fas fa-check"></i> Updated!';
+      refreshBtn.style.background = "var(--success-color)";
+      refreshBtn.style.color = "white";
+      
+      // Show notification with details
+      showNotification(
+        `Refreshed ${data.refreshed_count} of ${data.total_ingredients} ingredient matches`,
+        'success'
+      );
+      
+      // Reload the meal plan data to show updated matches
+      setTimeout(async () => {
+        await loadMealPlanDetails();
+        
+        // Dismiss the notification banner since matches are now refreshed
+        const banner = document.getElementById('pantry-change-banner');
+        if (banner) {
+          banner.style.animation = 'slideUp 0.3s ease';
+          setTimeout(() => {
+            banner.remove();
+          }, 300);
+        }
+        
+        // Reset button
+        refreshBtn.innerHTML = originalContent;
+        refreshBtn.style.background = "";
+        refreshBtn.style.color = "";
+        refreshBtn.disabled = false;
+      }, 1500);
+      
+    } else {
+      throw new Error(data.message || "Failed to refresh matches");
+    }
+  } catch (error) {
+    console.error("Error refreshing matches:", error);
+    
+    // Show error state
+    refreshBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Error';
+    refreshBtn.style.background = "var(--error-color)";
+    refreshBtn.style.color = "white";
+    
+    // Show error notification
+    showNotification('Failed to refresh matches: ' + error.message, 'error');
+    
+    // Reset button after delay
+    setTimeout(() => {
+      refreshBtn.innerHTML = originalContent;
+      refreshBtn.style.background = "";
+      refreshBtn.style.color = "";
+      refreshBtn.disabled = false;
+    }, 2000);
+  }
+}
+
+async function checkPantryChangeNotifications() {
+  if (!window.fuzzyMatchingData?.ingredient_matches) {
+    return; // No fuzzy matching data to check
+  }
+  
+  const matchData = window.fuzzyMatchingData.ingredient_matches;
+  const recentlyDeleted = [];
+  
+  // Check for items that have match_type 'auto' but pantry_item is null
+  // This indicates the pantry item was deleted after fuzzy matching
+  for (const [ingredientName, match] of Object.entries(matchData)) {
+    // If match_type is still 'auto' but pantry_item is null,
+    // it means the item was matched before but the pantry item was deleted
+    if (match.match_type === 'auto' && (!match.pantry_item || match.pantry_item.id === null)) {
+      // We need the original pantry item name, but since it's null, we'll use a generic message
+      // or we could store the ingredient name as a fallback
+      recentlyDeleted.push({
+        ingredient_name: ingredientName,
+        item_name: ingredientName // Fallback to ingredient name since pantry item data is gone
+      });
+    }
+  }
+  
+  if (recentlyDeleted.length > 0) {
+    displayPantryChangeNotifications(recentlyDeleted);
+  }
+}
+
+function displayPantryChangeNotifications(notifications) {
+  // Create a notification banner
+  const existingBanner = document.getElementById('pantry-change-banner');
+  if (existingBanner) {
+    existingBanner.remove();
+  }
+  
+  const itemNames = notifications.map(n => n.item_name).join(', ');
+  const itemCount = notifications.length;
+  
+  const banner = document.createElement('div');
+  banner.id = 'pantry-change-banner';
+  banner.className = 'pantry-change-notification';
+  banner.innerHTML = `
+    <div class="notification-content">
+      <i class="fas fa-exclamation-circle"></i>
+      <div class="notification-text">
+        <strong>Pantry Changes Detected</strong>
+        <span>${itemCount} item${itemCount > 1 ? 's' : ''} used in this meal plan ${itemCount > 1 ? 'have' : 'has'} been deleted: ${itemNames}</span>
+      </div>
+      <div class="notification-actions">
+        <button class="btn btn-primary btn-sm" onclick="refreshPantryMatches()">
+          <i class="fas fa-sync-alt"></i> Refresh Matches
+        </button>
+        <button class="btn btn-secondary btn-sm" onclick="dismissPantryNotifications()">
+          <i class="fas fa-times"></i> Dismiss
+        </button>
+      </div>
+    </div>
+  `;
+  
+  // Insert banner at the top of the main content
+  const mainContent = document.querySelector('.main-content');
+  const pageHeader = document.querySelector('.page-header');
+  mainContent.insertBefore(banner, pageHeader.nextSibling);
+  
+  // Store notification data for dismissal (simplified - no need for database IDs)
+  banner.dataset.notifications = JSON.stringify(notifications);
+}
+
+function dismissPantryNotifications() {
+  const banner = document.getElementById('pantry-change-banner');
+  if (!banner) return;
+  
+  // Simple dismissal - just remove the banner with animation
+  banner.style.animation = 'slideUp 0.3s ease';
+  setTimeout(() => {
+    banner.remove();
+  }, 300);
+}
+
+function toggleMissingPriority() {
+  const toggle = document.getElementById('prioritizeMissingToggle');
+  const isEnabled = toggle.checked;
+  
+  // Store preference for next time
+  localStorage.setItem('prioritizeMissingIngredients', isEnabled);
+  
+  // Re-render the shopping list with new sorting
+  if (window.currentShoppingData) {
+    displayShoppingList(
+      window.currentShoppingData.items, 
+      window.currentShoppingData.fuzzyMatches, 
+      window.currentShoppingData.planInfo
+    );
+  }
+}
+
+
+function isMissingItem(matchData) {
+  if (!matchData) return true;
+  
+  // Consider items missing if:
+  // 1. match_type is 'missing'
+  // 2. match_type is 'auto' but pantry_item is null (recently deleted)
+  return matchData.match_type === 'missing' || 
+         (matchData.match_type === 'auto' && (!matchData.pantry_item || matchData.pantry_item.id === null));
+}
+
+function initializeShoppingListControls() {
+  // Add event listeners to all checkboxes
+  const checkboxes = document.querySelectorAll('.item-checkbox');
+  checkboxes.forEach(checkbox => {
+    checkbox.addEventListener('change', updateSelectedCount);
+  });
+  
+  // Initialize selected count
+  updateSelectedCount();
+}
+
+function updateSelectedCount() {
+  const selectedCheckboxes = document.querySelectorAll('.item-checkbox:checked');
+  const count = selectedCheckboxes.length;
+  
+  const countSpan = document.getElementById('selectedCount');
+  const addButton = document.getElementById('addToShoppingListBtn');
+  
+  if (countSpan) {
+    countSpan.textContent = count;
+  }
+  
+  if (addButton) {
+    addButton.disabled = count === 0;
+    if (count === 0) {
+      addButton.classList.add('disabled');
+    } else {
+      addButton.classList.remove('disabled');
+    }
+  }
+}
+
+
+async function addSelectedToShoppingList() {
+  const selectedCheckboxes = document.querySelectorAll('.item-checkbox:checked');
+  
+  if (selectedCheckboxes.length === 0) {
+    showNotification('Please select at least one item to add to shopping list', 'warning');
+    return;
+  }
+  
+  const selectedItems = Array.from(selectedCheckboxes).map(checkbox => ({
+    ingredient_name: checkbox.dataset.ingredient,
+    quantity: parseFloat(checkbox.dataset.quantity),
+    unit: checkbox.dataset.unit,
+    estimated_cost: parseFloat(checkbox.dataset.cost)
+  }));
+  
+  const addButton = document.getElementById('addToShoppingListBtn');
+  const originalContent = addButton.innerHTML;
+  addButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+  addButton.disabled = true;
+  
+  try {
+    const response = await fetch(`/api/meal-plans/${planId}/shopping-list`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        items: selectedItems
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      showNotification(`Added ${selectedItems.length} items to shopping list`, 'success');
+      
+      // Uncheck selected items
+      selectedCheckboxes.forEach(checkbox => {
+        checkbox.checked = false;
+      });
+      updateSelectedCount();
+      
+    } else {
+      throw new Error(data.message || 'Failed to add items to shopping list');
+    }
+    
+  } catch (error) {
+    console.error('Error adding to shopping list:', error);
+    showNotification('Failed to add items: ' + error.message, 'error');
+  } finally {
+    addButton.innerHTML = originalContent;
+    addButton.disabled = false;
   }
 }

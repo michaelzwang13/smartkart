@@ -504,9 +504,76 @@
         box-shadow: var(--shadow-md);
       }
 
+      .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-lg);
+      }
+
+      .shopping-controls {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-lg);
+        flex-wrap: wrap;
+      }
+
+      .shopping-list-controls {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+      }
+
+      .toggle-control {
+        display: flex;
+        align-items: center;
+      }
+
+      .toggle-label {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        cursor: pointer;
+        user-select: none;
+      }
+
+      .toggle-label input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--error-color);
+        cursor: pointer;
+        appearance: none;
+        border: 2px solid var(--border-medium);
+        border-radius: 3px;
+        position: relative;
+        background: var(--bg-primary);
+      }
+
+      .toggle-label input[type="checkbox"]:checked {
+        background: var(--error-color);
+        border-color: var(--error-color);
+      }
+
+      .toggle-label input[type="checkbox"]:checked::after {
+        content: '✓';
+        position: absolute;
+        color: white;
+        font-size: 12px;
+        font-weight: bold;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+      }
+
+      .toggle-text {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        font-weight: 500;
+      }
+
       .shopping-categories {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        display: flex !important;
+        flex-direction: column !important;
         gap: var(--spacing-lg);
       }
 
@@ -514,6 +581,24 @@
         background: var(--bg-secondary);
         border-radius: var(--radius-lg);
         padding: var(--spacing-lg);
+        width: 100%;
+      }
+
+      .category-card.missing-category {
+        background: rgba(239, 68, 68, 0.05);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+      }
+
+      .category-card.missing-category .category-name {
+        color: var(--error-color);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+      }
+
+      .category-card.missing-category .category-name::before {
+        content: "⚠️";
+        font-size: 1.2em;
       }
 
       .category-name {
@@ -526,14 +611,30 @@
 
       .shopping-items {
         list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xs);
       }
 
       .shopping-item {
-        padding: var(--spacing-xs) 0;
+        padding: var(--spacing-sm);
         color: var(--text-secondary);
+        background: var(--bg-tertiary);
+        border-radius: var(--radius-md);
+        width: 100%;
+      }
+
+      .item-row {
         display: flex;
         justify-content: space-between;
         align-items: center;
+        gap: var(--spacing-md);
+        width: 100%;
+      }
+
+      .item-main {
+        flex: 1;
+        min-width: 0; /* Allows flex item to shrink below content size */
       }
 
       .item-cost {
@@ -741,7 +842,505 @@
         }
 
         .shopping-categories {
-          grid-template-columns: 1fr;
+          flex-direction: column;
+        }
+      }
+
+      /* Fuzzy Matching Styles */
+      .fuzzy-matching-summary {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-lg);
+        padding: var(--spacing-lg);
+        margin-top: var(--spacing-lg);
+      }
+
+      .summary-header {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-md);
+      }
+
+      .summary-stats {
+        display: flex;
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-md);
+      }
+
+      .stat-item {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        padding: var(--spacing-sm);
+        border-radius: var(--radius-md);
+        font-size: 0.875rem;
+        font-weight: 500;
+      }
+
+      .stat-item.success {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success-color);
+      }
+
+      .stat-item.warning {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--warning-color);
+      }
+
+      .stat-item.error {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--error-color);
+      }
+
+      .utilization-rate {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        font-weight: 500;
+      }
+
+      .rate-value.success {
+        color: var(--success-color);
+      }
+
+      .rate-value.warning {
+        color: var(--warning-color);
+      }
+
+      .rate-value.error {
+        color: var(--error-color);
+      }
+
+      .stale-warning {
+        background: rgba(245, 158, 11, 0.1);
+        border: 1px solid var(--warning-color);
+        border-radius: var(--radius-md);
+        padding: var(--spacing-sm) var(--spacing-md);
+        margin-bottom: var(--spacing-md);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        font-size: 0.875rem;
+        color: var(--warning-color);
+      }
+
+      .stale-warning i {
+        flex-shrink: 0;
+      }
+
+      .btn-link {
+        background: none;
+        border: none;
+        color: var(--primary-color);
+        text-decoration: underline;
+        cursor: pointer;
+        font-size: inherit;
+        padding: 0;
+        margin-left: var(--spacing-xs);
+      }
+
+      .btn-link:hover {
+        color: var(--primary-color-dark);
+      }
+
+      /* Pantry Change Notification Banner */
+      .pantry-change-notification {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        border: 1px solid #f59e0b;
+        border-radius: var(--radius-lg);
+        margin: var(--spacing-lg) 0;
+        padding: var(--spacing-lg);
+        box-shadow: var(--shadow-sm);
+        animation: slideDown 0.3s ease;
+      }
+
+      .notification-content {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+      }
+
+      .notification-content i {
+        color: #f59e0b;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+      }
+
+      .notification-text {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xs);
+      }
+
+      .notification-text strong {
+        color: #92400e;
+        font-size: 1rem;
+      }
+
+      .notification-text span {
+        color: #92400e;
+        font-size: 0.875rem;
+        line-height: 1.4;
+      }
+
+      .notification-actions {
+        display: flex;
+        gap: var(--spacing-sm);
+        flex-shrink: 0;
+      }
+
+      @keyframes slideDown {
+        from {
+          opacity: 0;
+          transform: translateY(-20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes slideUp {
+        from {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        to {
+          opacity: 0;
+          transform: translateY(-20px);
+        }
+      }
+
+      @media (max-width: 768px) {
+        .notification-content {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: var(--spacing-md);
+        }
+
+        .notification-actions {
+          flex-direction: column;
+          width: 100%;
+        }
+
+        .notification-actions .btn {
+          width: 100%;
+          justify-content: center;
+        }
+      }
+
+      /* Shopping Item Match Indicators */
+      .shopping-item.has-match-data {
+        border-left: 3px solid var(--border-light);
+        transition: all 0.3s ease;
+      }
+
+      .shopping-item.has-match-data:hover {
+        border-left-color: var(--primary-color);
+      }
+
+      .shopping-item.missing-item {
+        border-left: 3px solid var(--error-color);
+      }
+
+      .shopping-item.missing-item:hover {
+        border-left-color: var(--error-color);
+      }
+
+      .item-header {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        width: 100%;
+      }
+
+      .item-checkbox-container {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        margin-right: var(--spacing-xs);
+      }
+
+      .item-checkbox {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+      }
+
+      .checkbox-custom {
+        height: 18px;
+        width: 18px;
+        background-color: var(--bg-primary);
+        border: 2px solid var(--border-medium);
+        border-radius: 3px;
+        position: relative;
+        display: inline-block;
+        transition: all 0.3s ease;
+      }
+
+      .item-checkbox:checked + .checkbox-custom {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+      }
+
+      .item-checkbox:checked + .checkbox-custom::after {
+        content: '✓';
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-size: 12px;
+        font-weight: bold;
+      }
+
+      .item-checkbox-container:hover .checkbox-custom {
+        border-color: var(--primary-color);
+      }
+
+      .item-details {
+        flex: 1;
+        font-size: 1.5rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+      }
+
+      .match-indicator {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        font-size: 0.75rem;
+        font-weight: bold;
+      }
+
+      .match-indicator.auto-match {
+        background: var(--success-color);
+        color: white;
+      }
+
+      .match-indicator.confirm-match {
+        background: var(--warning-color);
+        color: white;
+      }
+
+      .match-indicator.missing {
+        background: var(--error-color);
+        color: white;
+      }
+
+      .match-indicator.no-data {
+        background: var(--border-medium);
+        color: var(--text-secondary);
+      }
+
+      .pantry-info {
+        padding: var(--spacing-sm);
+        background: rgba(16, 185, 129, 0.05);
+        border-radius: var(--radius-md);
+        font-size: 0.875rem;
+        flex-shrink: 0;
+        min-width: 300px;
+        max-width: 450px;
+      }
+
+      .pantry-match {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        color: var(--success-color);
+        font-weight: 500;
+        margin-bottom: var(--spacing-xs);
+      }
+
+      .storage-type {
+        color: var(--text-secondary);
+        font-style: italic;
+      }
+
+      .expiration.expired {
+        color: var(--error-color);
+        font-weight: 600;
+      }
+
+      .expiration.expires-during-plan {
+        color: #f59e0b;
+        font-weight: 600;
+      }
+
+      /* Fraction styling for mixed numbers only */
+      .mixed-fraction {
+        font-size: 0.85em;
+        vertical-align: baseline;
+        margin-right: 0.25em; /* Add space between fraction and unit */
+      }
+
+      .pantry-details {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: var(--spacing-md);
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        flex-wrap: wrap;
+      }
+
+      .still-need {
+        color: var(--warning-color);
+        font-weight: 500;
+      }
+
+      .fully-covered {
+        color: var(--success-color);
+        font-weight: 500;
+      }
+
+      .confirmation-buttons {
+        display: flex;
+        gap: var(--spacing-xs);
+        margin-top: var(--spacing-sm);
+      }
+
+      .btn-sm {
+        padding: var(--spacing-xs) var(--spacing-sm);
+        font-size: 0.75rem;
+        border-radius: var(--radius-sm);
+      }
+
+      .btn-success {
+        background: var(--success-color);
+        border: 1px solid var(--success-color);
+        color: white;
+      }
+
+      .btn-success:hover {
+        background: #059669;
+        border-color: #059669;
+      }
+
+      .btn-danger {
+        background: var(--error-color);
+        border: 1px solid var(--error-color);
+        color: white;
+      }
+
+      .btn-danger:hover {
+        background: #dc2626;
+        border-color: #dc2626;
+      }
+
+      .user-confirmed {
+        color: var(--info-color);
+        font-size: 0.8rem;
+        margin-left: var(--spacing-xs);
+      }
+
+      /* Notification Styles */
+      .notification {
+        position: fixed;
+        top: 100px;
+        right: var(--spacing-lg);
+        background: var(--bg-primary);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-md);
+        padding: var(--spacing-md);
+        box-shadow: var(--shadow-lg);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        z-index: 1000;
+        transform: translateX(350px);
+        opacity: 0;
+        transition: all 0.3s ease;
+      }
+
+      .notification.show {
+        transform: translateX(0);
+        opacity: 1;
+      }
+
+      .notification.success {
+        border-left: 4px solid var(--success-color);
+      }
+
+      .notification.error {
+        border-left: 4px solid var(--error-color);
+      }
+
+      .notification.info {
+        border-left: 4px solid var(--info-color);
+      }
+
+      @media (max-width: 768px) {
+        .summary-stats {
+          flex-direction: column;
+          gap: var(--spacing-sm);
+        }
+
+        .pantry-details {
+          flex-direction: column;
+          gap: var(--spacing-xs);
+        }
+
+        .confirmation-buttons {
+          flex-direction: column;
+        }
+
+        .item-row {
+          flex-direction: column;
+          gap: var(--spacing-sm);
+        }
+
+        .pantry-info {
+          min-width: unset;
+          max-width: unset;
+          width: 100%;
+        }
+
+        .pantry-details {
+          flex-direction: column;
+          gap: var(--spacing-xs);
+          align-items: flex-start;
+        }
+
+        .notification {
+          right: var(--spacing-md);
+          left: var(--spacing-md);
+          width: auto;
+          transform: translateY(-100px);
+        }
+
+        .notification.show {
+          transform: translateY(0);
+        }
+
+        .shopping-controls {
+          flex-direction: column;
+          gap: var(--spacing-md);
+          align-items: flex-start;
+        }
+
+        .shopping-list-controls {
+          flex-direction: column;
+          width: 100%;
+          gap: var(--spacing-sm);
+        }
+
+        .shopping-list-controls .btn {
+          width: 100%;
+          justify-content: center;
+        }
+
+        .toggle-control {
+          width: 100%;
+          justify-content: flex-start;
         }
       }
     </style>
@@ -911,10 +1510,28 @@
 
         <!-- Shopping List -->
         <section class="shopping-list" id="shoppingList" style="display: none">
-          <h2 class="section-title">
-            <i class="fas fa-shopping-bag"></i>
-            Shopping List
-          </h2>
+          <div class="section-header">
+            <h2 class="section-title">
+              <i class="fas fa-shopping-bag"></i>
+              Ingredients List
+            </h2>
+            <div class="shopping-controls">
+              <div class="toggle-control">
+                <label class="toggle-label">
+                  <input type="checkbox" id="prioritizeMissingToggle" onchange="toggleMissingPriority()">
+                  <span class="toggle-text">Missing items first</span>
+                </label>
+              </div>
+              <div class="shopping-list-controls">
+                <button class="btn btn-primary" id="addToShoppingListBtn" onclick="addSelectedToShoppingList()" title="Add selected items to shopping list">
+                  <i class="fas fa-plus"></i> Add to Shopping List (<span id="selectedCount">0</span>)
+                </button>
+              </div>
+              <button class="btn btn-secondary" id="refreshMatchesBtn" onclick="refreshPantryMatches()" title="Refresh pantry matches">
+                <i class="fas fa-sync-alt"></i> Refresh Matches
+              </button>
+            </div>
+          </div>
           <div class="shopping-categories" id="shoppingCategories">
             <!-- Will be populated by JavaScript -->
           </div>

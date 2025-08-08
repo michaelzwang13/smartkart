@@ -911,6 +911,38 @@ function createPlanCard(plan) {
   // If it's a single day plan, only show the date once
   const dateDisplay = plan.start_date === plan.end_date ? startDate : `${startDate} - ${endDate}`;
 
+  // Create fuzzy matching summary HTML if available
+  let fuzzyMatchingHtml = '';
+  if (plan.fuzzy_matching_summary) {
+    const summary = plan.fuzzy_matching_summary;
+    const utilizationRate = summary.pantry_utilization_rate || 0;
+    const utilizationColor = utilizationRate >= 70 ? 'success' : utilizationRate >= 50 ? 'warning' : 'error';
+    
+    fuzzyMatchingHtml = `
+      <div class="fuzzy-summary">
+        <div class="fuzzy-header">
+          <i class="fas fa-brain"></i>
+          <span>Pantry Analysis</span>
+        </div>
+        <div class="fuzzy-stats">
+          <span class="stat success">
+            <i class="fas fa-check"></i> ${summary.auto_matched}
+          </span>
+          <span class="stat warning">
+            <i class="fas fa-question"></i> ${summary.confirm_needed}
+          </span>
+          <span class="stat error">
+            <i class="fas fa-exclamation"></i> ${summary.missing}
+          </span>
+        </div>
+        <div class="utilization-bar">
+          <div class="utilization-fill ${utilizationColor}" style="width: ${utilizationRate}%"></div>
+          <span class="utilization-text">${utilizationRate.toFixed(1)}% utilized</span>
+        </div>
+      </div>
+    `;
+  }
+
   card.innerHTML = `
     <div class="plan-header">
         <div>
@@ -941,16 +973,288 @@ function createPlanCard(plan) {
         </div>
     </div>
     
+    ${fuzzyMatchingHtml}
+    
     <div class="plan-actions">
         <button class="btn-view" onclick="event.stopPropagation(); viewPlanDetails(${
           plan.plan_id
         })">
         <i class="fas fa-eye"></i> View Details
         </button>
+        <button class="btn-smart-list" onclick="event.stopPropagation(); generateSmartShoppingList(${
+          plan.plan_id
+        })" ${plan.fuzzy_matching_summary ? '' : 'disabled title="No pantry analysis available"'}>
+        <i class="fas fa-brain"></i> Smart List
+        </button>
     </div>
     `;
 
   return card;
+}
+
+async function generateSmartShoppingList(planId) {
+  try {
+    // Show loading state
+    const button = document.querySelector(`button[onclick*="generateSmartShoppingList(${planId})"]`);
+    const originalContent = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+    button.disabled = true;
+
+    // Generate smart shopping list
+    const response = await fetch('/api/shopping/smart-generate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        meal_plan_session_id: planId,
+        auto_confirm_threshold: 85.0
+      })
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      // Show confirmation modal with results
+      showSmartListModal(result);
+    } else {
+      throw new Error(result.message || 'Failed to generate smart shopping list');
+    }
+
+  } catch (error) {
+    console.error('Error generating smart shopping list:', error);
+    showNotification('Failed to generate smart shopping list: ' + error.message, 'error');
+  } finally {
+    // Restore button
+    const button = document.querySelector(`button[onclick*="generateSmartShoppingList(${planId})"]`);
+    if (button) {
+      button.innerHTML = originalContent;
+      button.disabled = false;
+    }
+  }
+}
+
+function showSmartListModal(result) {
+  const { shopping_items, confirmed_matches, matching_summary, cost_analysis, recommendations } = result;
+
+  const modalHtml = `
+    <div id="smartListModal" class="modal-overlay">
+      <div class="modal-content smart-list-modal">
+        <div class="modal-header">
+          <h3><i class="fas fa-brain"></i> Smart Shopping List Generated</h3>
+          <button class="modal-close" onclick="closeSmartListModal()">&times;</button>
+        </div>
+        
+        <div class="modal-body">
+          <!-- Cost Analysis Summary -->
+          <div class="cost-analysis">
+            <h4><i class="fas fa-dollar-sign"></i> Cost Analysis</h4>
+            <div class="cost-stats">
+              <div class="cost-stat">
+                <span class="label">Recipe Total:</span>
+                <span class="value">$${cost_analysis.total_recipe_cost.toFixed(2)}</span>
+              </div>
+              <div class="cost-stat">
+                <span class="label">Shopping Needed:</span>
+                <span class="value">$${cost_analysis.shopping_list_cost.toFixed(2)}</span>
+              </div>
+              <div class="cost-stat savings">
+                <span class="label">Pantry Savings:</span>
+                <span class="value">$${cost_analysis.estimated_savings.toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Matching Summary -->
+          <div class="matching-summary">
+            <h4><i class="fas fa-chart-pie"></i> Pantry Matching Results</h4>
+            <div class="summary-grid">
+              <div class="summary-item success">
+                <i class="fas fa-check"></i>
+                <span>${matching_summary.auto_matched} Auto-matched</span>
+              </div>
+              <div class="summary-item warning">
+                <i class="fas fa-question"></i>
+                <span>${matching_summary.confirm_needed} Need Confirmation</span>
+              </div>
+              <div class="summary-item error">
+                <i class="fas fa-exclamation"></i>
+                <span>${matching_summary.missing} Missing from Pantry</span>
+              </div>
+            </div>
+            <div class="utilization-display">
+              <span>Pantry Utilization: <strong>${cost_analysis.pantry_utilization_rate.toFixed(1)}%</strong></span>
+            </div>
+          </div>
+
+          <!-- Items that need confirmation -->
+          ${matching_summary.confirm_needed > 0 ? createConfirmationSection(shopping_items) : ''}
+
+          <!-- Recommendations -->
+          ${recommendations.length > 0 ? createRecommendationsSection(recommendations) : ''}
+
+          <!-- Shopping Items List -->
+          <div class="shopping-preview">
+            <h4><i class="fas fa-shopping-cart"></i> Items to Buy (${shopping_items.length})</h4>
+            <div class="items-list">
+              ${shopping_items.map(item => `
+                <div class="item-preview ${item.match_type}">
+                  <div class="item-indicator">
+                    <i class="fas fa-${item.match_type === 'auto' ? 'check' : item.match_type === 'confirm' ? 'question' : 'exclamation'}"></i>
+                  </div>
+                  <div class="item-info">
+                    <span class="item-name">${item.quantity_needed} ${item.unit} ${item.ingredient_name}</span>
+                    <span class="item-cost">$${item.estimated_cost || '0.00'}</span>
+                  </div>
+                  ${item.pantry_match ? `
+                    <div class="pantry-match-info">
+                      <i class="fas fa-warehouse"></i>
+                      <span>Found ${item.pantry_match.available} in pantry (${(item.pantry_match.confidence || 0).toFixed(1)}% match)</span>
+                    </div>
+                  ` : ''}
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn btn-secondary" onclick="closeSmartListModal()">
+            <i class="fas fa-times"></i> Close
+          </button>
+          <button class="btn btn-primary" onclick="createShoppingTrip(${result.generation_id})">
+            <i class="fas fa-cart-plus"></i> Create Shopping Trip
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+  // Show modal with animation
+  setTimeout(() => {
+    document.getElementById('smartListModal').classList.add('show');
+  }, 10);
+
+  // Close on outside click
+  const modal = document.getElementById('smartListModal');
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      closeSmartListModal();
+    }
+  });
+}
+
+function createConfirmationSection(shoppingItems) {
+  const itemsNeedingConfirmation = shoppingItems.filter(item => item.match_type === 'confirm');
+  
+  if (itemsNeedingConfirmation.length === 0) return '';
+
+  return `
+    <div class="confirmation-section">
+      <h4><i class="fas fa-question-circle"></i> Items Need Your Confirmation</h4>
+      <div class="confirmation-items">
+        ${itemsNeedingConfirmation.map(item => `
+          <div class="confirmation-item" data-ingredient="${item.ingredient_name}">
+            <div class="item-question">
+              <i class="fas fa-question"></i>
+              <span>Use <strong>${item.pantry_match.available} ${item.pantry_match.item_name}</strong> for <strong>${item.ingredient_name}</strong>?</span>
+              <span class="confidence">(${(item.pantry_match.confidence || 0).toFixed(1)}% match)</span>
+            </div>
+            <div class="confirmation-buttons">
+              <button class="btn btn-sm btn-success" onclick="confirmPantryMatch('${item.ingredient_name}', true)">
+                <i class="fas fa-check"></i> Yes
+              </button>
+              <button class="btn btn-sm btn-danger" onclick="confirmPantryMatch('${item.ingredient_name}', false)">
+                <i class="fas fa-times"></i> No
+              </button>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function createRecommendationsSection(recommendations) {
+  return `
+    <div class="recommendations-section">
+      <h4><i class="fas fa-lightbulb"></i> Recommendations</h4>
+      <ul class="recommendations-list">
+        ${recommendations.map(rec => `<li><i class="fas fa-check"></i> ${rec}</li>`).join('')}
+      </ul>
+    </div>
+  `;
+}
+
+function closeSmartListModal() {
+  const modal = document.getElementById('smartListModal');
+  if (modal) {
+    modal.classList.remove('show');
+    setTimeout(() => modal.remove(), 300);
+  }
+}
+
+async function confirmPantryMatch(ingredientName, isConfirmed) {
+  const confirmationItem = document.querySelector(`[data-ingredient="${ingredientName}"]`);
+  
+  if (isConfirmed) {
+    confirmationItem.innerHTML = `
+      <div class="confirmed-item success">
+        <i class="fas fa-check"></i>
+        <span>Confirmed: Will use pantry item for <strong>${ingredientName}</strong></span>
+      </div>
+    `;
+  } else {
+    confirmationItem.innerHTML = `
+      <div class="confirmed-item error">
+        <i class="fas fa-times"></i>
+        <span>Rejected: Will buy new <strong>${ingredientName}</strong></span>
+      </div>
+    `;
+  }
+}
+
+async function createShoppingTrip(generationId) {
+  try {
+    // You can implement this to integrate with your shopping trip system
+    // For now, just redirect to shopping trip page with a notification
+    showNotification('Smart shopping list ready! Create a new shopping trip to use it.', 'success');
+    closeSmartListModal();
+    
+    // Optional: redirect to shopping trip page
+    // window.location.href = '/shopping-trip';
+  } catch (error) {
+    console.error('Error creating shopping trip:', error);
+    showNotification('Failed to create shopping trip', 'error');
+  }
+}
+
+function showNotification(message, type = 'info') {
+  // Create notification element (reuse from meal plan details)
+  const notification = document.createElement('div');
+  notification.className = `notification ${type}`;
+  notification.innerHTML = `
+    <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation-triangle' : 'info'}"></i>
+    <span>${message}</span>
+  `;
+  
+  // Add to page
+  document.body.appendChild(notification);
+  
+  // Show notification
+  setTimeout(() => notification.classList.add('show'), 100);
+  
+  // Auto-hide after 3 seconds
+  setTimeout(() => {
+    notification.classList.remove('show');
+    setTimeout(() => {
+      if (document.body.contains(notification)) {
+        document.body.removeChild(notification);
+      }
+    }, 300);
+  }, 3000);
 }
 
 function highlightMealPlanDates(startDate, days) {
