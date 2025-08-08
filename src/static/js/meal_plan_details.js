@@ -471,22 +471,58 @@ function displayShoppingList(items, fuzzyMatches = {}, planInfo = {}) {
   const categoriesContainer = document.getElementById("shoppingCategories");
   categoriesContainer.innerHTML = "";
 
-  // Group items by category
+  // Store data globally for re-sorting
+  window.currentShoppingData = { items, fuzzyMatches, planInfo };
+  
+  // Load user preference for missing items priority
+  const prioritizeMissing = localStorage.getItem('prioritizeMissingIngredients') === 'true';
+  const toggle = document.getElementById('prioritizeMissingToggle');
+  if (toggle) {
+    toggle.checked = prioritizeMissing;
+  }
+
+  // Group items by category, with special handling for missing items
   const categories = {};
+  const missingItems = [];
+  
   items.forEach((item) => {
-    const category = item.category || "Other";
-    if (!categories[category]) {
-      categories[category] = [];
+    const matchData = fuzzyMatches[item.ingredient_name];
+    const isMissing = isMissingItem(matchData);
+    
+    if (prioritizeMissing && isMissing) {
+      // Put missing items in their own category
+      missingItems.push(item);
+    } else {
+      // Put non-missing items in their regular categories
+      const category = item.category || "Other";
+      if (!categories[category]) {
+        categories[category] = [];
+      }
+      categories[category].push(item);
     }
-    categories[category].push(item);
   });
 
+  // Create sorted category names
+  let sortedCategoryNames = Object.keys(categories).sort();
+  
+  // If we have missing items, add the Missing category at the top
+  if (prioritizeMissing && missingItems.length > 0) {
+    categories["Missing Items"] = missingItems;
+    sortedCategoryNames = ["Missing Items", ...sortedCategoryNames];
+  }
+
   // Create category cards with fuzzy matching indicators
-  Object.keys(categories).forEach((categoryName) => {
+  sortedCategoryNames.forEach((categoryName) => {
     const categoryCard = document.createElement("div");
     categoryCard.className = "category-card";
 
-    const itemsList = categories[categoryName]
+    // For the Missing Items category, add special styling
+    if (categoryName === "Missing Items") {
+      categoryCard.classList.add("missing-category");
+    }
+
+    const categoryItems = categories[categoryName];
+    const itemsList = categoryItems
       .map((item) => {
         const matchData = fuzzyMatches[item.ingredient_name];
         const matchIndicator = createMatchIndicator(matchData);
@@ -1012,4 +1048,32 @@ function dismissPantryNotifications() {
   setTimeout(() => {
     banner.remove();
   }, 300);
+}
+
+function toggleMissingPriority() {
+  const toggle = document.getElementById('prioritizeMissingToggle');
+  const isEnabled = toggle.checked;
+  
+  // Store preference for next time
+  localStorage.setItem('prioritizeMissingIngredients', isEnabled);
+  
+  // Re-render the shopping list with new sorting
+  if (window.currentShoppingData) {
+    displayShoppingList(
+      window.currentShoppingData.items, 
+      window.currentShoppingData.fuzzyMatches, 
+      window.currentShoppingData.planInfo
+    );
+  }
+}
+
+
+function isMissingItem(matchData) {
+  if (!matchData) return true;
+  
+  // Consider items missing if:
+  // 1. match_type is 'missing'
+  // 2. match_type is 'auto' but pantry_item is null (recently deleted)
+  return matchData.match_type === 'missing' || 
+         (matchData.match_type === 'auto' && (!matchData.pantry_item || matchData.pantry_item.id === null));
 }

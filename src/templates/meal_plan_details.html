@@ -511,6 +511,38 @@
         margin-bottom: var(--spacing-lg);
       }
 
+      .shopping-controls {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-lg);
+      }
+
+      .toggle-control {
+        display: flex;
+        align-items: center;
+      }
+
+      .toggle-label {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        cursor: pointer;
+        user-select: none;
+      }
+
+      .toggle-label input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--primary-color);
+        cursor: pointer;
+      }
+
+      .toggle-text {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        font-weight: 500;
+      }
+
       .shopping-categories {
         display: flex !important;
         flex-direction: column !important;
@@ -522,6 +554,23 @@
         border-radius: var(--radius-lg);
         padding: var(--spacing-lg);
         width: 100%;
+      }
+
+      .category-card.missing-category {
+        background: rgba(239, 68, 68, 0.05);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+      }
+
+      .category-card.missing-category .category-name {
+        color: var(--error-color);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+      }
+
+      .category-card.missing-category .category-name::before {
+        content: "⚠️";
+        font-size: 1.2em;
       }
 
       .category-name {
@@ -1191,6 +1240,17 @@
         .notification.show {
           transform: translateY(0);
         }
+
+        .shopping-controls {
+          flex-direction: column;
+          gap: var(--spacing-md);
+          align-items: flex-start;
+        }
+
+        .toggle-control {
+          width: 100%;
+          justify-content: flex-start;
+        }
       }
     </style>
   </head>
@@ -1364,9 +1424,17 @@
               <i class="fas fa-shopping-bag"></i>
               Ingredients List
             </h2>
-            <button class="btn btn-secondary" id="refreshMatchesBtn" onclick="refreshPantryMatches()" title="Refresh pantry matches">
-              <i class="fas fa-sync-alt"></i> Refresh Matches
-            </button>
+            <div class="shopping-controls">
+              <div class="toggle-control">
+                <label class="toggle-label">
+                  <input type="checkbox" id="prioritizeMissingToggle" onchange="toggleMissingPriority()">
+                  <span class="toggle-text">Missing items first</span>
+                </label>
+              </div>
+              <button class="btn btn-secondary" id="refreshMatchesBtn" onclick="refreshPantryMatches()" title="Refresh pantry matches">
+                <i class="fas fa-sync-alt"></i> Refresh Matches
+              </button>
+            </div>
           </div>
           <div class="shopping-categories" id="shoppingCategories">
             <!-- Will be populated by JavaScript -->
