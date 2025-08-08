@@ -6,8 +6,7 @@ while using the new individual meals database structure underneath.
 
 from flask import Blueprint, request, jsonify, session
 from src.database import get_db
-from datetime import datetime, timedelta
-import json
+from datetime import date
 
 meal_plan_compat_bp = Blueprint("meal_plan_compat", __name__, url_prefix="/api")
 
@@ -23,21 +22,25 @@ def get_meal_plans():
     cursor = db.cursor()
     
     try:
-        # Get meal plan sessions with fuzzy matching summary (replaces old meal_plans table)
+        # Get meal plan sessions with fuzzy matching summary and meal completion data
         query = """
             SELECT mps.session_id as plan_id, mps.session_name as plan_name, 
                    mps.start_date, mps.end_date, mps.total_days,
                    mps.dietary_preference, mps.budget_limit, mps.max_cooking_time,
                    mps.generated_at, mps.status,
                    sgs.generation_id, sgs.auto_matched_count, sgs.confirm_needed_count, 
-                   sgs.missing_count, sgs.total_ingredients
+                   sgs.missing_count, sgs.total_ingredients,
+                   COUNT(m.meal_id) as total_meals,
+                   COUNT(CASE WHEN m.is_completed = TRUE THEN 1 END) as completed_meals
             FROM meal_plan_sessions mps
             LEFT JOIN shopping_generation_sessions sgs ON mps.session_id = sgs.meal_plan_session_id
                 AND sgs.generation_id = (
                     SELECT MAX(generation_id) FROM shopping_generation_sessions 
                     WHERE meal_plan_session_id = mps.session_id
                 )
+            LEFT JOIN meals m ON mps.session_id = m.session_id
             WHERE mps.user_id = %s
+            GROUP BY mps.session_id, sgs.generation_id
             ORDER BY ABS(DATEDIFF(mps.start_date, CURDATE())), mps.start_date ASC
         """
         cursor.execute(query, (user_id,))
@@ -49,6 +52,28 @@ def get_meal_plans():
             plan_copy = dict(plan)
             plan_copy['start_date'] = plan['start_date'].strftime("%Y-%m-%d") if hasattr(plan['start_date'], 'strftime') else plan['start_date']
             plan_copy['end_date'] = plan['end_date'].strftime("%Y-%m-%d") if hasattr(plan['end_date'], 'strftime') else plan['end_date']
+            
+            # Calculate dynamic status based on completion and dates
+            today = date.today()
+            start_date = plan['start_date'] if hasattr(plan['start_date'], 'year') else plan['start_date']
+            end_date = plan['end_date'] if hasattr(plan['end_date'], 'year') else plan['end_date']
+            completed_meals = plan['completed_meals'] or 0
+            
+            # Determine status based on completion and dates
+            if start_date <= today <= end_date:
+                # Plan is currently active (includes today's date)
+                plan_copy['status'] = 'active'
+            elif end_date < today:
+                # Plan is in the past
+                if completed_meals > 0:
+                    # At least one meal was completed
+                    plan_copy['status'] = 'completed'
+                else:
+                    # No meals were completed
+                    plan_copy['status'] = 'expired'
+            else:
+                # Plan is in the future
+                plan_copy['status'] = 'active'
             
             # Add fuzzy matching summary if available
             if plan.get('generation_id'):
@@ -63,7 +88,7 @@ def get_meal_plans():
                 plan_copy['fuzzy_matching_summary'] = None
                 
             # Remove the generation fields from the main plan object
-            fields_to_remove = ['generation_id', 'auto_matched_count', 'confirm_needed_count', 'missing_count', 'total_ingredients']
+            fields_to_remove = ['generation_id', 'auto_matched_count', 'confirm_needed_count', 'missing_count', 'total_ingredients', 'total_meals', 'completed_meals']
             for field in fields_to_remove:
                 plan_copy.pop(field, None)
                 
@@ -501,6 +526,62 @@ def refresh_pantry_matches(plan_id):
         return jsonify({
             "success": False, 
             "message": f"Failed to refresh matches: {str(e)}"
+        })
+    finally:
+        cursor.close()
+
+
+@meal_plan_compat_bp.route("/meal-plans/<int:plan_id>/name", methods=["PUT"])
+def update_meal_plan_name(plan_id):
+    """Update meal plan name"""
+    if "user_ID" not in session:
+        return jsonify({"success": False, "message": "Not authenticated"})
+
+    user_id = session["user_ID"]
+    data = request.get_json()
+    new_name = data.get("name", "").strip()
+    
+    # Validate name length and content
+    if not new_name:
+        return jsonify({"success": False, "message": "Plan name cannot be empty"})
+    
+    if len(new_name) > 21:
+        return jsonify({"success": False, "message": "Plan name must be 21 characters or less"})
+    
+    db = get_db()
+    cursor = db.cursor()
+    
+    try:
+        # First verify the meal plan belongs to the current user
+        cursor.execute("""
+            SELECT session_name FROM meal_plan_sessions 
+            WHERE session_id = %s AND user_id = %s
+        """, (plan_id, user_id))
+        
+        meal_plan = cursor.fetchone()
+        if not meal_plan:
+            return jsonify({"success": False, "message": "Meal plan not found or access denied"})
+        
+        # Update the meal plan name
+        cursor.execute("""
+            UPDATE meal_plan_sessions 
+            SET session_name = %s 
+            WHERE session_id = %s AND user_id = %s
+        """, (new_name, plan_id, user_id))
+        
+        db.commit()
+        
+        return jsonify({
+            "success": True,
+            "message": "Meal plan name updated successfully",
+            "new_name": new_name
+        })
+
+    except Exception as e:
+        db.rollback()
+        return jsonify({
+            "success": False, 
+            "message": f"Failed to update meal plan name: {str(e)}"
         })
     finally:
         cursor.close()

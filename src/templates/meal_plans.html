@@ -370,7 +370,12 @@
       }
 
       .status-completed {
-        background: var(--text-muted);
+        background: var(--primary-color);
+        color: var(--text-white);
+      }
+
+      .status-expired {
+        background: var(--error-color);
         color: var(--text-white);
       }
 
@@ -2001,6 +2006,34 @@
         font-size: 0.75rem;
         font-weight: 500;
         color: var(--text-secondary);
+      }
+
+      .fuzzy-summary.no-analysis {
+        background: rgba(239, 68, 68, 0.05);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+      }
+
+      .fuzzy-summary.no-analysis .fuzzy-header {
+        color: var(--error-color);
+      }
+
+      .fuzzy-summary.no-analysis .fuzzy-header i {
+        color: var(--error-color);
+      }
+
+      .fuzzy-placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: var(--spacing-sm) 0;
+        min-height: 40px;
+      }
+
+      .placeholder-text {
+        font-size: 0.8rem;
+        color: var(--error-color);
+        font-style: italic;
+        text-align: center;
       }
 
       .btn-smart-list {

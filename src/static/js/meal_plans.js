@@ -941,6 +941,19 @@ function createPlanCard(plan) {
         </div>
       </div>
     `;
+  } else {
+    // Show placeholder for meal plans without pantry analysis
+    fuzzyMatchingHtml = `
+      <div class="fuzzy-summary no-analysis">
+        <div class="fuzzy-header">
+          <i class="fas fa-info-circle"></i>
+          <span>Pantry Analysis</span>
+        </div>
+        <div class="fuzzy-placeholder">
+          <span class="placeholder-text">Pantry analysis not enabled for this meal plan</span>
+        </div>
+      </div>
+    `;
   }
 
   card.innerHTML = `
