@@ -504,6 +504,13 @@
         box-shadow: var(--shadow-md);
       }
 
+      .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-lg);
+      }
+
       .shopping-categories {
         display: flex !important;
         flex-direction: column !important;
@@ -828,6 +835,38 @@
 
       .rate-value.error {
         color: var(--error-color);
+      }
+
+      .stale-warning {
+        background: rgba(245, 158, 11, 0.1);
+        border: 1px solid var(--warning-color);
+        border-radius: var(--radius-md);
+        padding: var(--spacing-sm) var(--spacing-md);
+        margin-bottom: var(--spacing-md);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        font-size: 0.875rem;
+        color: var(--warning-color);
+      }
+
+      .stale-warning i {
+        flex-shrink: 0;
+      }
+
+      .btn-link {
+        background: none;
+        border: none;
+        color: var(--primary-color);
+        text-decoration: underline;
+        cursor: pointer;
+        font-size: inherit;
+        padding: 0;
+        margin-left: var(--spacing-xs);
+      }
+
+      .btn-link:hover {
+        color: var(--primary-color-dark);
       }
 
       /* Shopping Item Match Indicators */
@@ -1233,10 +1272,15 @@
 
         <!-- Shopping List -->
         <section class="shopping-list" id="shoppingList" style="display: none">
-          <h2 class="section-title">
-            <i class="fas fa-shopping-bag"></i>
-            Ingredients List
-          </h2>
+          <div class="section-header">
+            <h2 class="section-title">
+              <i class="fas fa-shopping-bag"></i>
+              Ingredients List
+            </h2>
+            <button class="btn btn-secondary" id="refreshMatchesBtn" onclick="refreshPantryMatches()" title="Refresh pantry matches">
+              <i class="fas fa-sync-alt"></i> Refresh Matches
+            </button>
+          </div>
           <div class="shopping-categories" id="shoppingCategories">
             <!-- Will be populated by JavaScript -->
           </div>

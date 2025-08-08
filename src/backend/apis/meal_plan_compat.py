@@ -356,6 +356,156 @@ def delete_meal_plan(plan_id):
         cursor.close()
 
 
+@meal_plan_compat_bp.route("/meal-plans/<int:plan_id>/refresh-matches", methods=["POST"])
+def refresh_pantry_matches(plan_id):
+    """Refresh fuzzy matching data for a specific meal plan"""
+    if "user_ID" not in session:
+        return jsonify({"success": False, "message": "Not authenticated"})
+
+    user_id = session["user_ID"]
+    db = get_db()
+    cursor = db.cursor()
+    
+    try:
+        # First verify the meal plan belongs to the current user
+        cursor.execute("""
+            SELECT session_id FROM meal_plan_sessions 
+            WHERE session_id = %s AND user_id = %s
+        """, (plan_id, user_id))
+        
+        if not cursor.fetchone():
+            return jsonify({"success": False, "message": "Meal plan not found or access denied"})
+        
+        # Get the latest generation session for this meal plan
+        cursor.execute("""
+            SELECT generation_id FROM shopping_generation_sessions 
+            WHERE meal_plan_session_id = %s 
+            ORDER BY generated_at DESC LIMIT 1
+        """, (plan_id,))
+        
+        generation_result = cursor.fetchone()
+        if not generation_result:
+            return jsonify({"success": False, "message": "No fuzzy matching data found for this meal plan"})
+        
+        generation_id = generation_result["generation_id"]
+        
+        # Re-run fuzzy matching for all ingredients in this generation session
+        # This is a simplified version - in a full implementation, you'd call the fuzzy matching service
+        cursor.execute("""
+            SELECT ingredient_name, required_quantity, required_unit 
+            FROM generation_ingredient_matches 
+            WHERE generation_id = %s
+        """, (generation_id,))
+        
+        ingredients_to_refresh = cursor.fetchall()
+        
+        refreshed_count = 0
+        for ingredient in ingredients_to_refresh:
+            # Find current pantry items that might match this ingredient
+            cursor.execute("""
+                SELECT pantry_item_id, item_name, quantity, unit, storage_type, expiration_date
+                FROM pantry_items 
+                WHERE user_id = %s 
+                    AND is_consumed = FALSE
+                    AND (item_name LIKE %s OR item_name LIKE %s)
+                ORDER BY 
+                    CASE 
+                        WHEN LOWER(item_name) = LOWER(%s) THEN 1
+                        WHEN LOWER(item_name) LIKE LOWER(%s) THEN 2
+                        ELSE 3
+                    END,
+                    expiration_date ASC
+                LIMIT 1
+            """, (
+                user_id,
+                f"%{ingredient['ingredient_name']}%",
+                f"%{ingredient['ingredient_name'].split()[0]}%",
+                ingredient['ingredient_name'],
+                f"{ingredient['ingredient_name']}%"
+            ))
+            
+            pantry_match = cursor.fetchone()
+            
+            if pantry_match:
+                # Update the match with the found pantry item
+                available_qty = float(pantry_match['quantity'])
+                required_qty = float(ingredient['required_quantity'])
+                needs_to_buy = max(0, required_qty - available_qty)
+                
+                cursor.execute("""
+                    UPDATE generation_ingredient_matches 
+                    SET pantry_item_id = %s,
+                        pantry_available_quantity = %s,
+                        match_type = 'auto',
+                        match_confidence = 85.0,
+                        needs_to_buy_quantity = %s,
+                        is_user_confirmed = FALSE,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE generation_id = %s AND ingredient_name = %s
+                """, (
+                    pantry_match['pantry_item_id'],
+                    available_qty,
+                    needs_to_buy,
+                    generation_id,
+                    ingredient['ingredient_name']
+                ))
+                refreshed_count += 1
+            else:
+                # No match found - mark as missing
+                cursor.execute("""
+                    UPDATE generation_ingredient_matches 
+                    SET pantry_item_id = NULL,
+                        pantry_available_quantity = NULL,
+                        match_type = 'missing',
+                        match_confidence = NULL,
+                        needs_to_buy_quantity = %s,
+                        is_user_confirmed = FALSE,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE generation_id = %s AND ingredient_name = %s
+                """, (
+                    ingredient['required_quantity'],
+                    generation_id,
+                    ingredient['ingredient_name']
+                ))
+        
+        # Update the shopping generation session counts
+        cursor.execute("""
+            UPDATE shopping_generation_sessions sgs
+            SET 
+                sgs.auto_matched_count = (
+                    SELECT COUNT(*) FROM generation_ingredient_matches gim 
+                    WHERE gim.generation_id = %s AND gim.match_type = 'auto'
+                ),
+                sgs.confirm_needed_count = (
+                    SELECT COUNT(*) FROM generation_ingredient_matches gim 
+                    WHERE gim.generation_id = %s AND gim.match_type = 'confirm'
+                ),
+                sgs.missing_count = (
+                    SELECT COUNT(*) FROM generation_ingredient_matches gim 
+                    WHERE gim.generation_id = %s AND gim.match_type = 'missing'
+                )
+            WHERE generation_id = %s
+        """, (generation_id, generation_id, generation_id, generation_id))
+        
+        db.commit()
+        
+        return jsonify({
+            "success": True, 
+            "message": f"Refreshed {refreshed_count} ingredient matches",
+            "refreshed_count": refreshed_count,
+            "total_ingredients": len(ingredients_to_refresh)
+        })
+
+    except Exception as e:
+        db.rollback()
+        return jsonify({
+            "success": False, 
+            "message": f"Failed to refresh matches: {str(e)}"
+        })
+    finally:
+        cursor.close()
+
+
 def organize_recipes_by_day(recipe_data):
     """Organize recipe data by day and meal type (backward compatibility)"""
     organized = {}

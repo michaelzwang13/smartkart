@@ -212,12 +212,30 @@ function displayPlanInfo(plan, fuzzyMatchingSummary) {
     const utilizationRate = fuzzyMatchingSummary.pantry_utilization_rate || 0;
     const utilizationColor = utilizationRate >= 70 ? 'success' : utilizationRate >= 50 ? 'warning' : 'error';
     
+    // Check if data might be outdated (simple heuristic based on generated time)
+    const generatedAt = new Date(fuzzyMatchingSummary.generated_at);
+    const now = new Date();
+    const hoursSinceGenerated = (now - generatedAt) / (1000 * 60 * 60);
+    const isStale = hoursSinceGenerated > 24; // Consider stale after 24 hours
+    
+    let staleWarning = '';
+    if (isStale) {
+      staleWarning = `
+        <div class="stale-warning">
+          <i class="fas fa-exclamation-triangle"></i>
+          <span>Pantry analysis is ${Math.floor(hoursSinceGenerated)} hours old. Consider refreshing for accurate results.</span>
+          <button class="btn-link refresh-suggestion" onclick="refreshPantryMatches()">Refresh now</button>
+        </div>
+      `;
+    }
+    
     fuzzyMatchingHtml = `
       <div class="fuzzy-matching-summary">
         <div class="summary-header">
           <i class="fas fa-brain meta-icon"></i>
           <span>Smart Pantry Analysis</span>
         </div>
+        ${staleWarning}
         <div class="summary-stats">
           <div class="stat-item success">
             <i class="fas fa-check"></i>
@@ -833,5 +851,70 @@ async function deleteMealPlan() {
     }, 2000);
 
     alert("Failed to delete meal plan: " + error.message);
+  }
+}
+
+async function refreshPantryMatches() {
+  const refreshBtn = document.getElementById("refreshMatchesBtn");
+  
+  // Show loading state
+  const originalContent = refreshBtn.innerHTML;
+  refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
+  refreshBtn.disabled = true;
+  
+  try {
+    const response = await fetch(`/api/meal-plans/${planId}/refresh-matches`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      // Show success message briefly
+      refreshBtn.innerHTML = '<i class="fas fa-check"></i> Updated!';
+      refreshBtn.style.background = "var(--success-color)";
+      refreshBtn.style.color = "white";
+      
+      // Show notification with details
+      showNotification(
+        `Refreshed ${data.refreshed_count} of ${data.total_ingredients} ingredient matches`,
+        'success'
+      );
+      
+      // Reload the meal plan data to show updated matches
+      setTimeout(async () => {
+        await loadMealPlanDetails();
+        
+        // Reset button
+        refreshBtn.innerHTML = originalContent;
+        refreshBtn.style.background = "";
+        refreshBtn.style.color = "";
+        refreshBtn.disabled = false;
+      }, 1500);
+      
+    } else {
+      throw new Error(data.message || "Failed to refresh matches");
+    }
+  } catch (error) {
+    console.error("Error refreshing matches:", error);
+    
+    // Show error state
+    refreshBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Error';
+    refreshBtn.style.background = "var(--error-color)";
+    refreshBtn.style.color = "white";
+    
+    // Show error notification
+    showNotification('Failed to refresh matches: ' + error.message, 'error');
+    
+    // Reset button after delay
+    setTimeout(() => {
+      refreshBtn.innerHTML = originalContent;
+      refreshBtn.style.background = "";
+      refreshBtn.style.color = "";
+      refreshBtn.disabled = false;
+    }, 2000);
   }
 }
