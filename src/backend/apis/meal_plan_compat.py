@@ -233,7 +233,7 @@ def get_meal_plan_details(plan_id):
                 
                 # Get detailed matching results
                 matches_query = """
-                    SELECT gim.*, pi.item_name as pantry_item_name, pi.storage_type, pi.expiration_date
+                    SELECT gim.*, pi.item_name as pantry_item_name, pi.unit, pi.storage_type, pi.expiration_date
                     FROM generation_ingredient_matches gim
                     LEFT JOIN pantry_items pi ON gim.pantry_item_id = pi.pantry_item_id
                     WHERE gim.generation_id = %s
@@ -251,6 +251,7 @@ def get_meal_plan_details(plan_id):
                             "id": match["pantry_item_id"],
                             "name": match.get("pantry_item_name"),
                             "available_quantity": float(match["pantry_available_quantity"]) if match["pantry_available_quantity"] else None,
+                            "available_unit": match.get("unit"),
                             "storage_type": match.get("storage_type"),
                             "expiration_date": match.get("expiration_date").strftime("%Y-%m-%d") if match.get("expiration_date") else None
                         } if match["pantry_item_id"] else None,
