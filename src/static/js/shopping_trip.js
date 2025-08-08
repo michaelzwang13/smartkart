@@ -21,6 +21,9 @@ document.addEventListener("DOMContentLoaded", function () {
     form.addEventListener("submit", handleFormSubmit);
   }
 
+  // Setup price input auto-formatting
+  setupPriceInputFormatting();
+
   // Setup cart controls event listeners
   setupCartEventListeners();
 
@@ -164,11 +167,19 @@ async function handleFormSubmit(event) {
   form.classList.add("loading");
 
   const itemName = document.getElementById("itemName").value.trim();
-  const itemPrice = parseFloat(document.getElementById("itemPrice").value);
+  const itemPriceInput = document.getElementById("itemPrice").value.trim();
+  const itemPrice = itemPriceInput ? parseFloat(itemPriceInput) : 0;
   const itemQty = parseInt(document.getElementById("itemQty").value, 10);
 
-  if (!itemName || isNaN(itemPrice) || isNaN(itemQty) || itemQty <= 0) {
-    alert("Please enter valid item details.");
+  if (!itemName || isNaN(itemQty) || itemQty <= 0) {
+    alert("Please enter valid item name and quantity.");
+    resetForm();
+    return;
+  }
+
+  // Validate price only if provided
+  if (itemPriceInput && isNaN(itemPrice)) {
+    alert("Please enter a valid price or leave it empty.");
     resetForm();
     return;
   }
@@ -1025,6 +1036,49 @@ async function quickAddToCart(itemName, quantity, listItemId) {
     // Store the list item ID for linking when item is added
     nameInput.dataset.listItemId = listItemId;
 
-    showNotification(`📝 Fill in UPC and price for "${itemName}"`, "info");
+    showNotification(`📝 Fill in UPC for "${itemName}" (price is optional)`, "info");
   }
+}
+
+// Setup price input formatting to convert integers to decimal (499 -> 4.99)
+function setupPriceInputFormatting() {
+  const priceInput = document.getElementById("itemPrice");
+  if (!priceInput) return;
+
+  priceInput.addEventListener('input', function(e) {
+    let value = e.target.value.replace(/[^0-9]/g, ''); // Remove non-numeric characters
+    
+    if (value === '') {
+      e.target.value = '';
+      return;
+    }
+    
+    // Convert to integer and divide by 100 to get decimal
+    let numericValue = parseInt(value);
+    let formattedValue = (numericValue / 100).toFixed(2);
+    
+    e.target.value = formattedValue;
+  });
+
+  priceInput.addEventListener('blur', function(e) {
+    let value = e.target.value.trim();
+    
+    if (value === '' || value === '0.00') {
+      e.target.value = '';
+      return;
+    }
+    
+    // Ensure proper decimal formatting on blur
+    let numericValue = parseFloat(value);
+    if (!isNaN(numericValue)) {
+      e.target.value = numericValue.toFixed(2);
+    }
+  });
+
+  priceInput.addEventListener('focus', function(e) {
+    // Clear placeholder behavior - if it's empty, keep it empty
+    if (e.target.value === '0.00') {
+      e.target.value = '';
+    }
+  });
 }

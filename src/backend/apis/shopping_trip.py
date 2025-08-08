@@ -12,9 +12,14 @@ def add_item():
         return jsonify({"error": "User or cart not in session"}), 400
 
     data = request.get_json()
-    required_fields = ["upc", "price", "quantity", "itemName", "imageUrl"]
+    required_fields = ["upc", "quantity", "itemName", "imageUrl"]
     if not data or not all(field in data for field in required_fields):
         return jsonify({"error": "Missing required fields"}), 400
+    
+    # Price is now optional, default to 0 if not provided
+    price = data.get("price", 0)
+    if price is None:
+        price = 0
 
     db = get_db()
     cursor = db.cursor()
@@ -29,7 +34,7 @@ def add_item():
                 session["user_ID"],
                 data["quantity"],
                 data["itemName"],
-                data["price"],
+                price,
                 data["upc"],
                 7,
                 data["imageUrl"],
