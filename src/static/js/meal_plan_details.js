@@ -202,6 +202,10 @@ function displayPlanInfo(plan, fuzzyMatchingSummary) {
   // Format dates manually from YYYY-MM-DD string
   const startDate = formatDateString(plan.start_date);
   const endDate = formatDateString(plan.end_date);
+  
+  // Handle single day vs multi-day display
+  const dateDisplay = plan.total_days === 1 ? startDate : `${startDate} - ${endDate}`;
+  const daysDisplay = plan.total_days === 1 ? '1 day' : `${plan.total_days} days`;
 
   let fuzzyMatchingHtml = '';
   if (fuzzyMatchingSummary) {
@@ -240,11 +244,11 @@ function displayPlanInfo(plan, fuzzyMatchingSummary) {
     <div class="plan-meta">
         <div class="meta-item">
         <i class="fas fa-calendar-alt meta-icon"></i>
-        <span>${startDate} - ${endDate}</span>
+        <span>${dateDisplay}</span>
         </div>
         <div class="meta-item">
         <i class="fas fa-clock meta-icon"></i>
-        <span>${plan.total_days} days</span>
+        <span>${daysDisplay}</span>
         </div>
         <div class="meta-item">
         <i class="fas fa-leaf meta-icon"></i>
