@@ -182,7 +182,35 @@ def generate_meal_plan():
             for meal_type in ["breakfast", "lunch", "dinner"]:
                 if meal_type in day_data:
                     recipe_data = day_data[meal_type]
-                    recipe_name = recipe_data.get("name", "")
+                    
+                    # Check if this is a reused meal
+                    if "reused_from_day" in recipe_data:
+                        reused_day = recipe_data["reused_from_day"]
+                        print(f"DEBUG: Found reused meal from day {reused_day}")
+                        
+                        # Find the original meal from the specified day
+                        original_meal = None
+                        for original_day_data in meal_plan_data.get("days", []):
+                            original_day_number = original_day_data.get("day")
+                            if original_day_number == reused_day and meal_type in original_day_data:
+                                original_meal = original_day_data[meal_type]
+                                break
+                        
+                        if original_meal:
+                            original_name = original_meal.get("name", f"Custom {meal_type.title()}")
+                            recipe_name = f"Leftovers of {original_name}"
+                            
+                            # Copy the original recipe data but update the name
+                            recipe_data = original_meal.copy()
+                            recipe_data["name"] = recipe_name
+                            
+                            print(f"DEBUG: Created leftover meal: {recipe_name}")
+                        else:
+                            # Fallback if original meal not found
+                            recipe_name = f"Leftovers of Custom {meal_type.title()}"
+                            recipe_data = {"name": recipe_name}
+                    else:
+                        recipe_name = recipe_data.get("name", "")
 
                     # Get or create recipe template
                     print(f"DEBUG: Creating template for {recipe_name} ({meal_type})")
@@ -709,6 +737,7 @@ For all plans:
 
 Do not use fractions like 1/2 - convert them to decimals (e.g., 0.5) to ensure valid JSON
 Do not wrap any times like (10 min) in the instructions. Just add times in the instructions themselves such as Roast broccoli for 20 minutes
+Ingredient quantity must be a number. If it's adding spice to taste, just use 1 tsp
 
 CRITICAL: In the JSON response, the "day" field must be a NUMBER (1, 2, 3, etc.), never a date string.
 
