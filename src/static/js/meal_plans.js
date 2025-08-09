@@ -299,13 +299,23 @@ function initializeCalendar() {
     const twelveMonthsAgo = new Date(today);
     twelveMonthsAgo.setMonth(today.getMonth() - 12);
 
-    // Check if we can go back one more month
-    const potentialDate = new Date(currentDate);
-    potentialDate.setMonth(currentDate.getMonth() - 1);
+    let potentialDate = new Date(currentDate);
+    
+    if (currentView === "week") {
+      // Move back by 7 days (1 week)
+      potentialDate.setDate(currentDate.getDate() - 7);
+    } else {
+      // Move back by 1 month
+      potentialDate.setMonth(currentDate.getMonth() - 1);
+    }
 
     if (potentialDate >= twelveMonthsAgo) {
-      currentDate.setMonth(currentDate.getMonth() - 1);
-      clearMealPlanPreview(); // Clear preview when changing months
+      if (currentView === "week") {
+        currentDate.setDate(currentDate.getDate() - 7);
+      } else {
+        currentDate.setMonth(currentDate.getMonth() - 1);
+      }
+      clearMealPlanPreview();
       await loadMealsForCalendar();
       updateNavigationButtons();
     }
@@ -316,13 +326,23 @@ function initializeCalendar() {
     const twoMonthsFromNow = new Date(today);
     twoMonthsFromNow.setMonth(today.getMonth() + 2);
 
-    // Check if we can go forward one more month
-    const potentialDate = new Date(currentDate);
-    potentialDate.setMonth(currentDate.getMonth() + 1);
+    let potentialDate = new Date(currentDate);
+    
+    if (currentView === "week") {
+      // Move forward by 7 days (1 week)
+      potentialDate.setDate(currentDate.getDate() + 7);
+    } else {
+      // Move forward by 1 month
+      potentialDate.setMonth(currentDate.getMonth() + 1);
+    }
 
     if (potentialDate <= twoMonthsFromNow) {
-      currentDate.setMonth(currentDate.getMonth() + 1);
-      clearMealPlanPreview(); // Clear preview when changing months
+      if (currentView === "week") {
+        currentDate.setDate(currentDate.getDate() + 7);
+      } else {
+        currentDate.setMonth(currentDate.getMonth() + 1);
+      }
+      clearMealPlanPreview();
       await loadMealsForCalendar();
       updateNavigationButtons();
     }
@@ -357,25 +377,32 @@ function updateNavigationButtons() {
   const prevButton = document.getElementById("prevMonth");
   const nextButton = document.getElementById("nextMonth");
 
-  // Check if we can go back one more month
-  const potentialPrevDate = new Date(currentDate);
-  potentialPrevDate.setMonth(currentDate.getMonth() - 1);
+  let potentialPrevDate = new Date(currentDate);
+  let potentialNextDate = new Date(currentDate);
 
-  // Check if we can go forward one more month
-  const potentialNextDate = new Date(currentDate);
-  potentialNextDate.setMonth(currentDate.getMonth() + 1);
+  if (currentView === "week") {
+    // For week view, check one week back/forward
+    potentialPrevDate.setDate(currentDate.getDate() - 7);
+    potentialNextDate.setDate(currentDate.getDate() + 7);
+  } else {
+    // For month view, check one month back/forward
+    potentialPrevDate.setMonth(currentDate.getMonth() - 1);
+    potentialNextDate.setMonth(currentDate.getMonth() + 1);
+  }
 
   // Disable/enable previous button
   if (potentialPrevDate < twelveMonthsAgo) {
     prevButton.disabled = true;
     prevButton.style.opacity = "0.4";
     prevButton.style.cursor = "not-allowed";
-    prevButton.title = "Cannot go back more than 12 months";
+    prevButton.title = currentView === "week" ? 
+      "Cannot go back more than 12 months" : 
+      "Cannot go back more than 12 months";
   } else {
     prevButton.disabled = false;
     prevButton.style.opacity = "1";
     prevButton.style.cursor = "pointer";
-    prevButton.title = "Previous month";
+    prevButton.title = currentView === "week" ? "Previous week" : "Previous month";
   }
 
   // Disable/enable next button
@@ -383,12 +410,14 @@ function updateNavigationButtons() {
     nextButton.disabled = true;
     nextButton.style.opacity = "0.4";
     nextButton.style.cursor = "not-allowed";
-    nextButton.title = "Cannot go forward more than 2 months";
+    nextButton.title = currentView === "week" ? 
+      "Cannot go forward more than 2 months" : 
+      "Cannot go forward more than 2 months";
   } else {
     nextButton.disabled = false;
     nextButton.style.opacity = "1";
     nextButton.style.cursor = "pointer";
-    nextButton.title = "Next month";
+    nextButton.title = currentView === "week" ? "Next week" : "Next month";
   }
 }
 
@@ -466,11 +495,11 @@ function renderMonthView(container) {
 }
 
 function renderWeekView(container) {
-  const today = new Date();
-  const currentWeekStart = new Date(today);
-  currentWeekStart.setDate(today.getDate() - today.getDay());
+  // Use currentDate (which is modified by navigation) instead of hardcoded today
+  const currentWeekStart = new Date(currentDate);
+  currentWeekStart.setDate(currentDate.getDate() - currentDate.getDay());
 
-  // Generate 7 days for current week
+  // Generate 7 days for the week containing currentDate
   for (let i = 0; i < 7; i++) {
     const cellDate = new Date(currentWeekStart);
     cellDate.setDate(currentWeekStart.getDate() + i);
