@@ -967,6 +967,40 @@
         font-style: italic;
       }
 
+      /* Ensure meal slots maintain equal height */
+      .week-view .calendar-meal-slot {
+        height: 52px; /* Fixed height for consistency */
+        min-height: 52px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      /* Week view empty meal slots - invisible but maintains space */
+      .week-view .calendar-day .calendar-meals .calendar-meal-slot.empty-slot,
+      .week-view .calendar-day .calendar-meals .calendar-meal-slot:not(.has-meal) {
+        background: transparent !important;
+        border: none !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        align-items: center !important;
+        height: 52px !important;
+        min-height: 52px !important;
+        visibility: hidden !important; /* Invisible but maintains layout space */
+      }
+
+      /* Month view empty meal slots - invisible but maintains space */
+      .calendar-meal.empty-meal-slot {
+        background: transparent;
+        border: none;
+        padding: var(--spacing-xs);
+        margin-bottom: 2px;
+        height: 20px; /* Same height as regular meal slots */
+        min-height: 20px;
+        visibility: hidden; /* Invisible but maintains layout space */
+      }
+
       .calendar-legend {
         display: flex;
         justify-content: center;
@@ -1120,8 +1154,16 @@
         }
 
         .week-view .calendar-meal-slot {
-          min-height: 32px;
+          height: 42px; /* Smaller fixed height for mobile */
+          min-height: 42px;
           padding: 4px 6px;
+        }
+
+        /* Mobile responsive empty slots */
+        .week-view .calendar-day .calendar-meals .calendar-meal-slot.empty-slot,
+        .week-view .calendar-day .calendar-meals .calendar-meal-slot:not(.has-meal) {
+          height: 42px !important;
+          min-height: 42px !important;
         }
 
         .week-view .calendar-meal-type {
@@ -2564,6 +2606,309 @@
           transform: translateY(0);
         }
       }
+
+      /* Meal Selection Popup Styles */
+      .meal-selection-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 1000;
+        display: none;
+        justify-content: center;
+        align-items: center;
+        padding: var(--spacing-md);
+      }
+
+      .meal-selection-overlay.active {
+        display: flex;
+      }
+
+      .meal-selection-popup {
+        background: var(--bg-primary);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-lg);
+        width: 100%;
+        max-width: 800px;
+        max-height: 90vh;
+        overflow-y: auto;
+        position: relative;
+      }
+
+      .popup-header {
+        padding: var(--spacing-lg) var(--spacing-xl);
+        border-bottom: 1px solid var(--border-light);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: sticky;
+        top: 0;
+        background: var(--bg-primary);
+        z-index: 1;
+      }
+
+      .popup-header h3 {
+        margin: 0;
+        color: var(--text-primary);
+        font-size: 1.5rem;
+        font-weight: 600;
+      }
+
+      .popup-close {
+        background: none;
+        border: none;
+        font-size: 1.25rem;
+        color: var(--text-secondary);
+        cursor: pointer;
+        padding: var(--spacing-sm);
+        border-radius: var(--radius-md);
+        transition: all 0.2s ease;
+      }
+
+      .popup-close:hover {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+      }
+
+      .popup-content {
+        padding: var(--spacing-xl);
+      }
+
+      .quick-select-buttons {
+        display: flex;
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-xl);
+        flex-wrap: wrap;
+      }
+
+      .btn-quick-select {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-light);
+        color: var(--text-primary);
+        padding: var(--spacing-sm) var(--spacing-md);
+        border-radius: var(--radius-lg);
+        cursor: pointer;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+      }
+
+      .btn-quick-select:hover {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+      }
+
+      .meal-selection-grid {
+        display: grid;
+        gap: var(--spacing-lg);
+        margin-bottom: var(--spacing-xl);
+      }
+
+      .day-selection {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-lg);
+        padding: var(--spacing-lg);
+        transition: all 0.2s ease;
+      }
+
+      .day-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-md);
+      }
+
+      .day-title {
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 1.1rem;
+      }
+
+      .day-select-all {
+        font-size: 0.75rem;
+        color: var(--primary-color);
+        cursor: pointer;
+        text-decoration: underline;
+      }
+
+      .day-select-all:hover {
+        color: var(--primary-dark);
+      }
+
+      .meal-checkboxes {
+        display: flex;
+        gap: var(--spacing-lg);
+        flex-wrap: wrap;
+      }
+
+      .meal-checkbox-item {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        cursor: pointer;
+        padding: var(--spacing-sm);
+        border-radius: var(--radius-md);
+        transition: all 0.2s ease;
+      }
+
+      .meal-checkbox-item:hover {
+        background: rgba(var(--primary-rgb), 0.1);
+      }
+
+      .meal-checkbox-item input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--primary-color);
+        cursor: pointer;
+      }
+
+      .meal-checkbox-item label {
+        cursor: pointer;
+        font-weight: 500;
+        color: var(--text-primary);
+        text-transform: capitalize;
+      }
+
+      .meal-checkbox-item.breakfast label {
+        color: var(--warning-color);
+      }
+
+      .meal-checkbox-item.lunch label {
+        color: var(--primary-color);
+      }
+
+      .meal-checkbox-item.dinner label {
+        color: var(--secondary-color);
+      }
+
+      .selection-summary {
+        background: var(--bg-tertiary);
+        padding: var(--spacing-md);
+        border-radius: var(--radius-lg);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: var(--spacing-md);
+      }
+
+      .selected-count,
+      .estimated-time {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+      }
+
+      .selected-count i,
+      .estimated-time i {
+        color: var(--primary-color);
+      }
+
+      .popup-actions {
+        padding: var(--spacing-xl);
+        border-top: 1px solid var(--border-light);
+        display: flex;
+        justify-content: flex-end;
+        gap: var(--spacing-md);
+        position: sticky;
+        bottom: 0;
+        background: var(--bg-primary);
+      }
+
+      .btn-cancel,
+      .btn-confirm {
+        padding: var(--spacing-md) var(--spacing-xl);
+        border-radius: var(--radius-lg);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+      }
+
+      .btn-cancel {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-light);
+        color: var(--text-secondary);
+      }
+
+      .btn-cancel:hover {
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+      }
+
+      .btn-confirm {
+        background: var(--primary-color);
+        border: 1px solid var(--primary-color);
+        color: white;
+      }
+
+      .btn-confirm:hover:not(:disabled) {
+        background: var(--primary-dark);
+        border-color: var(--primary-dark);
+      }
+
+      .btn-confirm:disabled {
+        background: var(--bg-secondary);
+        border-color: var(--border-light);
+        color: var(--text-muted);
+        cursor: not-allowed;
+      }
+
+      /* Mobile Responsive */
+      @media (max-width: 768px) {
+        .meal-selection-popup {
+          margin: var(--spacing-md);
+          max-height: calc(100vh - 2rem);
+        }
+
+        .popup-header {
+          padding: var(--spacing-md);
+        }
+
+        .popup-content {
+          padding: var(--spacing-md);
+        }
+
+        .quick-select-buttons {
+          gap: var(--spacing-sm);
+        }
+
+        .btn-quick-select {
+          font-size: 0.8rem;
+          padding: var(--spacing-xs) var(--spacing-sm);
+        }
+
+        .meal-checkboxes {
+          gap: var(--spacing-md);
+        }
+
+        .selection-summary {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .popup-actions {
+          padding: var(--spacing-md);
+          flex-direction: column-reverse;
+        }
+
+        .btn-cancel,
+        .btn-confirm {
+          width: 100%;
+          justify-content: center;
+        }
+      }
     </style>
   </head>
 
@@ -3032,6 +3377,60 @@
         </div>
       </section>
     </main>
+
+    <!-- Meal Selection Popup -->
+    <div class="meal-selection-overlay" id="mealSelectionOverlay">
+      <div class="meal-selection-popup">
+        <div class="popup-header">
+          <h3>Select Meals to Generate</h3>
+          <button class="popup-close" id="closeMealSelection">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        
+        <div class="popup-content">
+          <div class="quick-select-buttons">
+            <button class="btn-quick-select" data-mode="all">
+              <i class="fas fa-check-double"></i>
+              Select All
+            </button>
+            <button class="btn-quick-select" data-mode="lunch-dinner">
+              <i class="fas fa-utensils"></i>
+              Lunch & Dinner
+            </button>
+            <button class="btn-quick-select" data-mode="clear">
+              <i class="fas fa-times"></i>
+              Clear All
+            </button>
+          </div>
+          
+          <div class="meal-selection-grid" id="mealSelectionGrid">
+            <!-- Days will be dynamically generated here -->
+          </div>
+          
+          <div class="selection-summary">
+            <span class="selected-count">
+              <i class="fas fa-utensils"></i>
+              <span id="selectedMealCount">0</span> meals selected
+            </span>
+            <span class="estimated-time">
+              <i class="fas fa-clock"></i>
+              Est. <span id="estimatedTime">0</span> min prep time
+            </span>
+          </div>
+        </div>
+        
+        <div class="popup-actions">
+          <button class="btn-cancel" id="cancelMealSelection">
+            Cancel
+          </button>
+          <button class="btn-confirm" id="confirmMealSelection" disabled>
+            <i class="fas fa-magic"></i>
+            Generate Selected Meals
+          </button>
+        </div>
+      </div>
+    </div>
 
     <!-- Footer -->
     <footer class="footer">
