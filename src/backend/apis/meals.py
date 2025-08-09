@@ -26,6 +26,7 @@ def generate_meal_plan():
     budget = data.get("budget")
     cooking_time = data.get("cooking_time", 60)
     minimal_cooking_sessions = data.get("minimal_cooking_sessions", False)
+    selected_meals = data.get("selected_meals", None)  # New parameter for meal selection
 
     try:
         days = int(days)
@@ -132,7 +133,8 @@ def generate_meal_plan():
             budget=budget,
             cooking_time=cooking_time,
             blocked_slots=blocked_slots,
-            minimal_cooking_sessions=minimal_cooking_sessions
+            minimal_cooking_sessions=minimal_cooking_sessions,
+            selected_meals=selected_meals
         )
 
         if not meal_plan_data:
@@ -158,6 +160,14 @@ def generate_meal_plan():
         created_meals = []
         recipe_template_map = {}
 
+        # Create a lookup for selected meals if provided
+        selected_meals_lookup = {}
+        if selected_meals:
+            for meal_selection in selected_meals:
+                day = meal_selection["day"]
+                meals = meal_selection["meals"]
+                selected_meals_lookup[day] = meals
+
         for day_data in meal_plan_data.get("days", []):
             day_value = day_data.get("day", 1)
             print(f"DEBUG: day_value = {day_value}, type = {type(day_value)}")
@@ -180,6 +190,12 @@ def generate_meal_plan():
             print(f"DEBUG: Final meal_date = {meal_date}")
             
             for meal_type in ["breakfast", "lunch", "dinner"]:
+                # Check if this meal type should be processed based on selected_meals
+                if selected_meals and day_number in selected_meals_lookup:
+                    if meal_type not in selected_meals_lookup[day_number]:
+                        print(f"DEBUG: Skipping {meal_type} for day {day_number} - not selected")
+                        continue
+                
                 if meal_type in day_data:
                     recipe_data = day_data[meal_type]
                     
@@ -682,7 +698,7 @@ def delete_meal(meal_id):
 
 
 # Import AI generation function from the old file
-def generate_meal_plan_with_ai(days, start_date, ingredients, dietary_preference, budget, cooking_time, blocked_slots=None, minimal_cooking_sessions=False):
+def generate_meal_plan_with_ai(days, start_date, ingredients, dietary_preference, budget, cooking_time, blocked_slots=None, minimal_cooking_sessions=False, selected_meals=None):
     """Use Gemini AI to generate a structured meal plan"""
     import os
     import google.generativeai as genai
@@ -711,6 +727,16 @@ def generate_meal_plan_with_ai(days, start_date, ingredients, dietary_preference
         budget_text = f"${budget}" if budget else "No limit"
         start_date_text = start_date.strftime('%B %d, %Y')
         
+        # Format selected meals information
+        selected_meals_info = ""
+        if selected_meals:
+            selected_meals_info = "\n\nSELECTED MEALS ONLY:\n"
+            for meal_selection in selected_meals:
+                day = meal_selection["day"]
+                meals = meal_selection["meals"]
+                selected_meals_info += f"- Day {day}: Generate only {', '.join(meals)}\n"
+            selected_meals_info += "IMPORTANT: Only generate recipes for the specified meals above. Omit any meals not listed."
+        
         # Create detailed prompt for meal planning
         prompt = f'''You are a professional meal prep consultant and nutrition planner. Create a detailed {days}-day meal plan starting from {start_date_text} with the following requirements:
 
@@ -723,9 +749,9 @@ REQUIREMENTS:
 - Budget limit: {budget_text}
 - Max cooking time per day: {cooking_time} minutes
 - Minimal cooking sessions mode: {minimal_sessions_text} (true or false)
-- Include breakfast, lunch, and dinner for each day
+- Include breakfast, lunch, and dinner for each day (unless specified otherwise below)
 - Focus on meal prep efficiency and batch cooking
-- Prioritize using available ingredients first{blocked_info}
+- Prioritize using available ingredients first{blocked_info}{selected_meals_info}
 
 If "minimal_cooking_sessions" is true:
 - Minimize recipe variety by reusing the same meals for multiple days

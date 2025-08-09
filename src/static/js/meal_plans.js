@@ -287,6 +287,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Setup info popup functionality
   setupInfoPopup();
+  
+  // Setup meal selection popup event listeners
+  setupMealSelectionPopup();
 });
 
 function initializeCalendar() {
@@ -1478,11 +1481,11 @@ async function generateMealPlan() {
   const icon = document.getElementById("generateIcon");
   const text = document.getElementById("generateText");
 
-  // Show loading state
+  // Show loading state for validation
   btn.disabled = true;
   spinner.style.display = "block";
   icon.style.display = "none";
-  text.textContent = "Checking for conflicts...";
+  text.textContent = "Validating...";
 
   try {
     const formData = new FormData(document.getElementById("generateForm"));
@@ -1505,9 +1508,6 @@ async function generateMealPlan() {
       return;
     }
 
-    // Update loading message
-    text.textContent = "Generating...";
-
     // Validate that start date is not more than one month in the future
     const selectedDate = new Date(startDate);
     const today = new Date();
@@ -1520,18 +1520,157 @@ async function generateMealPlan() {
       return;
     }
 
+    // Reset button state and show meal selection popup
+    resetGenerateButton(btn, spinner, icon, text);
+    showMealSelectionPopup(formData, days);
+
+  } catch (error) {
+    console.error("Validation error:", error);
+    alert("An error occurred during validation. Please try again.");
+    resetGenerateButton(btn, spinner, icon, text);
+  }
+}
+
+// Meal Selection Popup Functions
+function showMealSelectionPopup(formData, days) {
+  const overlay = document.getElementById('mealSelectionOverlay');
+  const grid = document.getElementById('mealSelectionGrid');
+  
+  // Generate day selection grid
+  grid.innerHTML = '';
+  const startDate = new Date(formData.get('start_date'));
+  
+  for (let i = 0; i < days; i++) {
+    const currentDate = new Date(startDate);
+    currentDate.setDate(startDate.getDate() + i);
+    
+    const dayDiv = document.createElement('div');
+    dayDiv.className = 'day-selection';
+    dayDiv.innerHTML = `
+      <div class="day-header">
+        <span class="day-title">Day ${i + 1} - ${currentDate.toLocaleDateString('en-US', { 
+          weekday: 'short', 
+          month: 'short', 
+          day: 'numeric' 
+        })}</span>
+        <span class="day-select-all" data-day="${i + 1}">Select All</span>
+      </div>
+      <div class="meal-checkboxes">
+        ${['breakfast', 'lunch', 'dinner'].map(mealType => `
+          <div class="meal-checkbox-item ${mealType}">
+            <input type="checkbox" id="meal_${i + 1}_${mealType}" 
+                   data-day="${i + 1}" data-meal="${mealType}" checked>
+            <label for="meal_${i + 1}_${mealType}">${mealType}</label>
+          </div>
+        `).join('')}
+      </div>
+    `;
+    grid.appendChild(dayDiv);
+  }
+  
+  // Store form data for later use
+  window.pendingMealPlanData = formData;
+  console.log('Stored pendingMealPlanData:', window.pendingMealPlanData);
+  
+  // Show popup
+  overlay.classList.add('active');
+  
+  // Update summary
+  updateMealSelectionSummary();
+}
+
+function updateMealSelectionSummary() {
+  const checkboxes = document.querySelectorAll('#mealSelectionGrid input[type="checkbox"]:checked');
+  const selectedCount = checkboxes.length;
+  
+  let cookingTime = 60; // default
+  if (window.pendingMealPlanData && typeof window.pendingMealPlanData.get === 'function') {
+    cookingTime = parseInt(window.pendingMealPlanData.get('cooking_time') || 60);
+  }
+  
+  const estimatedTime = selectedCount * (cookingTime / 3); // Rough estimate
+  
+  document.getElementById('selectedMealCount').textContent = selectedCount;
+  document.getElementById('estimatedTime').textContent = Math.round(estimatedTime);
+  
+  // Enable/disable confirm button
+  const confirmBtn = document.getElementById('confirmMealSelection');
+  confirmBtn.disabled = selectedCount === 0;
+}
+
+async function confirmMealSelection() {
+  const checkboxes = document.querySelectorAll('#mealSelectionGrid input[type="checkbox"]:checked');
+  
+  if (checkboxes.length === 0) {
+    alert('Please select at least one meal to generate.');
+    return;
+  }
+  
+  // Collect selected meals
+  const selectedMeals = [];
+  const dayMeals = {};
+  
+  checkboxes.forEach(checkbox => {
+    const day = parseInt(checkbox.dataset.day);
+    const meal = checkbox.dataset.meal;
+    
+    if (!dayMeals[day]) {
+      dayMeals[day] = [];
+    }
+    dayMeals[day].push(meal);
+  });
+  
+  // Convert to array format
+  for (const [day, meals] of Object.entries(dayMeals)) {
+    selectedMeals.push({
+      day: parseInt(day),
+      meals: meals
+    });
+  }
+  
+  // Store data before closing popup (which clears the global variable)
+  const formDataToUse = window.pendingMealPlanData;
+  
+  console.log('About to generate with:', {
+    formData: formDataToUse,
+    selectedMeals: selectedMeals
+  });
+  
+  // Close popup and start generation
+  closeMealSelectionPopup();
+  
+  // Call the actual generation function
+  await generateMealPlanWithSelection(formDataToUse, selectedMeals);
+}
+
+async function generateMealPlanWithSelection(formData, selectedMeals) {
+  const btn = document.getElementById("generateBtn");
+  const spinner = document.getElementById("spinner");
+  const icon = document.getElementById("generateIcon");
+  const text = document.getElementById("generateText");
+
+  // Show loading state
+  btn.disabled = true;
+  spinner.style.display = "block";
+  icon.style.display = "none";
+  text.textContent = "Generating...";
+
+  try {
+    if (!formData) {
+      throw new Error("Form data is missing");
+    }
+
     const data = {
-      start_date: startDate,
+      start_date: formData.get('start_date'),
       days: parseInt(formData.get("days")),
       dietary_preference: formData.get("dietary_preference"),
-      budget: formData.get("budget")
-        ? parseFloat(formData.get("budget"))
-        : null,
+      budget: formData.get("budget") ? parseFloat(formData.get("budget")) : null,
       cooking_time: parseInt(formData.get("cooking_time")),
       minimal_cooking_sessions: formData.has("minimal_cooking_sessions"),
+      selected_meals: selectedMeals
     };
 
-    console.log(data)
+    console.log('Sending data:', data);
     
     const response = await fetch("/api/generate-meal-plan", {
       method: "POST",
@@ -1542,50 +1681,92 @@ async function generateMealPlan() {
     });
 
     const result = await response.json();
-
-    console.log(result)
+    console.log('Result:', result);
 
     if (result.success) {
-      // Show success message and reload plans
-      alert(
-        `Meal plan generated successfully! Created ${result.created_meals.length} meals.`
-      );
-
-      // Reload both meal plans and calendar meals
+      alert(`Meal plan generated successfully! Created ${result.created_meals.length} meals.`);
       await loadMealPlans();
-
-      // Optionally navigate to the new session
+      
       if (result.session_id) {
         viewPlanDetails(result.session_id);
       }
     } else {
-      // Handle conflict errors with more detailed information
-      if (result.conflicting_dates && result.conflicting_dates.length > 0) {
-        const conflictInfo = {
-          hasConflicts: true,
-          conflictingDates: result.conflicting_dates,
-          lockedMeals: result.locked_meals || [],
-          unlockedMeals: result.unlocked_meals || [],
-          totalConflicts: (result.locked_meals || []).length + (result.unlocked_meals || []).length
-        };
-        showMealConflictWarning(conflictInfo);
-      } else {
-        alert("Error generating meal plan: " + result.message);
-      }
+      alert("Error generating meal plan: " + result.message);
     }
   } catch (error) {
     console.error("Error generating meal plan:", error);
     alert("Failed to generate meal plan. Please try again.");
   } finally {
-    // Reset button state
-    btn.disabled = false;
-    spinner.style.display = "none";
-    icon.style.display = "block";
-    text.textContent = "Generate Meal Plan";
-
-    // Clear meal plan preview after generation
+    resetGenerateButton(btn, spinner, icon, text);
     clearMealPlanPreview();
   }
+}
+
+function closeMealSelectionPopup() {
+  const overlay = document.getElementById('mealSelectionOverlay');
+  overlay.classList.remove('active');
+  window.pendingMealPlanData = null;
+}
+
+function setupMealSelectionPopup() {
+  // Close button
+  document.getElementById('closeMealSelection').addEventListener('click', closeMealSelectionPopup);
+  
+  // Cancel button
+  document.getElementById('cancelMealSelection').addEventListener('click', closeMealSelectionPopup);
+  
+  // Confirm button
+  document.getElementById('confirmMealSelection').addEventListener('click', confirmMealSelection);
+  
+  // Quick select buttons
+  document.querySelectorAll('.btn-quick-select').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const mode = e.currentTarget.dataset.mode;
+      const checkboxes = document.querySelectorAll('#mealSelectionGrid input[type="checkbox"]');
+      
+      switch (mode) {
+        case 'all':
+          checkboxes.forEach(cb => cb.checked = true);
+          break;
+        case 'lunch-dinner':
+          checkboxes.forEach(cb => {
+            cb.checked = cb.dataset.meal === 'lunch' || cb.dataset.meal === 'dinner';
+          });
+          break;
+        case 'clear':
+          checkboxes.forEach(cb => cb.checked = false);
+          break;
+      }
+      
+      updateMealSelectionSummary();
+    });
+  });
+  
+  // Close on overlay click
+  document.getElementById('mealSelectionOverlay').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) {
+      closeMealSelectionPopup();
+    }
+  });
+  
+  // Delegate event for day select all and checkboxes (since they're dynamically created)
+  document.getElementById('mealSelectionGrid').addEventListener('click', (e) => {
+    if (e.target.classList.contains('day-select-all')) {
+      const day = e.target.dataset.day;
+      const dayCheckboxes = document.querySelectorAll(`input[data-day="${day}"]`);
+      const allChecked = Array.from(dayCheckboxes).every(cb => cb.checked);
+      
+      dayCheckboxes.forEach(cb => cb.checked = !allChecked);
+      updateMealSelectionSummary();
+    }
+  });
+  
+  // Listen for checkbox changes
+  document.getElementById('mealSelectionGrid').addEventListener('change', (e) => {
+    if (e.target.type === 'checkbox') {
+      updateMealSelectionSummary();
+    }
+  });
 }
 
 function viewPlanDetails(planId) {
