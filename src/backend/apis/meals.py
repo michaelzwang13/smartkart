@@ -264,8 +264,18 @@ def get_or_create_recipe_template(cursor, recipe_data, meal_type):
     # Handle instructions - convert array to string if needed
     instructions_raw = recipe_data.get("instructions", "")
     if isinstance(instructions_raw, list):
-        # Convert array of instructions to numbered string
-        instructions = "\n".join([f"{i+1}. {step}" for i, step in enumerate(instructions_raw)])
+        # Check if steps are already numbered
+        instructions_list = []
+        for i, step in enumerate(instructions_raw):
+            step_str = str(step).strip()
+            # Check if step already starts with a number and period (e.g., "1. ")
+            if step_str and not (step_str[0].isdigit() and '. ' in step_str[:4]):
+                # Add numbering if not already numbered
+                instructions_list.append(f"{i+1}. {step_str}")
+            else:
+                # Keep as-is if already numbered
+                instructions_list.append(step_str)
+        instructions = "\n".join(instructions_list)
         print(f"DEBUG: Converted instructions array to string: {len(instructions_raw)} steps")
     else:
         instructions = instructions_raw
