@@ -967,6 +967,40 @@
         font-style: italic;
       }
 
+      /* Ensure meal slots maintain equal height */
+      .week-view .calendar-meal-slot {
+        height: 52px; /* Fixed height for consistency */
+        min-height: 52px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      /* Week view empty meal slots - invisible but maintains space */
+      .week-view .calendar-day .calendar-meals .calendar-meal-slot.empty-slot,
+      .week-view .calendar-day .calendar-meals .calendar-meal-slot:not(.has-meal) {
+        background: transparent !important;
+        border: none !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        align-items: center !important;
+        height: 52px !important;
+        min-height: 52px !important;
+        visibility: hidden !important; /* Invisible but maintains layout space */
+      }
+
+      /* Month view empty meal slots - invisible but maintains space */
+      .calendar-meal.empty-meal-slot {
+        background: transparent;
+        border: none;
+        padding: var(--spacing-xs);
+        margin-bottom: 2px;
+        height: 20px; /* Same height as regular meal slots */
+        min-height: 20px;
+        visibility: hidden; /* Invisible but maintains layout space */
+      }
+
       .calendar-legend {
         display: flex;
         justify-content: center;
@@ -1120,8 +1154,16 @@
         }
 
         .week-view .calendar-meal-slot {
-          min-height: 32px;
+          height: 42px; /* Smaller fixed height for mobile */
+          min-height: 42px;
           padding: 4px 6px;
+        }
+
+        /* Mobile responsive empty slots */
+        .week-view .calendar-day .calendar-meals .calendar-meal-slot.empty-slot,
+        .week-view .calendar-day .calendar-meals .calendar-meal-slot:not(.has-meal) {
+          height: 42px !important;
+          min-height: 42px !important;
         }
 
         .week-view .calendar-meal-type {

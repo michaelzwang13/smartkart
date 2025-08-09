@@ -525,11 +525,15 @@ function createWeekDayCell(date) {
   // Create fixed slots for each meal type
   const mealTypes = ["breakfast", "lunch", "dinner"];
 
+  console.log('Creating meal slots for date:', date, 'with meals:', mealsByType);
+
   mealTypes.forEach((type) => {
     const mealSlot = document.createElement("div");
     mealSlot.className = `calendar-meal-slot ${type}`;
 
     const meals = mealsByType[type];
+    console.log(`Processing ${type}: ${meals.length} meals`);
+    
     if (meals.length > 0) {
       mealSlot.classList.add("has-meal");
 
@@ -580,13 +584,16 @@ function createWeekDayCell(date) {
       // Add hover effect for clickable meals
       mealSlot.style.cursor = "pointer";
     } else {
-      mealSlot.innerHTML = `
-        <div class="calendar-meal-type">No ${type}</div>
-        `;
+      // Empty slot - invisible but maintains spacing
+      mealSlot.classList.add("empty-slot");
+      // No content - completely blank
     }
 
+    console.log(`Appending ${type} slot with classes:`, mealSlot.className);
     mealsContainer.appendChild(mealSlot);
   });
+
+  console.log(`Total meal slots appended: ${mealTypes.length}, container children: ${mealsContainer.children.length}`);
 
   if (dayMeals.length > 0) {
     dayCell.classList.add("has-meals");
@@ -644,12 +651,32 @@ function createDayCell(date, currentMonth, isWeekView = false) {
   // Find meals for this date
   const dayMeals = getMealsForDate(date);
 
-  if (dayMeals.length > 0) {
-    dayCell.classList.add("has-meals");
+  // Group meals by type for consistent positioning
+  const mealsByType = {
+    breakfast: [],
+    lunch: [],
+    dinner: [],
+    snack: [],
+  };
 
-    // Show up to 3 meals, then show count
-    const visibleMeals = dayMeals.slice(0, 3);
-    visibleMeals.forEach((meal) => {
+  dayMeals.forEach((meal) => {
+    if (mealsByType[meal.type]) {
+      mealsByType[meal.type].push(meal);
+    }
+  });
+
+  // Create fixed slots for each meal type (month view)
+  const mealTypes = ["breakfast", "lunch", "dinner"];
+  let hasAnyMeals = false;
+
+  mealTypes.forEach((type) => {
+    const meals = mealsByType[type];
+    
+    if (meals.length > 0) {
+      hasAnyMeals = true;
+      
+      // Show first meal for this type
+      const meal = meals[0];
       const mealElement = document.createElement("div");
       mealElement.className = `calendar-meal ${meal.type} ${
         meal.is_completed ? "completed" : ""
@@ -662,7 +689,7 @@ function createDayCell(date, currentMonth, isWeekView = false) {
       checkbox.checked = meal.is_completed;
       checkbox.disabled = meal.is_future;
       checkbox.addEventListener("click", (e) => {
-        e.stopPropagation(); // Prevent day click handler
+        e.stopPropagation();
         if (!checkbox.disabled) {
           toggleMealCompletion(meal.meal_id, checkbox.checked, date.toISOString().split("T")[0]);
         }
@@ -671,36 +698,40 @@ function createDayCell(date, currentMonth, isWeekView = false) {
       // Create meal name text
       const mealNameText = document.createElement("span");
       mealNameText.className = "meal-name-text";
-      mealNameText.textContent = getDishName(meal);
+      
+      // Show count if multiple meals of same type
+      const displayName = meals.length === 1 ? 
+        getDishName(meal) : 
+        `${getDishName(meal)} +${meals.length - 1}`;
+        
+      mealNameText.textContent = displayName;
       mealNameText.title = `${meal.type}: ${meal.name}`;
 
       // Make meal name clickable for details
       mealNameText.style.cursor = "pointer";
       mealNameText.addEventListener("click", (e) => {
-        e.stopPropagation(); // Prevent day click handler
-        showMealDetails(meal);
+        e.stopPropagation();
+        if (meals.length === 1) {
+          showMealDetails(meal);
+        } else {
+          showMealSelectionModal(date, meals);
+        }
       });
 
       mealElement.appendChild(checkbox);
       mealElement.appendChild(mealNameText);
       mealsContainer.appendChild(mealElement);
-    });
-
-    if (dayMeals.length > 3) {
-      const countElement = document.createElement("div");
-      countElement.className = "calendar-meal-count";
-      countElement.textContent = `+${dayMeals.length - 3} more`;
-      countElement.style.cursor = "pointer";
-      countElement.title = "Click to see all meals for this day";
-
-      // Show meal selection modal when clicking "+X more"
-      countElement.addEventListener("click", (e) => {
-        e.stopPropagation(); // Prevent day click handler
-        showMealSelectionModal(date, dayMeals);
-      });
-
-      mealsContainer.appendChild(countElement);
+    } else {
+      // Create invisible empty slot for month view (maintains spacing)
+      const mealElement = document.createElement("div");
+      mealElement.className = `calendar-meal ${type} empty-meal-slot`;
+      // Empty content - completely blank but maintains height
+      mealsContainer.appendChild(mealElement);
     }
+  });
+
+  if (hasAnyMeals) {
+    dayCell.classList.add("has-meals");
   }
 
   dayCell.appendChild(mealsContainer);
