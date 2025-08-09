@@ -173,6 +173,180 @@
         padding-left: 2.5rem !important;
       }
 
+      /* Toggle Switch Styles */
+      .toggle-title-row {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        margin-bottom: var(--spacing-xs);
+      }
+
+      .toggle-container {
+        position: relative;
+        display: inline-block;
+        width: 60px;
+        height: 32px;
+        cursor: pointer;
+      }
+
+      .toggle-container input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+
+      .toggle-slider {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: var(--border-medium);
+        border-radius: 32px;
+        transition: background-color 0.3s ease;
+        border: 2px solid var(--border-light);
+      }
+
+      .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 24px;
+        width: 24px;
+        left: 2px;
+        bottom: 2px;
+        background-color: var(--bg-primary);
+        border-radius: 50%;
+        transition: transform 0.3s ease;
+        box-shadow: var(--shadow-sm);
+      }
+
+      .toggle-container input:checked + .toggle-slider {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+      }
+
+      .toggle-container input:checked + .toggle-slider:before {
+        transform: translateX(28px);
+      }
+
+      .toggle-container:hover .toggle-slider {
+        box-shadow: var(--shadow-md);
+      }
+
+      .info-icon {
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        cursor: pointer;
+        padding: 2px;
+        border-radius: 50%;
+        transition: all 0.2s ease;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        height: 20px;
+        margin-top: -1px;
+      }
+
+      .info-icon:hover {
+        color: var(--primary-color);
+        background: rgba(16, 185, 129, 0.1);
+        transform: scale(1.1);
+      }
+
+
+      /* Info Popup Styles */
+      .info-popup {
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--bg-primary);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-lg);
+        padding: var(--spacing-md);
+        box-shadow: var(--shadow-xl);
+        z-index: 1000;
+        width: 320px;
+        margin-bottom: 8px;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+        pointer-events: none;
+      }
+
+      .info-popup.show {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+        transform: translateX(-50%) translateY(-4px);
+      }
+
+      .info-popup::after {
+        content: '';
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 0;
+        border-left: 8px solid transparent;
+        border-right: 8px solid transparent;
+        border-top: 8px solid var(--bg-primary);
+      }
+
+      .info-popup-title {
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-xs);
+        font-size: 1rem;
+      }
+
+      .info-popup-content {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+        line-height: 1.5;
+        margin-bottom: var(--spacing-sm);
+      }
+
+      .info-popup-examples {
+        margin-top: var(--spacing-sm);
+      }
+
+      .info-popup-examples h5 {
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-xs);
+        font-size: 0.875rem;
+      }
+
+      .info-popup-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .info-popup-list li {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--spacing-xs);
+        margin-bottom: var(--spacing-xs);
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+      }
+
+      .info-popup-list li i {
+        color: var(--primary-color);
+        margin-top: 2px;
+        font-size: 0.7rem;
+      }
+
+      .info-icon-container {
+        position: relative;
+      }
+
       /* Meal Plan Preview Styles */
       .meal-plan-preview {
         background: linear-gradient(
@@ -884,6 +1058,11 @@
 
         .generate-form {
           grid-template-columns: 1fr;
+        }
+
+        .toggle-title-row {
+          flex-wrap: wrap;
+          gap: var(--spacing-sm);
         }
 
         .plans-grid {
@@ -2662,6 +2841,36 @@
               <option value="90">1.5 hours</option>
               <option value="120">2 hours</option>
             </select>
+          </div>
+
+          <div class="form-group">
+            <div class="toggle-title-row">
+              <span class="form-label">Minimal Cooking Sessions</span>
+              <div class="info-icon-container">
+                <button type="button" class="info-icon" id="cookingSessionsInfo">
+                  <i class="fas fa-question-circle"></i>
+                </button>
+                <div class="info-popup" id="cookingSessionsPopup">
+                  <div class="info-popup-title">Minimal Cooking Sessions</div>
+                  <div class="info-popup-content">
+                    When enabled, this mode focuses on efficiency by reusing recipes across multiple days, reducing the variety but minimizing your time in the kitchen and grocery costs.
+                  </div>
+                  <div class="info-popup-examples">
+                    <h5>Benefits:</h5>
+                    <ul class="info-popup-list">
+                      <li><i class="fas fa-clock"></i> Fewer cooking sessions overall</li>
+                      <li><i class="fas fa-dollar-sign"></i> Lower grocery costs through bulk ingredients</li>
+                      <li><i class="fas fa-list"></i> Simpler shopping lists</li>
+                      <li><i class="fas fa-refrigerator"></i> Better meal prep and storage planning</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <label class="toggle-container">
+              <input type="checkbox" id="minimal_cooking_sessions" name="minimal_cooking_sessions" />
+              <span class="toggle-slider"></span>
+            </label>
           </div>
         </form>
 
