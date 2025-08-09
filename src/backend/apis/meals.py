@@ -715,7 +715,7 @@ CRITICAL: In the JSON response, the "day" field must be a NUMBER (1, 2, 3, etc.)
 Respond with a valid JSON object in exactly this format:
 
 {{
-  "minimal_cooking_sessions": true,
+  "minimal_cooking_sessions": {minimal_sessions_text},
   "days": [
     {{
       "day": 1,
