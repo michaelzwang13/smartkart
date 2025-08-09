@@ -87,7 +87,9 @@ async function displayMealPlan(mealPlan) {
   const { plan_info, recipes, batch_prep, shopping_list, fuzzy_matching } = mealPlan;
 
   // Update page title
-  document.getElementById("planTitle").textContent = plan_info.plan_name;
+  const titleInput = document.getElementById("planTitle");
+  titleInput.value = plan_info.plan_name;
+  titleInput.dataset.originalValue = plan_info.plan_name;
 
   // Display plan info with fuzzy matching summary
   displayPlanInfo(plan_info, fuzzy_matching?.summary);
@@ -1180,3 +1182,95 @@ async function addSelectedToShoppingList() {
     addButton.disabled = false;
   }
 }
+
+// Editable Title Functions
+function initializeEditableTitle() {
+  const titleInput = document.getElementById('planTitle');
+  
+  if (!titleInput) return;
+  
+  // Add event listeners
+  titleInput.addEventListener('blur', savePlanName);
+  titleInput.addEventListener('keydown', handleTitleKeydown);
+}
+
+function handleTitleKeydown(event) {
+  // Save on Enter key
+  if (event.key === 'Enter') {
+    event.target.blur();
+  }
+  
+  // Cancel on Escape key
+  if (event.key === 'Escape') {
+    // Reset to original value
+    const originalName = event.target.dataset.originalValue || '';
+    event.target.value = originalName;
+    event.target.blur();
+  }
+}
+
+async function savePlanName() {
+  const titleInput = document.getElementById('planTitle');
+  if (!titleInput) return;
+  
+  const newName = titleInput.value.trim();
+  const originalName = titleInput.dataset.originalValue || '';
+  
+  // If name hasn't changed or is empty, don't save
+  if (!newName || newName === originalName) {
+    if (!newName) {
+      titleInput.value = originalName; // Restore original if empty
+    }
+    return;
+  }
+  
+  // Validate length
+  if (newName.length > 21) {
+    showNotification('Plan name must be 21 characters or less', 'error');
+    titleInput.value = originalName;
+    return;
+  }
+  
+  try {
+    // Show saving state
+    titleInput.disabled = true;
+    titleInput.style.opacity = '0.7';
+    
+    const response = await fetch(`/api/meal-plans/${planId}/name`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name: newName
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      // Update stored original value
+      titleInput.dataset.originalValue = newName;
+      showNotification('Meal plan name updated successfully', 'success');
+    } else {
+      throw new Error(data.message || 'Failed to update meal plan name');
+    }
+    
+  } catch (error) {
+    console.error('Error updating meal plan name:', error);
+    showNotification('Failed to update name: ' + error.message, 'error');
+    
+    // Restore original name on error
+    titleInput.value = originalName;
+    
+  } finally {
+    // Restore input state
+    titleInput.disabled = false;
+    titleInput.style.opacity = '';
+  }
+}
+
+// Initialize editable title when page loads
+document.addEventListener('DOMContentLoaded', function() {
+  initializeEditableTitle();
+});

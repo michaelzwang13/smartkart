@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, session
 from src.database import get_db
-from src.timezone_utils import get_user_current_date, get_user_date_range_utc, is_date_today_for_user
+from src.timezone_utils import get_user_current_date
 import json
 from datetime import datetime, timedelta
 
@@ -25,6 +25,7 @@ def generate_meal_plan():
     dietary_preference = data.get("dietary_preference", "none")
     budget = data.get("budget")
     cooking_time = data.get("cooking_time", 60)
+    minimal_cooking_sessions = data.get("minimal_cooking_sessions", False)
 
     try:
         days = int(days)
@@ -130,14 +131,15 @@ def generate_meal_plan():
             dietary_preference=dietary_preference,
             budget=budget,
             cooking_time=cooking_time,
-            blocked_slots=blocked_slots
+            blocked_slots=blocked_slots,
+            minimal_cooking_sessions=minimal_cooking_sessions
         )
 
         if not meal_plan_data:
             return jsonify({"success": False, "message": "Failed to generate meal plan. Please try again."})
 
         # Create meal plan session
-        session_name = f"AI Meal Plan - {start_date.strftime('%b %d')}"
+        session_name = f"Meal Plan - {start_date.strftime('%b %d')}"
         generation_prompt = f"Generated plan for {days} days with {len(ingredients)} ingredients, {dietary_preference} diet, ${budget} budget, {cooking_time}min cooking time"
 
         session_query = """
@@ -157,15 +159,63 @@ def generate_meal_plan():
         recipe_template_map = {}
 
         for day_data in meal_plan_data.get("days", []):
-            meal_date = start_date + timedelta(days=day_data.get("day", 1) - 1)
+            day_value = day_data.get("day", 1)
+            print(f"DEBUG: day_value = {day_value}, type = {type(day_value)}")
+            
+            # Handle different possible formats for the day field
+            if isinstance(day_value, str):
+                # Check if it's a date string
+                if '-' in str(day_value):
+                    # It's a date string, extract day number from index
+                    day_number = meal_plan_data.get("days", []).index(day_data) + 1
+                    print(f"DEBUG: Using index-based day number: {day_number}")
+                else:
+                    # It's a string number
+                    day_number = int(day_value)
+            else:
+                # It's already a number
+                day_number = int(day_value)
+            
+            meal_date = start_date + timedelta(days=day_number - 1)
+            print(f"DEBUG: Final meal_date = {meal_date}")
             
             for meal_type in ["breakfast", "lunch", "dinner"]:
                 if meal_type in day_data:
                     recipe_data = day_data[meal_type]
-                    recipe_name = recipe_data.get("name", "")
+                    
+                    # Check if this is a reused meal
+                    if "reused_from_day" in recipe_data:
+                        reused_day = recipe_data["reused_from_day"]
+                        print(f"DEBUG: Found reused meal from day {reused_day}")
+                        
+                        # Find the original meal from the specified day
+                        original_meal = None
+                        for original_day_data in meal_plan_data.get("days", []):
+                            original_day_number = original_day_data.get("day")
+                            if original_day_number == reused_day and meal_type in original_day_data:
+                                original_meal = original_day_data[meal_type]
+                                break
+                        
+                        if original_meal:
+                            original_name = original_meal.get("name", f"Custom {meal_type.title()}")
+                            recipe_name = f"Leftovers of {original_name}"
+                            
+                            # Copy the original recipe data but update the name
+                            recipe_data = original_meal.copy()
+                            recipe_data["name"] = recipe_name
+                            
+                            print(f"DEBUG: Created leftover meal: {recipe_name}")
+                        else:
+                            # Fallback if original meal not found
+                            recipe_name = f"Leftovers of Custom {meal_type.title()}"
+                            recipe_data = {"name": recipe_name}
+                    else:
+                        recipe_name = recipe_data.get("name", "")
 
                     # Get or create recipe template
+                    print(f"DEBUG: Creating template for {recipe_name} ({meal_type})")
                     template_id = get_or_create_recipe_template(cursor, recipe_data, meal_type)
+                    print(f"DEBUG: Created template_id = {template_id}")
                     recipe_template_map[template_id] = recipe_data
 
                     # Create individual meal
@@ -210,7 +260,27 @@ def generate_meal_plan():
 def get_or_create_recipe_template(cursor, recipe_data, meal_type):
     """Get existing recipe template or create new one"""
     recipe_name = recipe_data.get("name", "")
-    instructions = recipe_data.get("instructions", "")
+    
+    # Handle instructions - convert array to string if needed
+    instructions_raw = recipe_data.get("instructions", "")
+    if isinstance(instructions_raw, list):
+        # Check if steps are already numbered
+        instructions_list = []
+        for i, step in enumerate(instructions_raw):
+            step_str = str(step).strip()
+            # Check if step already starts with a number and period (e.g., "1. ")
+            if step_str and not (step_str[0].isdigit() and '. ' in step_str[:4]):
+                # Add numbering if not already numbered
+                instructions_list.append(f"{i+1}. {step_str}")
+            else:
+                # Keep as-is if already numbered
+                instructions_list.append(step_str)
+        instructions = "\n".join(instructions_list)
+        print(f"DEBUG: Converted instructions array to string: {len(instructions_raw)} steps")
+    else:
+        instructions = instructions_raw
+    
+    print(f"DEBUG: Final instructions type: {type(instructions)}")
     
     # Check if template already exists
     check_query = """
@@ -245,20 +315,26 @@ def get_or_create_recipe_template(cursor, recipe_data, meal_type):
     template_id = cursor.lastrowid
     
     # Add ingredients
-    for ingredient in recipe_data.get("ingredients", []):
+    ingredients_list = recipe_data.get("ingredients", [])
+    print(f"DEBUG: Adding {len(ingredients_list)} ingredients for template {template_id}")
+    
+    for i, ingredient in enumerate(ingredients_list):
+        print(f"DEBUG: Ingredient {i}: {ingredient}")
         ingredient_query = """
             INSERT INTO template_ingredients (
                 template_id, ingredient_name, quantity, unit, notes, estimated_cost
             ) VALUES (%s, %s, %s, %s, %s, %s)
         """
-        cursor.execute(ingredient_query, (
+        ingredient_values = (
             template_id,
             ingredient.get("name", ""),
             ingredient.get("quantity", 1),
             ingredient.get("unit", ""),
             ingredient.get("notes", ""),
             ingredient.get("cost", 0)
-        ))
+        )
+        print(f"DEBUG: Ingredient values: {ingredient_values}")
+        cursor.execute(ingredient_query, ingredient_values)
     
     return template_id
 
@@ -606,7 +682,7 @@ def delete_meal(meal_id):
 
 
 # Import AI generation function from the old file
-def generate_meal_plan_with_ai(days, start_date, ingredients, dietary_preference, budget, cooking_time, blocked_slots=None):
+def generate_meal_plan_with_ai(days, start_date, ingredients, dietary_preference, budget, cooking_time, blocked_slots=None, minimal_cooking_sessions=False):
     """Use Gemini AI to generate a structured meal plan"""
     import os
     import google.generativeai as genai
@@ -630,23 +706,55 @@ def generate_meal_plan_with_ai(days, start_date, ingredients, dietary_preference
             blocked_list = [f"{date.strftime('%Y-%m-%d')} {meal_type}" for date, meal_type in blocked_slots]
             blocked_info = f"\nSKIP these locked meal slots: {', '.join(blocked_list)}"
 
+        # Format the minimal cooking sessions mode setting
+        minimal_sessions_text = "true" if minimal_cooking_sessions else "false"
+        budget_text = f"${budget}" if budget else "No limit"
+        start_date_text = start_date.strftime('%B %d, %Y')
+        
         # Create detailed prompt for meal planning
-        prompt = f"""You are a professional meal prep consultant. Create a detailed {days}-day meal plan starting from {start_date.strftime('%B %d, %Y')} with the following requirements:
+        prompt = f'''You are a professional meal prep consultant and nutrition planner. Create a detailed {days}-day meal plan starting from {start_date_text} with the following requirements:
+
+IMPORTANT: Use numeric day numbers (1, 2, 3, etc.) NOT dates in the "day" field.
 
 REQUIREMENTS:
 - Days: {days}
 - Available ingredients: {ingredients_text}
 - Dietary preference: {dietary_preference}
-- Budget limit: ${budget if budget else 'No limit'}
+- Budget limit: {budget_text}
 - Max cooking time per day: {cooking_time} minutes
+- Minimal cooking sessions mode: {minimal_sessions_text} (true or false)
 - Include breakfast, lunch, and dinner for each day
 - Focus on meal prep efficiency and batch cooking
 - Prioritize using available ingredients first{blocked_info}
 
-Do not use fractions like 1/2 — convert them to decimals (e.g., 0.5) to ensure valid JSON
-IMPORTANT: Respond with a valid JSON object in exactly this format:
+If "minimal_cooking_sessions" is true:
+- Minimize recipe variety by reusing the same meals for multiple days
+- Show repeated meals using the "reused_from_day" field
+- Plan larger batch prep sessions covering multiple days
+- Add a "storage_plan" section listing fridge/freezer life for each recipe
+- Emphasize cost savings and fewer total ingredients
+
+If "minimal_cooking_sessions" is false:
+- Provide unique recipes for each meal with more variety in flavors and ingredients
+- Focus on balanced variety while still using pantry items first
+
+For all plans:
+- Make cooking "instructions" a step-by-step array with clear numbered steps, each including timing and equipment
+- Include "make_ahead_tips", "storage", and "reheat_instructions" for every recipe
+- Provide "macros" (protein, carbs, fat in grams) along with "calories"
+- Include "alternate_ingredients" for substitutions
+- Maintain flavor and ingredient balance across the plan
+
+Do not use fractions like 1/2 - convert them to decimals (e.g., 0.5) to ensure valid JSON
+Do not wrap any times like (10 min) in the instructions. Just add times in the instructions themselves such as Roast broccoli for 20 minutes
+Ingredient quantity must be a number. If it's adding spice to taste, just use 1 tsp
+
+CRITICAL: In the JSON response, the "day" field must be a NUMBER (1, 2, 3, etc.), never a date string.
+
+Respond with a valid JSON object in exactly this format:
 
 {{
+  "minimal_cooking_sessions": {minimal_sessions_text},
   "days": [
     {{
       "day": 1,
@@ -659,32 +767,51 @@ IMPORTANT: Respond with a valid JSON object in exactly this format:
         "cost": 4.50,
         "difficulty": "easy",
         "calories": 350,
-        "instructions": "Step-by-step cooking instructions",
-        "ingredients": [
-          {{"name": "eggs", "quantity": 2, "unit": "pcs", "notes": "", "cost": 1.00}},
-          {{"name": "bread", "quantity": 2, "unit": "slices", "notes": "whole wheat", "cost": 0.50}}
+        "macros": {{"protein": 20, "carbs": 30, "fat": 10}},
+        "instructions": [
+          "Step 1: ...",
+          "Step 2: ..."
         ],
+        "ingredients": [
+          {{"name": "eggs", "quantity": 2, "unit": "pcs", "notes": "", "cost": 1.00}}
+        ],
+        "make_ahead_tips": "Chop vegetables the night before",
+        "storage": "Store in airtight container for up to 3 days in fridge",
+        "reheat_instructions": "Microwave for 60 seconds or reheat in skillet on low heat for 5 minutes",
         "notes": "Can be prepped night before"
       }},
-      "lunch": {{ ... }},
-      "dinner": {{ ... }}
+      "lunch": {{"...": "..."}},
+      "dinner": {{"...": "..."}}
     }},
-    {{ "day": 2, ... }}
+    {{
+      "day": 2,
+      "breakfast": {{"reused_from_day": 1}},
+      "lunch": {{"reused_from_day": 1}},
+      "dinner": {{"reused_from_day": 1}}
+    }}
   ],
   "batch_prep": [
     {{
-      "session_name": "Sunday Prep Session",
+      "session_name": "Main Cooking Session",
       "order": 1,
-      "description": "Wash and chop all vegetables",
-      "time": 30,
-      "recipes": "Day 1-3 meals",
-      "equipment": "Sharp knife, cutting board",
-      "tips": "Store in airtight containers"
+      "description": "Prepare all breakfasts, lunches, and dinners for Days 1-4 in one batch",
+      "time": 180,
+      "recipes": "All meals for Days 1-4",
+      "equipment": "Large pot, oven, storage containers",
+      "tips": "Cool completely before refrigerating or freezing"
+    }}
+  ],
+  "storage_plan": [
+    {{
+      "recipe": "Overnight Oats with Berries",
+      "fridge_life_days": 4,
+      "freezer_life_days": 0,
+      "notes": "Best eaten fresh"
     }}
   ]
 }}
 
-Generate the complete meal plan now:"""
+Generate the complete meal plan now. Remember to convert fractions into decimal'''
 
         # Generate the meal plan
         response = model.generate_content(prompt)
@@ -703,6 +830,7 @@ Generate the complete meal plan now:"""
         # Parse JSON response
         try:
             meal_plan = json.loads(response_text)
+            print("FULL RAW RESPONSE:\n", response.text)
             print(f"DEBUG: Successfully parsed meal plan with {len(meal_plan.get('days', []))} days")
             return meal_plan
         except json.JSONDecodeError as e:
@@ -733,6 +861,12 @@ def generate_session_shopping_list_with_fuzzy_matching(cursor, session_id, user_
 
         # Get ingredients for all templates used in this session
         template_ids = [meal['template_id'] for meal in session_meals]
+        print(f"DEBUG: template_ids = {template_ids}")
+        
+        if not template_ids:
+            print("DEBUG: No template IDs found, skipping ingredient generation")
+            return
+        
         placeholders = ','.join(['%s'] * len(template_ids))
         
         ingredients_query = f"""
@@ -740,6 +874,8 @@ def generate_session_shopping_list_with_fuzzy_matching(cursor, session_id, user_
             FROM template_ingredients ti
             WHERE ti.template_id IN ({placeholders})
         """
+        print(f"DEBUG: ingredients_query = {ingredients_query}")
+        print(f"DEBUG: template_ids for query = {template_ids}")
         cursor.execute(ingredients_query, template_ids)
         ingredients = cursor.fetchall()
 

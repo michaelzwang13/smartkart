@@ -284,6 +284,9 @@ document.addEventListener("DOMContentLoaded", function () {
   document
     .getElementById("generateBtn")
     .addEventListener("click", generateMealPlan);
+
+  // Setup info popup functionality
+  setupInfoPopup();
 });
 
 function initializeCalendar() {
@@ -941,6 +944,19 @@ function createPlanCard(plan) {
         </div>
       </div>
     `;
+  } else {
+    // Show placeholder for meal plans without pantry analysis
+    fuzzyMatchingHtml = `
+      <div class="fuzzy-summary no-analysis">
+        <div class="fuzzy-header">
+          <i class="fas fa-info-circle"></i>
+          <span>Pantry Analysis</span>
+        </div>
+        <div class="fuzzy-placeholder">
+          <span class="placeholder-text">Pantry analysis not enabled for this meal plan</span>
+        </div>
+      </div>
+    `;
   }
 
   card.innerHTML = `
@@ -1385,7 +1401,6 @@ function showMealConflictWarning(conflicts) {
                 Cannot generate meal plan because there are existing meals on the selected dates: <strong>${conflictDates}</strong>.
                 <br><br>
                 You have ${conflicts.totalConflicts} existing meal(s) in this date range. Please choose a different date range or delete the conflicting meals first.
-                ${detailText ? `<br><br><small style="color: var(--text-secondary);">${detailText.replace(/\n/g, '<br>')}</small>` : ''}
             </p>
             <div class="warning-actions">
                 <button class="btn btn-secondary" onclick="closeMealConflictWarning(); navigateToConflictDate('${conflicts.conflictingDates[0]}')">
@@ -1513,8 +1528,11 @@ async function generateMealPlan() {
         ? parseFloat(formData.get("budget"))
         : null,
       cooking_time: parseInt(formData.get("cooking_time")),
+      minimal_cooking_sessions: formData.has("minimal_cooking_sessions"),
     };
 
+    console.log(data)
+    
     const response = await fetch("/api/generate-meal-plan", {
       method: "POST",
       headers: {
@@ -1524,6 +1542,8 @@ async function generateMealPlan() {
     });
 
     const result = await response.json();
+
+    console.log(result)
 
     if (result.success) {
       // Show success message and reload plans
@@ -2123,5 +2143,49 @@ function initializeFormHandlers() {
 
   if (startDateInput) {
     startDateInput.addEventListener("change", updateCalendarPreview);
+  }
+}
+
+function setupInfoPopup() {
+  const infoIcon = document.getElementById('cookingSessionsInfo');
+  const popup = document.getElementById('cookingSessionsPopup');
+  let isPopupVisible = false;
+
+  if (!infoIcon || !popup) return;
+
+  // Show popup on click
+  infoIcon.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (isPopupVisible) {
+      hidePopup();
+    } else {
+      showPopup();
+    }
+  });
+
+  // Hide popup when clicking outside
+  document.addEventListener('click', (e) => {
+    if (isPopupVisible && !popup.contains(e.target) && !infoIcon.contains(e.target)) {
+      hidePopup();
+    }
+  });
+
+  // Hide popup on escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && isPopupVisible) {
+      hidePopup();
+    }
+  });
+
+  function showPopup() {
+    popup.classList.add('show');
+    isPopupVisible = true;
+  }
+
+  function hidePopup() {
+    popup.classList.remove('show');
+    isPopupVisible = false;
   }
 }
