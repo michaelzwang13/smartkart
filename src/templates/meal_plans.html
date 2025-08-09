@@ -779,13 +779,12 @@
         font-size: 0.75rem;
         font-weight: 500;
         overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
         transition: all 0.2s ease;
         display: flex;
-        align-items: center;
-        gap: 4px;
+        flex-direction: column;
+        gap: 1px;
         position: relative;
+        min-height: 24px;
       }
 
       .calendar-meal:hover {
@@ -849,6 +848,13 @@
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+      }
+      
+      .meal-header {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        width: 100%;
       }
 
       .calendar-meal-count {
@@ -960,6 +966,203 @@
         -webkit-line-clamp: 2;
         line-clamp: 2;
         -webkit-box-orient: vertical;
+      }
+      
+      .meal-nutrition {
+        font-size: 0.6rem;
+        opacity: 0.9;
+        margin-top: 2px;
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+      
+      /* Smaller nutrition text for month view */
+      .calendar-meal .meal-nutrition {
+        font-size: 0.5rem;
+        gap: 4px;
+        margin-top: 1px;
+      }
+      
+      .nutrition-item {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+      }
+      
+      .nutrition-calories {
+        font-weight: 600;
+      }
+      
+      .nutrition-macros {
+        opacity: 0.8;
+      }
+      
+      /* Daily Nutrition Summary */
+      .nutrition-summary {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-lg);
+        padding: var(--spacing-lg);
+        margin-top: var(--spacing-lg);
+        box-shadow: var(--shadow-sm);
+      }
+      
+      .nutrition-summary-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-md);
+        border-bottom: 1px solid var(--border-light);
+        padding-bottom: var(--spacing-sm);
+      }
+      
+      .nutrition-summary-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+      }
+      
+      .nutrition-date-selector {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+      }
+      
+      .date-nav-btn {
+        background: none;
+        border: 1px solid var(--border-light);
+        padding: 4px 8px;
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        color: var(--text-secondary);
+        transition: all 0.2s ease;
+      }
+      
+      .date-nav-btn:hover {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+      }
+      
+      .nutrition-overview {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-lg);
+      }
+      
+      .nutrition-stat {
+        text-align: center;
+        padding: var(--spacing-md);
+        background: var(--bg-tertiary);
+        border-radius: var(--radius-md);
+        transition: transform 0.2s ease;
+      }
+      
+      .nutrition-stat:hover {
+        transform: translateY(-2px);
+      }
+      
+      .nutrition-stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        display: block;
+      }
+      
+      .nutrition-stat-label {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        font-weight: 500;
+        margin-top: 4px;
+      }
+      
+      .nutrition-stat-unit {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+      }
+      
+      .nutrition-breakdown {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--spacing-md);
+      }
+      
+      .nutrition-category {
+        background: var(--bg-primary);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-md);
+        padding: var(--spacing-md);
+      }
+      
+      .nutrition-category-title {
+        font-weight: 600;
+        margin-bottom: var(--spacing-sm);
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+      }
+      
+      .macro-bar {
+        margin-bottom: var(--spacing-sm);
+      }
+      
+      .macro-bar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 4px;
+      }
+      
+      .macro-name {
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: var(--text-secondary);
+      }
+      
+      .macro-value {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+      
+      .macro-progress {
+        height: 8px;
+        background: var(--bg-tertiary);
+        border-radius: 4px;
+        overflow: hidden;
+        position: relative;
+      }
+      
+      .macro-progress-fill {
+        height: 100%;
+        transition: width 0.3s ease;
+        border-radius: 4px;
+      }
+      
+      .macro-progress-fill.protein {
+        background: linear-gradient(90deg, #ff6b6b, #ff5252);
+      }
+      
+      .macro-progress-fill.carbs {
+        background: linear-gradient(90deg, #4ecdc4, #26c6da);
+      }
+      
+      .macro-progress-fill.fat {
+        background: linear-gradient(90deg, #ffe66d, #ffcc02);
+      }
+      
+      .nutrition-loading {
+        text-align: center;
+        color: var(--text-muted);
+        font-style: italic;
+        padding: var(--spacing-lg);
       }
 
       .week-view .calendar-meal-slot:not(.has-meal) .calendar-meal-type {
@@ -3075,6 +3278,32 @@
         <div class="calendar-container">
           <div class="calendar-grid" id="calendarGrid">
             <!-- Calendar will be generated here -->
+          </div>
+        </div>
+        
+        <!-- Daily Nutrition Summary -->
+        <div class="nutrition-summary" id="nutritionSummary">
+          <div class="nutrition-summary-header">
+            <div class="nutrition-summary-title">
+              <i class="fas fa-chart-pie"></i>
+              Daily Nutrition
+            </div>
+            <div class="nutrition-date-selector">
+              <button class="date-nav-btn" id="prevNutritionDate">
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <span id="currentNutritionDate"></span>
+              <button class="date-nav-btn" id="nextNutritionDate">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+          
+          <div id="nutritionContent">
+            <div class="nutrition-loading">
+              <i class="fas fa-spinner fa-spin"></i>
+              Loading nutrition data...
+            </div>
           </div>
         </div>
 

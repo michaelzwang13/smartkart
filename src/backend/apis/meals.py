@@ -7,6 +7,159 @@ from datetime import datetime, timedelta
 meals_bp = Blueprint("meals", __name__, url_prefix="/api")
 
 
+@meals_bp.route("/nutrition/<int:meal_id>", methods=["GET"])
+def get_meal_nutrition(meal_id):
+    """Get nutrition data for a specific meal"""
+    if "user_ID" not in session:
+        return jsonify({"success": False, "message": "Not authenticated"})
+    
+    user_id = session["user_ID"]
+    db = get_db()
+    cursor = db.cursor()
+    
+    try:
+        # Get meal nutrition data
+        nutrition_query = """
+            SELECT mn.*, m.meal_type, m.meal_date, rt.name as recipe_name
+            FROM meal_nutrition mn
+            JOIN meals m ON mn.meal_id = m.meal_id
+            LEFT JOIN recipe_templates rt ON m.recipe_template_id = rt.template_id
+            WHERE mn.meal_id = %s AND mn.user_id = %s
+        """
+        cursor.execute(nutrition_query, (meal_id, user_id))
+        nutrition_data = cursor.fetchone()
+        
+        if not nutrition_data:
+            return jsonify({"success": False, "message": "Nutrition data not found"})
+        
+        # Format the response
+        response_data = {
+            "success": True,
+            "nutrition": {
+                "meal_id": nutrition_data["meal_id"],
+                "recipe_name": nutrition_data["recipe_name"],
+                "meal_type": nutrition_data["meal_type"],
+                "meal_date": nutrition_data["meal_date"].strftime("%Y-%m-%d"),
+                "calories": float(nutrition_data["calories"]) if nutrition_data["calories"] else None,
+                "macros": {
+                    "protein": float(nutrition_data["protein_g"]) if nutrition_data["protein_g"] else None,
+                    "carbs": float(nutrition_data["carbohydrates_g"]) if nutrition_data["carbohydrates_g"] else None,
+                    "fat": float(nutrition_data["fat_g"]) if nutrition_data["fat_g"] else None
+                },
+                "fiber": float(nutrition_data["fiber_g"]) if nutrition_data["fiber_g"] else None,
+                "sodium": float(nutrition_data["sodium_mg"]) if nutrition_data["sodium_mg"] else None,
+                "servings": nutrition_data["servings"],
+                "serving_size": nutrition_data["serving_size"],
+                "source_type": nutrition_data["source_type"],
+                "created_at": nutrition_data["created_at"].strftime("%Y-%m-%d %H:%M:%S")
+            }
+        }
+        
+        return jsonify(response_data)
+        
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Failed to get nutrition data: {str(e)}"})
+    finally:
+        cursor.close()
+
+
+@meals_bp.route("/nutrition/daily/<string:date>", methods=["GET"])
+def get_daily_nutrition_summary(date):
+    """Get daily nutrition summary for a specific date"""
+    if "user_ID" not in session:
+        return jsonify({"success": False, "message": "Not authenticated"})
+    
+    user_id = session["user_ID"]
+    
+    try:
+        target_date = datetime.strptime(date, "%Y-%m-%d").date()
+    except ValueError:
+        return jsonify({"success": False, "message": "Invalid date format. Use YYYY-MM-DD"})
+    
+    db = get_db()
+    cursor = db.cursor()
+    
+    try:
+        # Get all meals and nutrition for the specific date
+        meals_query = """
+            SELECT m.meal_id, m.meal_type, rt.name as recipe_name,
+                   mn.calories, mn.protein_g, mn.carbohydrates_g, mn.fat_g,
+                   mn.fiber_g, mn.sodium_mg, mn.servings, mn.serving_size,
+                   m.is_completed
+            FROM meals m
+            LEFT JOIN meal_nutrition mn ON m.meal_id = mn.meal_id
+            LEFT JOIN recipe_templates rt ON m.recipe_template_id = rt.template_id
+            WHERE m.user_id = %s AND m.meal_date = %s
+            ORDER BY 
+                CASE m.meal_type 
+                    WHEN 'breakfast' THEN 1
+                    WHEN 'lunch' THEN 2
+                    WHEN 'dinner' THEN 3
+                    WHEN 'snack' THEN 4
+                    ELSE 5
+                END
+        """
+        cursor.execute(meals_query, (user_id, target_date))
+        meals_data = cursor.fetchall()
+        
+        # Calculate daily totals
+        daily_totals = {
+            "calories": 0,
+            "protein": 0,
+            "carbs": 0,
+            "fat": 0,
+            "fiber": 0,
+            "sodium": 0
+        }
+        
+        meals_with_nutrition = []
+        
+        for meal in meals_data:
+            meal_nutrition = {
+                "meal_id": meal["meal_id"],
+                "meal_type": meal["meal_type"],
+                "recipe_name": meal["recipe_name"],
+                "is_completed": meal["is_completed"],
+                "nutrition": {
+                    "calories": float(meal["calories"]) if meal["calories"] else 0,
+                    "protein": float(meal["protein_g"]) if meal["protein_g"] else 0,
+                    "carbs": float(meal["carbohydrates_g"]) if meal["carbohydrates_g"] else 0,
+                    "fat": float(meal["fat_g"]) if meal["fat_g"] else 0,
+                    "fiber": float(meal["fiber_g"]) if meal["fiber_g"] else 0,
+                    "sodium": float(meal["sodium_mg"]) if meal["sodium_mg"] else 0
+                },
+                "servings": meal["servings"],
+                "serving_size": meal["serving_size"]
+            }
+            
+            # Add to daily totals if meal is completed (or if we want to show planned vs actual)
+            if meal["is_completed"]:
+                daily_totals["calories"] += meal_nutrition["nutrition"]["calories"]
+                daily_totals["protein"] += meal_nutrition["nutrition"]["protein"]
+                daily_totals["carbs"] += meal_nutrition["nutrition"]["carbs"]
+                daily_totals["fat"] += meal_nutrition["nutrition"]["fat"]
+                daily_totals["fiber"] += meal_nutrition["nutrition"]["fiber"]
+                daily_totals["sodium"] += meal_nutrition["nutrition"]["sodium"]
+            
+            meals_with_nutrition.append(meal_nutrition)
+        
+        response_data = {
+            "success": True,
+            "date": date,
+            "daily_totals": daily_totals,
+            "meals": meals_with_nutrition,
+            "total_meals": len(meals_data),
+            "completed_meals": len([m for m in meals_data if m["is_completed"]])
+        }
+        
+        return jsonify(response_data)
+        
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Failed to get daily nutrition summary: {str(e)}"})
+    finally:
+        cursor.close()
+
+
 @meals_bp.route("/generate-meal-plan", methods=["POST"])
 def generate_meal_plan():
     """Generate a meal plan and store as individual meals"""
@@ -242,6 +395,9 @@ def generate_meal_plan():
                     """
                     cursor.execute(meal_query, (user_id, meal_date, meal_type, template_id, session_id))
                     meal_id = cursor.lastrowid
+                    
+                    # Store nutrition data if available
+                    store_meal_nutrition(cursor, meal_id, user_id, recipe_data)
                     
                     created_meals.append({
                         "meal_id": meal_id,
@@ -771,9 +927,17 @@ For all plans:
 - Include "alternate_ingredients" for substitutions
 - Maintain flavor and ingredient balance across the plan
 
+NUTRITION REQUIREMENTS:
+- Provide detailed and accurate macro estimates for each recipe
+- Calculate "calories" per serving
+- Break down "macros" with protein, carbs, fat in grams
+- Add "fiber" and "sodium" estimates in grams/milligrams  
+- Include "serving_size" description (e.g., "1 cup", "1 plate")
+- Ensure nutrition data is realistic based on ingredients and portions
+
 Do not use fractions like 1/2 - convert them to decimals (e.g., 0.5) to ensure valid JSON
 Do not wrap any times like (10 min) in the instructions. Just add times in the instructions themselves such as Roast broccoli for 20 minutes
-Ingredient quantity must be a number. If it's adding spice to taste, just use 1 tsp
+Ingredient quantity must be a number. Use quantifiable units, do not use splash, taste, bunch, etc.
 
 CRITICAL: In the JSON response, the "day" field must be a NUMBER (1, 2, 3, etc.), never a date string.
 
@@ -794,6 +958,9 @@ Respond with a valid JSON object in exactly this format:
         "difficulty": "easy",
         "calories": 350,
         "macros": {{"protein": 20, "carbs": 30, "fat": 10}},
+        "fiber": 8,
+        "sodium": 150,
+        "serving_size": "1 cup",
         "instructions": [
           "Step 1: ...",
           "Step 2: ..."
@@ -1096,6 +1263,46 @@ def generate_session_batch_prep(cursor, session_id, batch_prep_data):
         print(f"ERROR: Failed to generate batch prep: {str(e)}")
 
 
+def store_meal_nutrition(cursor, meal_id, user_id, recipe_data):
+    """Store nutrition data for a meal if available in recipe_data"""
+    try:
+        # Extract nutrition data from recipe
+        calories = recipe_data.get("calories")
+        macros = recipe_data.get("macros", {})
+        fiber = recipe_data.get("fiber")
+        sodium = recipe_data.get("sodium")
+        servings = recipe_data.get("servings", 1)
+        serving_size = recipe_data.get("serving_size")
+        
+        # Only store if we have at least calories or macros
+        if calories is not None or macros:
+            nutrition_query = """
+                INSERT INTO meal_nutrition (
+                    meal_id, user_id, calories, protein_g, carbohydrates_g, fat_g, 
+                    fiber_g, sodium_mg, servings, serving_size, source_type, ai_model_used
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """
+            
+            cursor.execute(nutrition_query, (
+                meal_id,
+                user_id,
+                calories,
+                macros.get("protein"),
+                macros.get("carbs"),
+                macros.get("fat"), 
+                fiber,
+                sodium,
+                servings,
+                serving_size,
+                'ai_generated',
+                'gemini-1.5-flash-latest'
+            ))
+            
+            print(f"DEBUG: Stored nutrition for meal_id {meal_id}: {calories} calories")
+    except Exception as e:
+        print(f"ERROR: Failed to store nutrition for meal_id {meal_id}: {str(e)}")
+
+
 def categorize_ingredient(ingredient_name):
     """Simple ingredient categorization"""
     name = ingredient_name.lower()
@@ -1112,3 +1319,106 @@ def categorize_ingredient(ingredient_name):
         return "Condiments"
     else:
         return "Other"
+
+
+@meals_bp.route("/nutrition/goals", methods=["GET", "POST"])
+def nutrition_goals():
+    """Get or set user nutrition goals"""
+    if "user_ID" not in session:
+        return jsonify({"success": False, "message": "Not authenticated"})
+    
+    user_id = session["user_ID"]
+    db = get_db()
+    cursor = db.cursor()
+    
+    try:
+        if request.method == "GET":
+            # Get current nutrition goals
+            goals_query = """
+                SELECT * FROM user_nutrition_goals 
+                WHERE user_id = %s AND is_active = TRUE
+                ORDER BY created_at DESC
+                LIMIT 1
+            """
+            cursor.execute(goals_query, (user_id,))
+            goals_data = cursor.fetchone()
+            
+            if goals_data:
+                response_data = {
+                    "success": True,
+                    "goals": {
+                        "daily_calories": float(goals_data["daily_calories_goal"]) if goals_data["daily_calories_goal"] else None,
+                        "daily_protein": float(goals_data["daily_protein_goal_g"]) if goals_data["daily_protein_goal_g"] else None,
+                        "daily_carbs": float(goals_data["daily_carbs_goal_g"]) if goals_data["daily_carbs_goal_g"] else None,
+                        "daily_fat": float(goals_data["daily_fat_goal_g"]) if goals_data["daily_fat_goal_g"] else None,
+                        "daily_fiber": float(goals_data["daily_fiber_goal_g"]) if goals_data["daily_fiber_goal_g"] else None,
+                        "daily_sodium_limit": float(goals_data["daily_sodium_limit_mg"]) if goals_data["daily_sodium_limit_mg"] else None,
+                        "goal_type": goals_data["goal_type"],
+                        "activity_level": goals_data["activity_level"]
+                    }
+                }
+            else:
+                # Return default goals
+                response_data = {
+                    "success": True,
+                    "goals": {
+                        "daily_calories": 2000,
+                        "daily_protein": 150,
+                        "daily_carbs": 250,
+                        "daily_fat": 70,
+                        "daily_fiber": 25,
+                        "daily_sodium_limit": 2300,
+                        "goal_type": "maintenance",
+                        "activity_level": "moderately_active"
+                    }
+                }
+            
+            return jsonify(response_data)
+        
+        elif request.method == "POST":
+            # Update nutrition goals
+            data = request.get_json()
+            if not data:
+                return jsonify({"success": False, "message": "No data provided"})
+            
+            # Deactivate existing goals
+            deactivate_query = "UPDATE user_nutrition_goals SET is_active = FALSE WHERE user_id = %s"
+            cursor.execute(deactivate_query, (user_id,))
+            
+            # Insert new goals
+            insert_query = """
+                INSERT INTO user_nutrition_goals (
+                    user_id, daily_calories_goal, daily_protein_goal_g, daily_carbs_goal_g,
+                    daily_fat_goal_g, daily_fiber_goal_g, daily_sodium_limit_mg,
+                    goal_type, activity_level, age, gender, weight_lbs, height_inches
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """
+            
+            cursor.execute(insert_query, (
+                user_id,
+                data.get("daily_calories"),
+                data.get("daily_protein"),
+                data.get("daily_carbs"),
+                data.get("daily_fat"),
+                data.get("daily_fiber"),
+                data.get("daily_sodium_limit"),
+                data.get("goal_type", "maintenance"),
+                data.get("activity_level", "moderately_active"),
+                data.get("age"),
+                data.get("gender"),
+                data.get("weight_lbs"),
+                data.get("height_inches")
+            ))
+            
+            db.commit()
+            
+            return jsonify({
+                "success": True,
+                "message": "Nutrition goals updated successfully"
+            })
+        
+    except Exception as e:
+        db.rollback()
+        return jsonify({"success": False, "message": f"Failed to manage nutrition goals: {str(e)}"})
+    finally:
+        cursor.close()

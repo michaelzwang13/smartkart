@@ -276,6 +276,7 @@ document.addEventListener("DOMContentLoaded", function () {
   loadMealPlans();
   initializeCalendar();
   initializeGoals();
+  initializeDailyNutrition();
 
   // Initialize form handlers for slider and calendar preview
   initializeFormHandlers();
@@ -578,6 +579,9 @@ function createWeekDayCell(date) {
       mealSlot.innerHTML = `
         <div class="calendar-meal-type">${type}</div>
         <div class="calendar-meal-name">${dishName}</div>
+        <div class="meal-nutrition" id="nutrition-${meals[0].meal_id}">
+          <span class="nutrition-loading" style="opacity: 0.6; font-size: 0.55rem;">Loading nutrition...</span>
+        </div>
         <div class="meal-completion">
             <input type="checkbox" class="meal-checkbox" ${
               meals[0].is_completed ? "checked" : ""
@@ -591,6 +595,9 @@ function createWeekDayCell(date) {
             }</span>
         </div>
         `;
+      
+      // Load nutrition data for this meal
+      loadMealNutrition(meals[0].meal_id);
 
       if (meals[0].is_completed) {
         mealSlot.classList.add("completed");
@@ -747,9 +754,24 @@ function createDayCell(date, currentMonth, isWeekView = false) {
         }
       });
 
-      mealElement.appendChild(checkbox);
-      mealElement.appendChild(mealNameText);
+      // Create meal header (checkbox + name)
+      const mealHeader = document.createElement("div");
+      mealHeader.className = "meal-header";
+      mealHeader.appendChild(checkbox);
+      mealHeader.appendChild(mealNameText);
+
+      // Create nutrition display for month view
+      const nutritionElement = document.createElement("div");
+      nutritionElement.className = "meal-nutrition";
+      nutritionElement.id = `nutrition-${meal.meal_id}`;
+      nutritionElement.innerHTML = '<span class="nutrition-loading" style="opacity: 0.6; font-size: 0.5rem;">Loading...</span>';
+
+      mealElement.appendChild(mealHeader);
+      mealElement.appendChild(nutritionElement);
       mealsContainer.appendChild(mealElement);
+      
+      // Load nutrition data for this meal
+      loadMealNutrition(meal.meal_id);
     } else {
       // Create invisible empty slot for month view (maintains spacing)
       const mealElement = document.createElement("div");
@@ -2428,5 +2450,235 @@ function setupInfoPopup() {
   function hidePopup() {
     popup.classList.remove('show');
     isPopupVisible = false;
+  }
+}
+
+// Function to load and display nutrition data for a meal
+async function loadMealNutrition(mealId) {
+  try {
+    const response = await fetch(`/api/nutrition/${mealId}`);
+    const data = await response.json();
+    
+    const nutritionElement = document.getElementById(`nutrition-${mealId}`);
+    if (!nutritionElement) return;
+    
+    if (data.success && data.nutrition) {
+      const nutrition = data.nutrition;
+      let nutritionHTML = '';
+      
+      // Add calories if available
+      if (nutrition.calories) {
+        nutritionHTML += `<span class="nutrition-item nutrition-calories">${Math.round(nutrition.calories)} cal</span>`;
+      }
+      
+      // Add macros if available
+      const macros = [];
+      if (nutrition.macros.protein) {
+        macros.push(`${Math.round(nutrition.macros.protein)}p`);
+      }
+      if (nutrition.macros.carbs) {
+        macros.push(`${Math.round(nutrition.macros.carbs)}c`);
+      }
+      if (nutrition.macros.fat) {
+        macros.push(`${Math.round(nutrition.macros.fat)}f`);
+      }
+      
+      if (macros.length > 0) {
+        nutritionHTML += `<span class="nutrition-item nutrition-macros">${macros.join('/')}</span>`;
+      }
+      
+      if (nutritionHTML) {
+        nutritionElement.innerHTML = nutritionHTML;
+      } else {
+        nutritionElement.innerHTML = '<span style="opacity: 0.5; font-size: 0.5rem; font-style: italic;">No nutrition</span>';
+      }
+    } else {
+      nutritionElement.innerHTML = '<span style="opacity: 0.5; font-size: 0.5rem; font-style: italic;">No nutrition</span>';
+    }
+  } catch (error) {
+    console.error('Failed to load nutrition:', error);
+    const nutritionElement = document.getElementById(`nutrition-${mealId}`);
+    if (nutritionElement) {
+      nutritionElement.innerHTML = '<span style="opacity: 0.5; font-size: 0.5rem;">-</span>';
+    }
+  }
+}
+
+// Daily nutrition summary variables
+let currentNutritionDate = new Date();
+let userNutritionGoals = null;
+
+// Initialize daily nutrition summary
+function initializeDailyNutrition() {
+  const prevBtn = document.getElementById('prevNutritionDate');
+  const nextBtn = document.getElementById('nextNutritionDate');
+  
+  if (prevBtn && nextBtn) {
+    prevBtn.addEventListener('click', () => {
+      currentNutritionDate.setDate(currentNutritionDate.getDate() - 1);
+      loadDailyNutritionSummary();
+    });
+    
+    nextBtn.addEventListener('click', () => {
+      currentNutritionDate.setDate(currentNutritionDate.getDate() + 1);
+      loadDailyNutritionSummary();
+    });
+  }
+  
+  // Load nutrition goals and current date nutrition
+  loadNutritionGoals().then(() => {
+    loadDailyNutritionSummary();
+  });
+}
+
+// Load daily nutrition summary
+async function loadDailyNutritionSummary() {
+  try {
+    const dateString = currentNutritionDate.toISOString().split('T')[0];
+    const dateDisplay = currentNutritionDate.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short', 
+      day: 'numeric'
+    });
+    
+    // Update date display
+    const dateElement = document.getElementById('currentNutritionDate');
+    if (dateElement) {
+      dateElement.textContent = dateDisplay;
+    }
+    
+    const response = await fetch(`/api/nutrition/daily/${dateString}`);
+    const data = await response.json();
+    
+    const contentElement = document.getElementById('nutritionContent');
+    if (!contentElement) return;
+    
+    if (data.success) {
+      const totals = data.daily_totals;
+      const meals = data.meals;
+      
+      let contentHTML = `
+        <div class="nutrition-overview">
+          <div class="nutrition-stat">
+            <span class="nutrition-stat-value">${Math.round(totals.calories)}</span>
+            <span class="nutrition-stat-label">Calories</span>
+          </div>
+          <div class="nutrition-stat">
+            <span class="nutrition-stat-value">${Math.round(totals.protein)}<span class="nutrition-stat-unit">g</span></span>
+            <span class="nutrition-stat-label">Protein</span>
+          </div>
+          <div class="nutrition-stat">
+            <span class="nutrition-stat-value">${Math.round(totals.carbs)}<span class="nutrition-stat-unit">g</span></span>
+            <span class="nutrition-stat-label">Carbs</span>
+          </div>
+          <div class="nutrition-stat">
+            <span class="nutrition-stat-value">${Math.round(totals.fat)}<span class="nutrition-stat-unit">g</span></span>
+            <span class="nutrition-stat-label">Fat</span>
+          </div>
+        </div>
+        
+        <div class="nutrition-breakdown">
+          <div class="nutrition-category">
+            <div class="nutrition-category-title">
+              <i class="fas fa-dumbbell"></i>
+              Macronutrients
+            </div>
+            <div class="macro-bar">
+              <div class="macro-bar-header">
+                <span class="macro-name">Protein</span>
+                <span class="macro-value">${Math.round(totals.protein)}g</span>
+              </div>
+              <div class="macro-progress">
+                <div class="macro-progress-fill protein" style="width: ${Math.min((totals.protein / (userNutritionGoals?.daily_protein || 150)) * 100, 100)}%"></div>
+              </div>
+            </div>
+            <div class="macro-bar">
+              <div class="macro-bar-header">
+                <span class="macro-name">Carbohydrates</span>
+                <span class="macro-value">${Math.round(totals.carbs)}g</span>
+              </div>
+              <div class="macro-progress">
+                <div class="macro-progress-fill carbs" style="width: ${Math.min((totals.carbs / (userNutritionGoals?.daily_carbs || 250)) * 100, 100)}%"></div>
+              </div>
+            </div>
+            <div class="macro-bar">
+              <div class="macro-bar-header">
+                <span class="macro-name">Fat</span>
+                <span class="macro-value">${Math.round(totals.fat)}g</span>
+              </div>
+              <div class="macro-progress">
+                <div class="macro-progress-fill fat" style="width: ${Math.min((totals.fat / (userNutritionGoals?.daily_fat || 70)) * 100, 100)}%"></div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="nutrition-category">
+            <div class="nutrition-category-title">
+              <i class="fas fa-utensils"></i>
+              Meal Breakdown
+            </div>
+            ${meals.map(meal => `
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding: 8px; background: var(--bg-tertiary); border-radius: 4px;">
+                <div>
+                  <div style="font-weight: 500; font-size: 0.85rem; text-transform: capitalize;">${meal.meal_type}</div>
+                  <div style="font-size: 0.75rem; color: var(--text-secondary);">${meal.recipe_name || 'No recipe'}</div>
+                </div>
+                <div style="text-align: right;">
+                  <div style="font-weight: 600; color: var(--primary-color);">${Math.round(meal.nutrition.calories)} cal</div>
+                  <div style="font-size: 0.7rem; color: var(--text-muted);">${Math.round(meal.nutrition.protein)}p/${Math.round(meal.nutrition.carbs)}c/${Math.round(meal.nutrition.fat)}f</div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+      
+      if (meals.length === 0) {
+        contentHTML = '<div style="text-align: center; color: var(--text-muted); padding: 2rem;">No meals logged for this date</div>';
+      }
+      
+      contentElement.innerHTML = contentHTML;
+    } else {
+      contentElement.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 2rem;">No nutrition data available</div>';
+    }
+  } catch (error) {
+    console.error('Failed to load daily nutrition:', error);
+    const contentElement = document.getElementById('nutritionContent');
+    if (contentElement) {
+      contentElement.innerHTML = '<div style="text-align: center; color: var(--error-color); padding: 2rem;">Failed to load nutrition data</div>';
+    }
+  }
+}
+
+// Load user nutrition goals
+async function loadNutritionGoals() {
+  try {
+    const response = await fetch('/api/nutrition/goals');
+    const data = await response.json();
+    
+    if (data.success) {
+      userNutritionGoals = data.goals;
+      console.log('Loaded nutrition goals:', userNutritionGoals);
+    } else {
+      console.warn('Failed to load nutrition goals, using defaults');
+      userNutritionGoals = {
+        daily_calories: 2000,
+        daily_protein: 150,
+        daily_carbs: 250,
+        daily_fat: 70,
+        daily_fiber: 25,
+        daily_sodium_limit: 2300
+      };
+    }
+  } catch (error) {
+    console.error('Error loading nutrition goals:', error);
+    userNutritionGoals = {
+      daily_calories: 2000,
+      daily_protein: 150,
+      daily_carbs: 250,
+      daily_fat: 70,
+      daily_fiber: 25,
+      daily_sodium_limit: 2300
+    };
   }
 }
