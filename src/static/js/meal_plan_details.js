@@ -430,7 +430,7 @@ function createMealCard(mealType, recipe) {
                     <i class="fas fa-clipboard-list"></i>
                     Instructions
                 </div>
-                <div class="instructions">${recipe.instructions}</div>
+                <div class="instructions">${formatInstructions(recipe.instructions)}</div>
             </div>
         </div>
         
@@ -445,6 +445,45 @@ function createMealCard(mealType, recipe) {
     `;
 
   return mealRow;
+}
+
+function formatInstructions(instructions) {
+  if (!instructions) return '';
+  
+  // Split instructions by numbered steps (1., 2., etc.)
+  const stepRegex = /^(\d+)\.\s*(.+)/gm;
+  const matches = [...instructions.matchAll(stepRegex)];
+  
+  if (matches.length === 0) {
+    // No numbered steps found, return as-is with pre-wrap
+    return instructions;
+  }
+  
+  // Format as proper numbered list
+  let formattedHTML = '<ol class="instructions-list">';
+  
+  matches.forEach((match) => {
+    const [, stepNumber, stepText] = match;
+    formattedHTML += `
+      <li class="instruction-step">
+        <span class="step-number">${stepNumber}.</span>
+        <span class="step-text">${stepText.trim()}</span>
+      </li>
+    `;
+  });
+  
+  formattedHTML += '</ol>';
+  
+  // Check if there's any text after the last numbered step
+  const lastMatch = matches[matches.length - 1];
+  const afterLastStepIndex = lastMatch.index + lastMatch[0].length;
+  const remainingText = instructions.slice(afterLastStepIndex).trim();
+  
+  if (remainingText) {
+    formattedHTML += `<div style=font-style: italic;">${remainingText}</div>`;
+  }
+  
+  return formattedHTML;
 }
 
 function displayBatchPrep(prepSteps) {

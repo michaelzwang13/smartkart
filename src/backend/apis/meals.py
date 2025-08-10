@@ -16,9 +16,7 @@ def get_meal_nutrition(meal_id):
     user_id = session["user_ID"]
     db = get_db()
     cursor = db.cursor()
-    
-    print("SEIFOGJHOSEHGOSHGOSHGHEGOHSEOGHOSEGHOGHEIGOSJEFIOESFJSOFJ")
-    
+        
     try:
         # Get meal nutrition data
         nutrition_query = """
