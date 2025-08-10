@@ -287,7 +287,8 @@ def generate_meal_plan():
             cooking_time=cooking_time,
             blocked_slots=blocked_slots,
             minimal_cooking_sessions=minimal_cooking_sessions,
-            selected_meals=selected_meals
+            selected_meals=selected_meals,
+            nutrition_tracking_enabled=nutrition_tracking_enabled
         )
 
         if not meal_plan_data:
@@ -309,6 +310,10 @@ def generate_meal_plan():
         ))
         session_id = cursor.lastrowid
 
+        # Check if nutrition tracking is enabled for this user
+        from src.backend.views.shopping import get_user_preference
+        nutrition_tracking_enabled = get_user_preference(user_id, "nutrition_tracking_enabled", True)
+        
         # Process each day and create individual meals
         created_meals = []
         recipe_template_map = {}
@@ -396,8 +401,9 @@ def generate_meal_plan():
                     cursor.execute(meal_query, (user_id, meal_date, meal_type, template_id, session_id))
                     meal_id = cursor.lastrowid
                     
-                    # Store nutrition data if available
-                    store_meal_nutrition(cursor, meal_id, user_id, recipe_data)
+                    # Store nutrition data if available and nutrition tracking is enabled
+                    if nutrition_tracking_enabled:
+                        store_meal_nutrition(cursor, meal_id, user_id, recipe_data)
                     
                     created_meals.append({
                         "meal_id": meal_id,
@@ -854,7 +860,7 @@ def delete_meal(meal_id):
 
 
 # Import AI generation function from the old file
-def generate_meal_plan_with_ai(days, start_date, ingredients, dietary_preference, budget, cooking_time, blocked_slots=None, minimal_cooking_sessions=False, selected_meals=None):
+def generate_meal_plan_with_ai(days, start_date, ingredients, dietary_preference, budget, cooking_time, blocked_slots=None, minimal_cooking_sessions=False, selected_meals=None, nutrition_tracking_enabled=True):
     """Use Gemini AI to generate a structured meal plan"""
     import os
     import google.generativeai as genai
@@ -894,7 +900,8 @@ def generate_meal_plan_with_ai(days, start_date, ingredients, dietary_preference
             selected_meals_info += "IMPORTANT: Only generate recipes for the specified meals above. Omit any meals not listed."
         
         # Create detailed prompt for meal planning
-        prompt = f'''You are a professional meal prep consultant and nutrition planner. Create a detailed {days}-day meal plan starting from {start_date_text} with the following requirements:
+        nutrition_role = "nutrition planner" if nutrition_tracking_enabled else "meal planner"
+        prompt = f'''You are a professional meal prep consultant and {nutrition_role}. Create a detailed {days}-day meal plan starting from {start_date_text} with the following requirements:
 
 IMPORTANT: Use numeric day numbers (1, 2, 3, etc.) NOT dates in the "day" field.
 
@@ -927,13 +934,14 @@ For all plans:
 - Include "alternate_ingredients" for substitutions
 - Maintain flavor and ingredient balance across the plan
 
+{f"""
 NUTRITION REQUIREMENTS:
 - Provide detailed and accurate macro estimates for each recipe
 - Calculate "calories" per serving
 - Break down "macros" with protein, carbs, fat in grams
 - Add "fiber" and "sodium" estimates in grams/milligrams  
 - Include "serving_size" description (e.g., "1 cup", "1 plate")
-- Ensure nutrition data is realistic based on ingredients and portions
+- Ensure nutrition data is realistic based on ingredients and portions""" if nutrition_tracking_enabled else ""}
 
 Do not use fractions like 1/2 - convert them to decimals (e.g., 0.5) to ensure valid JSON
 Do not wrap any times like (10 min) in the instructions. Just add times in the instructions themselves such as Roast broccoli for 20 minutes
@@ -955,12 +963,12 @@ Respond with a valid JSON object in exactly this format:
         "cook_time": 20,
         "servings": 2,
         "cost": 4.50,
-        "difficulty": "easy",
+        "difficulty": "easy",{f"""
         "calories": 350,
         "macros": {{"protein": 20, "carbs": 30, "fat": 10}},
         "fiber": 8,
         "sodium": 150,
-        "serving_size": "1 cup",
+        "serving_size": "1 cup",""" if nutrition_tracking_enabled else ""}
         "instructions": [
           "Step 1: ...",
           "Step 2: ..."
@@ -1462,5 +1470,201 @@ def nutrition_goals():
     except Exception as e:
         db.rollback()
         return jsonify({"success": False, "message": f"Failed to manage nutrition goals: {str(e)}"})
+    finally:
+        cursor.close()
+
+
+@meals_bp.route("/user/preferences", methods=["GET", "POST"])
+def user_preferences():
+    """Get or set user preferences"""
+    if "user_ID" not in session:
+        return jsonify({"success": False, "message": "Not authenticated"})
+    
+    user_id = session["user_ID"]
+    db = get_db()
+    cursor = db.cursor()
+    
+    try:
+        if request.method == "GET":
+            # Get user preferences
+            preferences_query = """
+                SELECT preference_key, preference_value, data_type 
+                FROM user_preferences 
+                WHERE user_id = %s
+            """
+            cursor.execute(preferences_query, (user_id,))
+            preferences_data = cursor.fetchall()
+            
+            preferences = {}
+            for pref in preferences_data:
+                key = pref["preference_key"]
+                value = pref["preference_value"]
+                data_type = pref["data_type"]
+                
+                # Convert value based on data type
+                if data_type == "boolean":
+                    preferences[key] = value.lower() == "true"
+                elif data_type == "number":
+                    preferences[key] = float(value) if '.' in value else int(value)
+                elif data_type == "json":
+                    import json
+                    preferences[key] = json.loads(value)
+                else:
+                    preferences[key] = value
+            
+            return jsonify({
+                "success": True,
+                "preferences": preferences
+            })
+        
+        elif request.method == "POST":
+            # Update user preferences
+            data = request.get_json()
+            if not data:
+                return jsonify({"success": False, "message": "No data provided"})
+            
+            for key, value in data.items():
+                # Determine data type
+                if isinstance(value, bool):
+                    data_type = "boolean"
+                    value_str = str(value).lower()
+                elif isinstance(value, (int, float)):
+                    data_type = "number"
+                    value_str = str(value)
+                elif isinstance(value, (dict, list)):
+                    data_type = "json"
+                    import json
+                    value_str = json.dumps(value)
+                else:
+                    data_type = "string"
+                    value_str = str(value)
+                
+                # Insert or update preference
+                upsert_query = """
+                    INSERT INTO user_preferences (user_id, preference_key, preference_value, data_type)
+                    VALUES (%s, %s, %s, %s)
+                    ON DUPLICATE KEY UPDATE 
+                        preference_value = VALUES(preference_value),
+                        data_type = VALUES(data_type),
+                        updated_at = CURRENT_TIMESTAMP
+                """
+                cursor.execute(upsert_query, (user_id, key, value_str, data_type))
+            
+            db.commit()
+            
+            return jsonify({
+                "success": True,
+                "message": "Preferences updated successfully"
+            })
+        
+    except Exception as e:
+        db.rollback()
+        return jsonify({"success": False, "message": f"Failed to manage preferences: {str(e)}"})
+    finally:
+        cursor.close()
+
+
+@meals_bp.route("/user/preferences/<preference_key>", methods=["GET", "POST"])
+def single_user_preference(preference_key):
+    """Get or set a single user preference"""
+    if "user_ID" not in session:
+        return jsonify({"success": False, "message": "Not authenticated"})
+    
+    user_id = session["user_ID"]
+    db = get_db()
+    cursor = db.cursor()
+    
+    try:
+        if request.method == "GET":
+            # Get single preference
+            preference_query = """
+                SELECT preference_value, data_type 
+                FROM user_preferences 
+                WHERE user_id = %s AND preference_key = %s
+            """
+            cursor.execute(preference_query, (user_id, preference_key))
+            preference_data = cursor.fetchone()
+            
+            if preference_data:
+                value = preference_data["preference_value"]
+                data_type = preference_data["data_type"]
+                
+                # Convert value based on data type
+                if data_type == "boolean":
+                    converted_value = value.lower() == "true"
+                elif data_type == "number":
+                    converted_value = float(value) if '.' in value else int(value)
+                elif data_type == "json":
+                    import json
+                    converted_value = json.loads(value)
+                else:
+                    converted_value = value
+                
+                return jsonify({
+                    "success": True,
+                    "preference_key": preference_key,
+                    "value": converted_value
+                })
+            else:
+                # Return default values for known preferences
+                defaults = {
+                    "nutrition_tracking_enabled": True,
+                    "email_notifications": True,
+                    "theme_preference": "system",
+                    "measurement_unit": "imperial"
+                }
+                
+                default_value = defaults.get(preference_key, None)
+                return jsonify({
+                    "success": True,
+                    "preference_key": preference_key,
+                    "value": default_value,
+                    "is_default": True
+                })
+        
+        elif request.method == "POST":
+            # Update single preference
+            data = request.get_json()
+            if not data or "value" not in data:
+                return jsonify({"success": False, "message": "No value provided"})
+            
+            value = data["value"]
+            
+            # Determine data type
+            if isinstance(value, bool):
+                data_type = "boolean"
+                value_str = str(value).lower()
+            elif isinstance(value, (int, float)):
+                data_type = "number"
+                value_str = str(value)
+            elif isinstance(value, (dict, list)):
+                data_type = "json"
+                import json
+                value_str = json.dumps(value)
+            else:
+                data_type = "string"
+                value_str = str(value)
+            
+            # Insert or update preference
+            upsert_query = """
+                INSERT INTO user_preferences (user_id, preference_key, preference_value, data_type)
+                VALUES (%s, %s, %s, %s)
+                ON DUPLICATE KEY UPDATE 
+                    preference_value = VALUES(preference_value),
+                    data_type = VALUES(data_type),
+                    updated_at = CURRENT_TIMESTAMP
+            """
+            cursor.execute(upsert_query, (user_id, preference_key, value_str, data_type))
+            
+            db.commit()
+            
+            return jsonify({
+                "success": True,
+                "message": f"Preference '{preference_key}' updated successfully"
+            })
+        
+    except Exception as e:
+        db.rollback()
+        return jsonify({"success": False, "message": f"Failed to manage preference: {str(e)}"})
     finally:
         cursor.close()

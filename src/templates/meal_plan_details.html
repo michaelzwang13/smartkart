@@ -1521,11 +1521,13 @@
                     <i class="fas fa-wallet"></i>Budget
                   </a>
                 </li>
+                {% if nutrition_tracking_enabled %}
                 <li>
                   <a href="{{ url_for('shopping.nutrition') }}" class="dropdown-link">
                     <i class="fas fa-chart-pie"></i>Nutrition
                   </a>
                 </li>
+                {% endif %}
               </ul>
             </li>
             <li>
@@ -1678,6 +1680,7 @@
       // Pass server data to JavaScript
       window.MEAL_PLAN_DETAILS_CONFIG = {
         planId: JSON.parse("{{ plan_id }}"),
+        nutritionTrackingEnabled: JSON.parse('{{ nutrition_tracking_enabled | tojson }}'),
       };
     </script>
     <script src="{{ url_for('static', filename='js/meal_plan_details.js') }}"></script>

@@ -1986,10 +1986,12 @@ function displayMealDetailsModal(meal) {
                 }
             </div>
 
+            ${window.NUTRITION_TRACKING_ENABLED ? `
             <div class="meal-nutrition-section" id="mealNutritionSection-${meal.meal_id}">
                 <h4><i class="fas fa-chart-bar"></i> Nutrition Information</h4>
                 <div class="nutrition-loading" style="color: var(--text-muted); font-style: italic;">Loading nutrition data...</div>
             </div>
+            ` : ''}
 
             ${
               meal.ingredients && meal.ingredients.length > 0
@@ -2073,8 +2075,10 @@ function displayMealDetailsModal(meal) {
   // Show modal with animation
   setTimeout(() => {
     document.getElementById("mealDetailsModal").classList.add("show");
-    // Load nutrition data for the meal
-    loadMealNutritionForDetails(meal.meal_id);
+    // Load nutrition data for the meal if nutrition tracking is enabled
+    if (window.NUTRITION_TRACKING_ENABLED) {
+      loadMealNutritionForDetails(meal.meal_id);
+    }
   }, 10);
 }
 

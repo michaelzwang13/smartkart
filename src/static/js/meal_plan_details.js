@@ -415,6 +415,7 @@ function createMealCard(mealType, recipe) {
                 </ul>
             </div>
             
+            ${window.MEAL_PLAN_DETAILS_CONFIG?.nutritionTrackingEnabled ? `
             <div class="nutrition-section" id="nutritionSection-${recipe.recipe_id}">
                 <div class="section-label">
                     <i class="fas fa-chart-bar"></i>
@@ -424,6 +425,7 @@ function createMealCard(mealType, recipe) {
                     Loading nutrition data...
                 </div>
             </div>
+            ` : ''}
             
             <div class="instructions-section">
                 <div class="section-label">
@@ -816,7 +818,9 @@ function toggleMealDetails(header) {
       // Only load if not already loaded
       if (!loadedNutritionMeals.has(mealId)) {
         loadedNutritionMeals.add(mealId);
-        loadMealNutritionForPlanDetails(mealId);
+        if (window.MEAL_PLAN_DETAILS_CONFIG?.nutritionTrackingEnabled) {
+          loadMealNutritionForPlanDetails(mealId);
+        }
       }
     }
   }

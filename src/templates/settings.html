@@ -270,6 +270,71 @@
         outline: 2px solid var(--primary-color);
         outline-offset: 2px;
       }
+
+      /* Toggle Switch Styles */
+      .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 60px;
+        height: 34px;
+      }
+
+      .toggle-input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+
+      .toggle-label {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: var(--bg-tertiary);
+        border: 2px solid var(--border-light);
+        transition: .4s;
+        border-radius: 34px;
+      }
+
+      .toggle-label:before {
+        position: absolute;
+        content: "";
+        height: 24px;
+        width: 24px;
+        left: 3px;
+        bottom: 3px;
+        background-color: var(--text-white);
+        transition: .4s;
+        border-radius: 50%;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      .toggle-input:checked + .toggle-label {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+      }
+
+      .toggle-input:focus + .toggle-label {
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+      }
+
+      .toggle-input:checked + .toggle-label:before {
+        transform: translateX(26px);
+      }
+
+      .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: transparent;
+        transition: .4s;
+        border-radius: 34px;
+      }
     </style>
   </head>
   <body class="font-sans text-slate-800 leading-relaxed bg-slate-50">
@@ -575,6 +640,78 @@
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+
+          <!-- User Preferences -->
+          <div class="settings-card">
+            <div class="card-header">
+              <h2 class="card-title">
+                <i class="fas fa-sliders-h" aria-hidden="true"></i>
+                Preferences
+              </h2>
+              <p class="card-description">
+                Customize your Preppr experience and features
+              </p>
+            </div>
+            <div class="card-body">
+              <div class="form-group">
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: var(--spacing-md) 0;">
+                  <div>
+                    <label class="form-label" style="margin-bottom: var(--spacing-xs);">
+                      <i class="fas fa-chart-pie" style="margin-right: var(--spacing-sm); color: var(--primary-color);"></i>
+                      Nutrition Tracking
+                    </label>
+                    <p style="color: var(--text-secondary); font-size: 0.875rem; margin: 0;">
+                      Enable advanced nutrition metrics, meal nutrition info, and daily nutrition summaries
+                    </p>
+                  </div>
+                  <div class="toggle-switch">
+                    <input type="checkbox" id="nutritionTrackingToggle" class="toggle-input" checked>
+                    <label for="nutritionTrackingToggle" class="toggle-label">
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: var(--spacing-md) 0;">
+                  <div>
+                    <label class="form-label" style="margin-bottom: var(--spacing-xs);">
+                      <i class="fas fa-bell" style="margin-right: var(--spacing-sm); color: var(--primary-color);"></i>
+                      Email Notifications
+                    </label>
+                    <p style="color: var(--text-secondary); font-size: 0.875rem; margin: 0;">
+                      Receive email updates about meal plans and shopping lists
+                    </p>
+                  </div>
+                  <div class="toggle-switch">
+                    <input type="checkbox" id="emailNotificationsToggle" class="toggle-input" checked>
+                    <label for="emailNotificationsToggle" class="toggle-label">
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="measurementUnit" class="form-label">Measurement Unit</label>
+                <div class="form-input-container">
+                  <select id="measurementUnit" class="form-input">
+                    <option value="imperial">Imperial (lbs, °F)</option>
+                    <option value="metric">Metric (kg, °C)</option>
+                  </select>
+                  <i class="fas fa-ruler form-input-icon" aria-hidden="true"></i>
+                </div>
+              </div>
+
+              <div class="btn-actions">
+                <button type="button" class="btn-primary" id="savePreferencesBtn">
+                  <i class="fas fa-save" aria-hidden="true"></i>
+                  Save Preferences
+                </button>
+              </div>
             </div>
           </div>
         </div>
