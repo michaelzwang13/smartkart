@@ -415,12 +415,24 @@ function createMealCard(mealType, recipe) {
                 </ul>
             </div>
             
+            ${window.MEAL_PLAN_DETAILS_CONFIG?.nutritionTrackingEnabled ? `
+            <div class="nutrition-section" id="nutritionSection-${recipe.recipe_id}">
+                <div class="section-label">
+                    <i class="fas fa-chart-bar"></i>
+                    Nutrition Information
+                </div>
+                <div class="nutrition-loading" style="color: var(--text-muted); font-style: italic; padding: var(--spacing-sm) 0;">
+                    Loading nutrition data...
+                </div>
+            </div>
+            ` : ''}
+            
             <div class="instructions-section">
                 <div class="section-label">
                     <i class="fas fa-clipboard-list"></i>
                     Instructions
                 </div>
-                <div class="instructions">${recipe.instructions}</div>
+                <div class="instructions">${formatInstructions(recipe.instructions)}</div>
             </div>
         </div>
         
@@ -435,6 +447,45 @@ function createMealCard(mealType, recipe) {
     `;
 
   return mealRow;
+}
+
+function formatInstructions(instructions) {
+  if (!instructions) return '';
+  
+  // Split instructions by numbered steps (1., 2., etc.)
+  const stepRegex = /^(\d+)\.\s*(.+)/gm;
+  const matches = [...instructions.matchAll(stepRegex)];
+  
+  if (matches.length === 0) {
+    // No numbered steps found, return as-is with pre-wrap
+    return instructions;
+  }
+  
+  // Format as proper numbered list
+  let formattedHTML = '<ol class="instructions-list">';
+  
+  matches.forEach((match) => {
+    const [, stepNumber, stepText] = match;
+    formattedHTML += `
+      <li class="instruction-step">
+        <span class="step-number">${stepNumber}.</span>
+        <span class="step-text">${stepText.trim()}</span>
+      </li>
+    `;
+  });
+  
+  formattedHTML += '</ol>';
+  
+  // Check if there's any text after the last numbered step
+  const lastMatch = matches[matches.length - 1];
+  const afterLastStepIndex = lastMatch.index + lastMatch[0].length;
+  const remainingText = instructions.slice(afterLastStepIndex).trim();
+  
+  if (remainingText) {
+    formattedHTML += `<div style=font-style: italic;">${remainingText}</div>`;
+  }
+  
+  return formattedHTML;
 }
 
 function displayBatchPrep(prepSteps) {
@@ -746,9 +797,33 @@ function getMealIcon(mealType) {
   }
 }
 
+// Track which meals have loaded nutrition data to avoid repeated API calls
+const loadedNutritionMeals = new Set();
+
 function toggleMealDetails(header) {
   const mealRow = header.closest('.meal-row');
+  const isExpanding = !mealRow.classList.contains('expanded');
+  
   mealRow.classList.toggle('expanded');
+  
+  // If expanding for the first time, load nutrition data
+  if (isExpanding) {
+    // Find the meal ID from the nutrition section
+    const nutritionSection = mealRow.querySelector('[id^="nutritionSection-"]');
+    console.log(nutritionSection);
+
+    if (nutritionSection) {
+      const mealId = nutritionSection.id.replace('nutritionSection-', '');
+      
+      // Only load if not already loaded
+      if (!loadedNutritionMeals.has(mealId)) {
+        loadedNutritionMeals.add(mealId);
+        if (window.MEAL_PLAN_DETAILS_CONFIG?.nutritionTrackingEnabled) {
+          loadMealNutritionForPlanDetails(mealId);
+        }
+      }
+    }
+  }
 }
 
 function toggleDayMeals(dayNum) {
@@ -1274,3 +1349,110 @@ async function savePlanName() {
 document.addEventListener('DOMContentLoaded', function() {
   initializeEditableTitle();
 });
+
+// Function to load and display detailed nutrition data for meal plan details
+async function loadMealNutritionForPlanDetails(mealId) {
+  console.log(`mealID: ${mealId}`);
+  try {
+    const response = await fetch(`/api/nutrition/${mealId}`);
+    const data = await response.json();
+    
+    const nutritionSection = document.getElementById(`nutritionSection-${mealId}`);
+    if (!nutritionSection) return;
+    
+    if (data.success && data.nutrition) {
+      const nutrition = data.nutrition;
+      
+      let nutritionHTML = `
+        <div class="section-label">
+          <i class="fas fa-chart-bar"></i>
+          Nutrition Information
+        </div>
+        <div class="nutrition-details-grid">
+      `;
+      
+      // Main macros
+      if (nutrition.calories) {
+        nutritionHTML += `<div class="nutrition-detail-item">
+          <span class="nutrition-label">Calories</span>
+          <span class="nutrition-value">${Math.round(nutrition.calories)}</span>
+        </div>`;
+      }
+      
+      if (nutrition.macros.protein) {
+        nutritionHTML += `<div class="nutrition-detail-item">
+          <span class="nutrition-label">Protein</span>
+          <span class="nutrition-value">${Math.round(nutrition.macros.protein)}g</span>
+        </div>`;
+      }
+      
+      if (nutrition.macros.carbs) {
+        nutritionHTML += `<div class="nutrition-detail-item">
+          <span class="nutrition-label">Carbs</span>
+          <span class="nutrition-value">${Math.round(nutrition.macros.carbs)}g</span>
+        </div>`;
+      }
+      
+      if (nutrition.macros.fat) {
+        nutritionHTML += `<div class="nutrition-detail-item">
+          <span class="nutrition-label">Fat</span>
+          <span class="nutrition-value">${Math.round(nutrition.macros.fat)}g</span>
+        </div>`;
+      }
+      
+      if (nutrition.macros.fiber) {
+        nutritionHTML += `<div class="nutrition-detail-item">
+          <span class="nutrition-label">Fiber</span>
+          <span class="nutrition-value">${Math.round(nutrition.macros.fiber)}g</span>
+        </div>`;
+      }
+      
+      if (nutrition.macros.sodium) {
+        nutritionHTML += `<div class="nutrition-detail-item">
+          <span class="nutrition-label">Sodium</span>
+          <span class="nutrition-value">${Math.round(nutrition.macros.sodium)}mg</span>
+        </div>`;
+      }
+      
+      nutritionHTML += '</div>';
+      
+      // Add serving info if available
+      if (nutrition.servings || nutrition.serving_size) {
+        nutritionHTML += '<div class="nutrition-serving-info">';
+        if (nutrition.servings) {
+          nutritionHTML += `<span class="serving-info">Servings: ${nutrition.servings}</span>`;
+        }
+        if (nutrition.serving_size) {
+          nutritionHTML += `<span class="serving-info">Serving Size: ${nutrition.serving_size}</span>`;
+        }
+        nutritionHTML += '</div>';
+      }
+      
+      nutritionSection.innerHTML = nutritionHTML;
+    } else {
+      nutritionSection.innerHTML = `
+        <div class="section-label">
+          <i class="fas fa-chart-bar"></i>
+          Nutrition Information
+        </div>
+        <div style="color: var(--text-muted); font-style: italic; padding: var(--spacing-sm) 0;">
+          No nutrition data available for this meal.
+        </div>
+      `;
+    }
+  } catch (error) {
+    console.error('Failed to load nutrition for meal plan details:', error);
+    const nutritionSection = document.getElementById(`nutritionSection-${mealId}`);
+    if (nutritionSection) {
+      nutritionSection.innerHTML = `
+        <div class="section-label">
+          <i class="fas fa-chart-bar"></i>
+          Nutrition Information
+        </div>
+        <div style="color: var(--error-color); font-style: italic; padding: var(--spacing-sm) 0;">
+          Failed to load nutrition data.
+        </div>
+      `;
+    }
+  }
+}

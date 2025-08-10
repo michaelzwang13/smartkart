@@ -258,3 +258,25 @@ INSERT INTO expiry_predictions (item_name, storage_type, predicted_days, confide
 ('cheese', 'fridge', 21, 0.80, 7),
 ('apples', 'fridge', 14, 0.85, 11),
 ('carrots', 'fridge', 21, 0.90, 9);
+
+-- User Preferences Table
+-- Stores various user preferences and settings
+
+CREATE TABLE IF NOT EXISTS user_preferences (
+    preference_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id VARCHAR(50) NOT NULL,
+    preference_key VARCHAR(100) NOT NULL,
+    preference_value TEXT,
+    data_type ENUM('boolean', 'string', 'number', 'json') DEFAULT 'string',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    -- Foreign key constraint
+    FOREIGN KEY (user_id) REFERENCES user_account(user_ID) ON DELETE CASCADE,
+    
+    -- Ensure unique preference per user
+    UNIQUE KEY unique_user_preference (user_id, preference_key),
+    
+    -- Index for faster lookups
+    INDEX idx_user_preferences (user_id, preference_key)
+);

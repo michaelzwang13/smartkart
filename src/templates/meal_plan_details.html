@@ -408,7 +408,7 @@
 
       .details-grid {
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1fr 1fr 1fr;
         gap: var(--spacing-xl);
         margin-top: var(--spacing-md);
       }
@@ -440,6 +440,53 @@
         margin-bottom: var(--spacing-xs);
       }
 
+      .nutrition-section {
+        margin-bottom: var(--spacing-lg);
+      }
+      
+      .nutrition-details-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--spacing-sm);
+        margin-bottom: var(--spacing-md);
+      }
+      
+      .nutrition-detail-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--spacing-xs) var(--spacing-sm);
+        background: var(--bg-tertiary);
+        border-radius: var(--radius-sm);
+        margin-bottom: var(--spacing-xs);
+      }
+      
+      .nutrition-label {
+        font-weight: 500;
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+      }
+      
+      .nutrition-value {
+        font-weight: 600;
+        color: var(--primary-color);
+        font-size: 0.875rem;
+      }
+      
+      .nutrition-serving-info {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xs);
+        padding-top: var(--spacing-sm);
+        border-top: 1px solid var(--border-light);
+        font-size: 0.8rem;
+      }
+      
+      .serving-info {
+        color: var(--text-muted);
+        font-style: italic;
+      }
+
       .instructions-section {
         background: var(--bg-tertiary);
         border-radius: var(--radius-md);
@@ -450,6 +497,38 @@
         white-space: pre-wrap;
         color: var(--text-secondary);
         line-height: 1.6;
+      }
+      
+      .instructions-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        line-height: 0.1;
+      }
+      
+      .instruction-step {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 6px;
+      }
+      
+      .instruction-step:last-child {
+        margin-bottom: 0;
+      }
+      
+      .step-number {
+        font-weight: 600;
+        color: var(--primary-color);
+        min-width: 1.5rem;
+        flex-shrink: 0;
+        margin-right: 8px;
+        line-height: 1.4;
+      }
+      
+      .step-text {
+        flex: 1;
+        line-height: 1.4;
+        margin: 0;
       }
 
       .meal-notes {
@@ -856,6 +935,11 @@
         .details-grid {
           grid-template-columns: 1fr;
           gap: var(--spacing-lg);
+        }
+        
+        .nutrition-details-grid {
+          grid-template-columns: 1fr;
+          gap: var(--spacing-xs);
         }
 
         .meal-row-header {
@@ -1426,14 +1510,23 @@
                 </li>
               </ul>
             </li>
-            <li>
-              <a href="{{ url_for('shopping.budget') }}" class="nav-link">
-                <i
-                  class="fas fa-chart-line"
-                  style="margin-right: 6px; font-size: 0.85em"
-                ></i
-                >Analytics
+            <li class="nav-dropdown">
+              <a href="#" class="nav-link dropdown-toggle">
+                <i class="fas fa-chart-line" style="margin-right: 6px; font-size: 0.85em"></i>Analytics
+                <i class="fas fa-chevron-down dropdown-arrow" style="margin-left: 6px; font-size: 0.7em"></i>
               </a>
+              <ul class="dropdown-menu">
+                <li>
+                  <a href="{{ url_for('shopping.budget') }}" class="dropdown-link">
+                    <i class="fas fa-wallet"></i>Budget
+                  </a>
+                </li>
+                <li>
+                  <a href="{{ url_for('shopping.nutrition') }}" class="dropdown-link">
+                    <i class="fas fa-chart-pie"></i>Nutrition
+                  </a>
+                </li>
+              </ul>
             </li>
             <li>
               <a href="{{ url_for('shopping.pantry') }}" class="nav-link">
@@ -1585,6 +1678,7 @@
       // Pass server data to JavaScript
       window.MEAL_PLAN_DETAILS_CONFIG = {
         planId: JSON.parse("{{ plan_id }}"),
+        nutritionTrackingEnabled: JSON.parse('{{ nutrition_tracking_enabled | tojson }}'),
       };
     </script>
     <script src="{{ url_for('static', filename='js/meal_plan_details.js') }}"></script>

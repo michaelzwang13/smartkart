@@ -7,6 +7,159 @@ from datetime import datetime, timedelta
 meals_bp = Blueprint("meals", __name__, url_prefix="/api")
 
 
+@meals_bp.route("/nutrition/<int:meal_id>", methods=["GET"])
+def get_meal_nutrition(meal_id):
+    """Get nutrition data for a specific meal"""
+    if "user_ID" not in session:
+        return jsonify({"success": False, "message": "Not authenticated"})
+    
+    user_id = session["user_ID"]
+    db = get_db()
+    cursor = db.cursor()
+        
+    try:
+        # Get meal nutrition data
+        nutrition_query = """
+            SELECT mn.*, m.meal_type, m.meal_date, rt.recipe_name as recipe_name
+            FROM meal_nutrition mn
+            JOIN meals m ON mn.meal_id = m.meal_id
+            LEFT JOIN recipe_templates rt ON m.recipe_template_id = rt.template_id
+            WHERE mn.meal_id = %s AND mn.user_id = %s
+        """
+        cursor.execute(nutrition_query, (meal_id, user_id))
+        nutrition_data = cursor.fetchone()
+        
+        if not nutrition_data:
+            return jsonify({"success": False, "message": "Nutrition data not found"})
+        
+        # Format the response
+        response_data = {
+            "success": True,
+            "nutrition": {
+                "meal_id": nutrition_data["meal_id"],
+                "recipe_name": nutrition_data["recipe_name"],
+                "meal_type": nutrition_data["meal_type"],
+                "meal_date": nutrition_data["meal_date"].strftime("%Y-%m-%d"),
+                "calories": float(nutrition_data["calories"]) if nutrition_data["calories"] else None,
+                "macros": {
+                    "protein": float(nutrition_data["protein_g"]) if nutrition_data["protein_g"] else None,
+                    "carbs": float(nutrition_data["carbohydrates_g"]) if nutrition_data["carbohydrates_g"] else None,
+                    "fat": float(nutrition_data["fat_g"]) if nutrition_data["fat_g"] else None
+                },
+                "fiber": float(nutrition_data["fiber_g"]) if nutrition_data["fiber_g"] else None,
+                "sodium": float(nutrition_data["sodium_mg"]) if nutrition_data["sodium_mg"] else None,
+                "servings": nutrition_data["servings"],
+                "serving_size": nutrition_data["serving_size"],
+                "source_type": nutrition_data["source_type"],
+                "created_at": nutrition_data["created_at"].strftime("%Y-%m-%d %H:%M:%S")
+            }
+        }
+        
+        return jsonify(response_data)
+        
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Failed to get nutrition data: {str(e)}"})
+    finally:
+        cursor.close()
+
+
+@meals_bp.route("/nutrition/daily/<string:date>", methods=["GET"])
+def get_daily_nutrition_summary(date):
+    """Get daily nutrition summary for a specific date"""
+    if "user_ID" not in session:
+        return jsonify({"success": False, "message": "Not authenticated"})
+    
+    user_id = session["user_ID"]
+    
+    try:
+        target_date = datetime.strptime(date, "%Y-%m-%d").date()
+    except ValueError:
+        return jsonify({"success": False, "message": "Invalid date format. Use YYYY-MM-DD"})
+    
+    db = get_db()
+    cursor = db.cursor()
+    
+    try:
+        # Get all meals and nutrition for the specific date
+        meals_query = """
+            SELECT m.meal_id, m.meal_type, rt.name as recipe_name,
+                   mn.calories, mn.protein_g, mn.carbohydrates_g, mn.fat_g,
+                   mn.fiber_g, mn.sodium_mg, mn.servings, mn.serving_size,
+                   m.is_completed
+            FROM meals m
+            LEFT JOIN meal_nutrition mn ON m.meal_id = mn.meal_id
+            LEFT JOIN recipe_templates rt ON m.recipe_template_id = rt.template_id
+            WHERE m.user_id = %s AND m.meal_date = %s
+            ORDER BY 
+                CASE m.meal_type 
+                    WHEN 'breakfast' THEN 1
+                    WHEN 'lunch' THEN 2
+                    WHEN 'dinner' THEN 3
+                    WHEN 'snack' THEN 4
+                    ELSE 5
+                END
+        """
+        cursor.execute(meals_query, (user_id, target_date))
+        meals_data = cursor.fetchall()
+        
+        # Calculate daily totals
+        daily_totals = {
+            "calories": 0,
+            "protein": 0,
+            "carbs": 0,
+            "fat": 0,
+            "fiber": 0,
+            "sodium": 0
+        }
+        
+        meals_with_nutrition = []
+        
+        for meal in meals_data:
+            meal_nutrition = {
+                "meal_id": meal["meal_id"],
+                "meal_type": meal["meal_type"],
+                "recipe_name": meal["recipe_name"],
+                "is_completed": meal["is_completed"],
+                "nutrition": {
+                    "calories": float(meal["calories"]) if meal["calories"] else 0,
+                    "protein": float(meal["protein_g"]) if meal["protein_g"] else 0,
+                    "carbs": float(meal["carbohydrates_g"]) if meal["carbohydrates_g"] else 0,
+                    "fat": float(meal["fat_g"]) if meal["fat_g"] else 0,
+                    "fiber": float(meal["fiber_g"]) if meal["fiber_g"] else 0,
+                    "sodium": float(meal["sodium_mg"]) if meal["sodium_mg"] else 0
+                },
+                "servings": meal["servings"],
+                "serving_size": meal["serving_size"]
+            }
+            
+            # Add to daily totals if meal is completed (or if we want to show planned vs actual)
+            if meal["is_completed"]:
+                daily_totals["calories"] += meal_nutrition["nutrition"]["calories"]
+                daily_totals["protein"] += meal_nutrition["nutrition"]["protein"]
+                daily_totals["carbs"] += meal_nutrition["nutrition"]["carbs"]
+                daily_totals["fat"] += meal_nutrition["nutrition"]["fat"]
+                daily_totals["fiber"] += meal_nutrition["nutrition"]["fiber"]
+                daily_totals["sodium"] += meal_nutrition["nutrition"]["sodium"]
+            
+            meals_with_nutrition.append(meal_nutrition)
+        
+        response_data = {
+            "success": True,
+            "date": date,
+            "daily_totals": daily_totals,
+            "meals": meals_with_nutrition,
+            "total_meals": len(meals_data),
+            "completed_meals": len([m for m in meals_data if m["is_completed"]])
+        }
+        
+        return jsonify(response_data)
+        
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Failed to get daily nutrition summary: {str(e)}"})
+    finally:
+        cursor.close()
+
+
 @meals_bp.route("/generate-meal-plan", methods=["POST"])
 def generate_meal_plan():
     """Generate a meal plan and store as individual meals"""
@@ -134,7 +287,8 @@ def generate_meal_plan():
             cooking_time=cooking_time,
             blocked_slots=blocked_slots,
             minimal_cooking_sessions=minimal_cooking_sessions,
-            selected_meals=selected_meals
+            selected_meals=selected_meals,
+            nutrition_tracking_enabled=nutrition_tracking_enabled
         )
 
         if not meal_plan_data:
@@ -156,6 +310,10 @@ def generate_meal_plan():
         ))
         session_id = cursor.lastrowid
 
+        # Check if nutrition tracking is enabled for this user
+        from src.backend.views.shopping import get_user_preference
+        nutrition_tracking_enabled = get_user_preference(user_id, "nutrition_tracking_enabled", True)
+        
         # Process each day and create individual meals
         created_meals = []
         recipe_template_map = {}
@@ -242,6 +400,10 @@ def generate_meal_plan():
                     """
                     cursor.execute(meal_query, (user_id, meal_date, meal_type, template_id, session_id))
                     meal_id = cursor.lastrowid
+                    
+                    # Store nutrition data if available and nutrition tracking is enabled
+                    if nutrition_tracking_enabled:
+                        store_meal_nutrition(cursor, meal_id, user_id, recipe_data)
                     
                     created_meals.append({
                         "meal_id": meal_id,
@@ -698,7 +860,7 @@ def delete_meal(meal_id):
 
 
 # Import AI generation function from the old file
-def generate_meal_plan_with_ai(days, start_date, ingredients, dietary_preference, budget, cooking_time, blocked_slots=None, minimal_cooking_sessions=False, selected_meals=None):
+def generate_meal_plan_with_ai(days, start_date, ingredients, dietary_preference, budget, cooking_time, blocked_slots=None, minimal_cooking_sessions=False, selected_meals=None, nutrition_tracking_enabled=True):
     """Use Gemini AI to generate a structured meal plan"""
     import os
     import google.generativeai as genai
@@ -738,7 +900,8 @@ def generate_meal_plan_with_ai(days, start_date, ingredients, dietary_preference
             selected_meals_info += "IMPORTANT: Only generate recipes for the specified meals above. Omit any meals not listed."
         
         # Create detailed prompt for meal planning
-        prompt = f'''You are a professional meal prep consultant and nutrition planner. Create a detailed {days}-day meal plan starting from {start_date_text} with the following requirements:
+        nutrition_role = "nutrition planner" if nutrition_tracking_enabled else "meal planner"
+        prompt = f'''You are a professional meal prep consultant and {nutrition_role}. Create a detailed {days}-day meal plan starting from {start_date_text} with the following requirements:
 
 IMPORTANT: Use numeric day numbers (1, 2, 3, etc.) NOT dates in the "day" field.
 
@@ -771,9 +934,18 @@ For all plans:
 - Include "alternate_ingredients" for substitutions
 - Maintain flavor and ingredient balance across the plan
 
+{f"""
+NUTRITION REQUIREMENTS:
+- Provide detailed and accurate macro estimates for each recipe
+- Calculate "calories" per serving
+- Break down "macros" with protein, carbs, fat in grams
+- Add "fiber" and "sodium" estimates in grams/milligrams  
+- Include "serving_size" description (e.g., "1 cup", "1 plate")
+- Ensure nutrition data is realistic based on ingredients and portions""" if nutrition_tracking_enabled else ""}
+
 Do not use fractions like 1/2 - convert them to decimals (e.g., 0.5) to ensure valid JSON
 Do not wrap any times like (10 min) in the instructions. Just add times in the instructions themselves such as Roast broccoli for 20 minutes
-Ingredient quantity must be a number. If it's adding spice to taste, just use 1 tsp
+Ingredient quantity must be a number. Use quantifiable units, do not use splash, taste, bunch, etc.
 
 CRITICAL: In the JSON response, the "day" field must be a NUMBER (1, 2, 3, etc.), never a date string.
 
@@ -791,9 +963,12 @@ Respond with a valid JSON object in exactly this format:
         "cook_time": 20,
         "servings": 2,
         "cost": 4.50,
-        "difficulty": "easy",
+        "difficulty": "easy",{f"""
         "calories": 350,
         "macros": {{"protein": 20, "carbs": 30, "fat": 10}},
+        "fiber": 8,
+        "sodium": 150,
+        "serving_size": "1 cup",""" if nutrition_tracking_enabled else ""}
         "instructions": [
           "Step 1: ...",
           "Step 2: ..."
@@ -1096,6 +1271,46 @@ def generate_session_batch_prep(cursor, session_id, batch_prep_data):
         print(f"ERROR: Failed to generate batch prep: {str(e)}")
 
 
+def store_meal_nutrition(cursor, meal_id, user_id, recipe_data):
+    """Store nutrition data for a meal if available in recipe_data"""
+    try:
+        # Extract nutrition data from recipe
+        calories = recipe_data.get("calories")
+        macros = recipe_data.get("macros", {})
+        fiber = recipe_data.get("fiber")
+        sodium = recipe_data.get("sodium")
+        servings = recipe_data.get("servings", 1)
+        serving_size = recipe_data.get("serving_size")
+        
+        # Only store if we have at least calories or macros
+        if calories is not None or macros:
+            nutrition_query = """
+                INSERT INTO meal_nutrition (
+                    meal_id, user_id, calories, protein_g, carbohydrates_g, fat_g, 
+                    fiber_g, sodium_mg, servings, serving_size, source_type, ai_model_used
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """
+            
+            cursor.execute(nutrition_query, (
+                meal_id,
+                user_id,
+                calories,
+                macros.get("protein"),
+                macros.get("carbs"),
+                macros.get("fat"), 
+                fiber,
+                sodium,
+                servings,
+                serving_size,
+                'ai_generated',
+                'gemini-1.5-flash-latest'
+            ))
+            
+            print(f"DEBUG: Stored nutrition for meal_id {meal_id}: {calories} calories")
+    except Exception as e:
+        print(f"ERROR: Failed to store nutrition for meal_id {meal_id}: {str(e)}")
+
+
 def categorize_ingredient(ingredient_name):
     """Simple ingredient categorization"""
     name = ingredient_name.lower()
@@ -1112,3 +1327,344 @@ def categorize_ingredient(ingredient_name):
         return "Condiments"
     else:
         return "Other"
+
+
+@meals_bp.route("/nutrition/goals", methods=["GET", "POST"])
+def nutrition_goals():
+    """Get or set user nutrition goals"""
+    if "user_ID" not in session:
+        return jsonify({"success": False, "message": "Not authenticated"})
+    
+    user_id = session["user_ID"]
+    db = get_db()
+    cursor = db.cursor()
+    
+    try:
+        if request.method == "GET":
+            # Get current nutrition goals
+            goals_query = """
+                SELECT * FROM user_nutrition_goals 
+                WHERE user_id = %s AND is_active = TRUE
+                ORDER BY created_at DESC
+                LIMIT 1
+            """
+            cursor.execute(goals_query, (user_id,))
+            goals_data = cursor.fetchone()
+            
+            if goals_data:
+                response_data = {
+                    "success": True,
+                    "goals": {
+                        "daily_calories": float(goals_data["daily_calories_goal"]) if goals_data["daily_calories_goal"] else None,
+                        "daily_protein": float(goals_data["daily_protein_goal_g"]) if goals_data["daily_protein_goal_g"] else None,
+                        "daily_carbs": float(goals_data["daily_carbs_goal_g"]) if goals_data["daily_carbs_goal_g"] else None,
+                        "daily_fat": float(goals_data["daily_fat_goal_g"]) if goals_data["daily_fat_goal_g"] else None,
+                        "daily_fiber": float(goals_data["daily_fiber_goal_g"]) if goals_data["daily_fiber_goal_g"] else None,
+                        "daily_sodium_limit": float(goals_data["daily_sodium_limit_mg"]) if goals_data["daily_sodium_limit_mg"] else None,
+                        "goal_type": goals_data["goal_type"],
+                        "activity_level": goals_data["activity_level"]
+                    }
+                }
+            else:
+                # Return default goals
+                response_data = {
+                    "success": True,
+                    "goals": {
+                        "daily_calories": 2000,
+                        "daily_protein": 150,
+                        "daily_carbs": 250,
+                        "daily_fat": 70,
+                        "daily_fiber": 25,
+                        "daily_sodium_limit": 2300,
+                        "goal_type": "maintenance",
+                        "activity_level": "moderately_active"
+                    }
+                }
+            
+            return jsonify(response_data)
+        
+        elif request.method == "POST":
+            # Update nutrition goals
+            data = request.get_json()
+            if not data:
+                return jsonify({"success": False, "message": "No data provided"})
+            
+            # Check if user has existing active goals
+            check_query = """
+                SELECT goal_id FROM user_nutrition_goals 
+                WHERE user_id = %s AND is_active = TRUE
+                ORDER BY created_at DESC
+                LIMIT 1
+            """
+            cursor.execute(check_query, (user_id,))
+            existing_goal = cursor.fetchone()
+            
+            if existing_goal:
+                # Update existing goals
+                update_query = """
+                    UPDATE user_nutrition_goals SET
+                        daily_calories_goal = %s,
+                        daily_protein_goal_g = %s,
+                        daily_carbs_goal_g = %s,
+                        daily_fat_goal_g = %s,
+                        daily_fiber_goal_g = %s,
+                        daily_sodium_limit_mg = %s,
+                        goal_type = %s,
+                        activity_level = %s,
+                        age = %s,
+                        gender = %s,
+                        weight_lbs = %s,
+                        height_inches = %s,
+                        updated_at = NOW()
+                    WHERE goal_id = %s
+                """
+                
+                cursor.execute(update_query, (
+                    data.get("daily_calories"),
+                    data.get("daily_protein"),
+                    data.get("daily_carbs"),
+                    data.get("daily_fat"),
+                    data.get("daily_fiber"),
+                    data.get("daily_sodium_limit"),
+                    data.get("goal_type", "maintenance"),
+                    data.get("activity_level", "moderately_active"),
+                    data.get("age"),
+                    data.get("gender"),
+                    data.get("weight_lbs"),
+                    data.get("height_inches"),
+                    existing_goal["goal_id"]
+                ))
+            else:
+                # Insert new goals if none exist
+                insert_query = """
+                    INSERT INTO user_nutrition_goals (
+                        user_id, daily_calories_goal, daily_protein_goal_g, daily_carbs_goal_g,
+                        daily_fat_goal_g, daily_fiber_goal_g, daily_sodium_limit_mg,
+                        goal_type, activity_level, age, gender, weight_lbs, height_inches
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """
+                
+                cursor.execute(insert_query, (
+                    user_id,
+                    data.get("daily_calories"),
+                    data.get("daily_protein"),
+                    data.get("daily_carbs"),
+                    data.get("daily_fat"),
+                    data.get("daily_fiber"),
+                    data.get("daily_sodium_limit"),
+                    data.get("goal_type", "maintenance"),
+                    data.get("activity_level", "moderately_active"),
+                    data.get("age"),
+                    data.get("gender"),
+                    data.get("weight_lbs"),
+                    data.get("height_inches")
+                ))
+            
+            db.commit()
+            
+            return jsonify({
+                "success": True,
+                "message": "Nutrition goals updated successfully"
+            })
+        
+    except Exception as e:
+        db.rollback()
+        return jsonify({"success": False, "message": f"Failed to manage nutrition goals: {str(e)}"})
+    finally:
+        cursor.close()
+
+
+@meals_bp.route("/user/preferences", methods=["GET", "POST"])
+def user_preferences():
+    """Get or set user preferences"""
+    if "user_ID" not in session:
+        return jsonify({"success": False, "message": "Not authenticated"})
+    
+    user_id = session["user_ID"]
+    db = get_db()
+    cursor = db.cursor()
+    
+    try:
+        if request.method == "GET":
+            # Get user preferences
+            preferences_query = """
+                SELECT preference_key, preference_value, data_type 
+                FROM user_preferences 
+                WHERE user_id = %s
+            """
+            cursor.execute(preferences_query, (user_id,))
+            preferences_data = cursor.fetchall()
+            
+            preferences = {}
+            for pref in preferences_data:
+                key = pref["preference_key"]
+                value = pref["preference_value"]
+                data_type = pref["data_type"]
+                
+                # Convert value based on data type
+                if data_type == "boolean":
+                    preferences[key] = value.lower() == "true"
+                elif data_type == "number":
+                    preferences[key] = float(value) if '.' in value else int(value)
+                elif data_type == "json":
+                    import json
+                    preferences[key] = json.loads(value)
+                else:
+                    preferences[key] = value
+            
+            return jsonify({
+                "success": True,
+                "preferences": preferences
+            })
+        
+        elif request.method == "POST":
+            # Update user preferences
+            data = request.get_json()
+            if not data:
+                return jsonify({"success": False, "message": "No data provided"})
+            
+            for key, value in data.items():
+                # Determine data type
+                if isinstance(value, bool):
+                    data_type = "boolean"
+                    value_str = str(value).lower()
+                elif isinstance(value, (int, float)):
+                    data_type = "number"
+                    value_str = str(value)
+                elif isinstance(value, (dict, list)):
+                    data_type = "json"
+                    import json
+                    value_str = json.dumps(value)
+                else:
+                    data_type = "string"
+                    value_str = str(value)
+                
+                # Insert or update preference
+                upsert_query = """
+                    INSERT INTO user_preferences (user_id, preference_key, preference_value, data_type)
+                    VALUES (%s, %s, %s, %s)
+                    ON DUPLICATE KEY UPDATE 
+                        preference_value = VALUES(preference_value),
+                        data_type = VALUES(data_type),
+                        updated_at = CURRENT_TIMESTAMP
+                """
+                cursor.execute(upsert_query, (user_id, key, value_str, data_type))
+            
+            db.commit()
+            
+            return jsonify({
+                "success": True,
+                "message": "Preferences updated successfully"
+            })
+        
+    except Exception as e:
+        db.rollback()
+        return jsonify({"success": False, "message": f"Failed to manage preferences: {str(e)}"})
+    finally:
+        cursor.close()
+
+
+@meals_bp.route("/user/preferences/<preference_key>", methods=["GET", "POST"])
+def single_user_preference(preference_key):
+    """Get or set a single user preference"""
+    if "user_ID" not in session:
+        return jsonify({"success": False, "message": "Not authenticated"})
+    
+    user_id = session["user_ID"]
+    db = get_db()
+    cursor = db.cursor()
+    
+    try:
+        if request.method == "GET":
+            # Get single preference
+            preference_query = """
+                SELECT preference_value, data_type 
+                FROM user_preferences 
+                WHERE user_id = %s AND preference_key = %s
+            """
+            cursor.execute(preference_query, (user_id, preference_key))
+            preference_data = cursor.fetchone()
+            
+            if preference_data:
+                value = preference_data["preference_value"]
+                data_type = preference_data["data_type"]
+                
+                # Convert value based on data type
+                if data_type == "boolean":
+                    converted_value = value.lower() == "true"
+                elif data_type == "number":
+                    converted_value = float(value) if '.' in value else int(value)
+                elif data_type == "json":
+                    import json
+                    converted_value = json.loads(value)
+                else:
+                    converted_value = value
+                
+                return jsonify({
+                    "success": True,
+                    "preference_key": preference_key,
+                    "value": converted_value
+                })
+            else:
+                # Return default values for known preferences
+                defaults = {
+                    "nutrition_tracking_enabled": True,
+                    "email_notifications": True,
+                    "theme_preference": "system",
+                    "measurement_unit": "imperial"
+                }
+                
+                default_value = defaults.get(preference_key, None)
+                return jsonify({
+                    "success": True,
+                    "preference_key": preference_key,
+                    "value": default_value,
+                    "is_default": True
+                })
+        
+        elif request.method == "POST":
+            # Update single preference
+            data = request.get_json()
+            if not data or "value" not in data:
+                return jsonify({"success": False, "message": "No value provided"})
+            
+            value = data["value"]
+            
+            # Determine data type
+            if isinstance(value, bool):
+                data_type = "boolean"
+                value_str = str(value).lower()
+            elif isinstance(value, (int, float)):
+                data_type = "number"
+                value_str = str(value)
+            elif isinstance(value, (dict, list)):
+                data_type = "json"
+                import json
+                value_str = json.dumps(value)
+            else:
+                data_type = "string"
+                value_str = str(value)
+            
+            # Insert or update preference
+            upsert_query = """
+                INSERT INTO user_preferences (user_id, preference_key, preference_value, data_type)
+                VALUES (%s, %s, %s, %s)
+                ON DUPLICATE KEY UPDATE 
+                    preference_value = VALUES(preference_value),
+                    data_type = VALUES(data_type),
+                    updated_at = CURRENT_TIMESTAMP
+            """
+            cursor.execute(upsert_query, (user_id, preference_key, value_str, data_type))
+            
+            db.commit()
+            
+            return jsonify({
+                "success": True,
+                "message": f"Preference '{preference_key}' updated successfully"
+            })
+        
+    except Exception as e:
+        db.rollback()
+        return jsonify({"success": False, "message": f"Failed to manage preference: {str(e)}"})
+    finally:
+        cursor.close()

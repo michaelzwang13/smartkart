@@ -910,6 +910,170 @@
       }
     }
     
+    /* Daily Nutrition Summary */
+    .nutrition-summary {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-xl);
+      margin-bottom: var(--spacing-2xl);
+      box-shadow: var(--shadow-md);
+      animation: fadeInUp 0.8s ease;
+      animation-delay: 0.8s;
+      animation-fill-mode: both;
+    }
+    
+    .nutrition-summary-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--spacing-md);
+      border-bottom: 1px solid var(--border-light);
+      padding-bottom: var(--spacing-sm);
+    }
+    
+    .nutrition-summary-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+    
+    .nutrition-date-selector {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+    
+    .date-nav-btn {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-xs) var(--spacing-sm);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+    }
+    
+    .date-nav-btn:hover {
+      background: var(--bg-tertiary);
+      color: var(--primary-color);
+      transform: translateY(-1px);
+    }
+    
+    #currentNutritionDate {
+      font-weight: 500;
+      color: var(--text-primary);
+      min-width: 120px;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+    
+    .nutrition-loading {
+      text-align: center;
+      color: var(--text-muted);
+      padding: var(--spacing-lg) 0;
+      font-style: italic;
+    }
+    
+    .nutrition-overview {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-lg);
+    }
+    
+    .nutrition-stat {
+      text-align: center;
+      padding: var(--spacing-md);
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      transition: transform 0.3s ease;
+    }
+    
+    .nutrition-stat:hover {
+      transform: translateY(-2px);
+    }
+    
+    .nutrition-stat-value {
+      display: block;
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--primary-color);
+      margin-bottom: var(--spacing-xs);
+    }
+    
+    .nutrition-stat-unit {
+      font-size: 0.9rem;
+      opacity: 0.8;
+    }
+    
+    .nutrition-stat-label {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+    
+    .nutrition-breakdown {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: var(--spacing-lg);
+    }
+    
+    .nutrition-category {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-md);
+    }
+    
+    .nutrition-category-title {
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--spacing-md);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      padding-bottom: var(--spacing-sm);
+      border-bottom: 1px solid var(--border-light);
+    }
+    
+    .nutrition-category-meals {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-sm);
+    }
+    
+    .nutrition-meal-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--spacing-sm);
+      background: var(--bg-primary);
+      border-radius: var(--radius-md);
+      transition: transform 0.2s ease;
+    }
+    
+    .nutrition-meal-item:hover {
+      transform: translateX(4px);
+    }
+    
+    .nutrition-meal-name {
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+    
+    .nutrition-meal-macros {
+      text-align: right;
+      font-size: 0.875rem;
+    }
+    
     /* Responsive Design */
     @media (max-width: 768px) {
       .nav-links {
@@ -1024,6 +1188,21 @@
       .history-table th,
       .history-table td {
         padding: var(--spacing-sm);
+      }
+      
+      /* Nutrition Summary Mobile Styles */
+      .nutrition-summary-header {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+        text-align: center;
+      }
+      
+      .nutrition-overview {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      .nutrition-breakdown {
+        grid-template-columns: 1fr;
       }
     }
     
@@ -1558,9 +1737,24 @@
               </a></li>
             </ul>
           </li>
-          <li><a href="{{ url_for('shopping.budget') }}" class="nav-link">
-            <i class="fas fa-chart-line" style="margin-right: 6px; font-size: 0.85em;"></i>Analytics
-          </a></li>
+          <li class="nav-dropdown">
+            <a href="#" class="nav-link dropdown-toggle">
+              <i class="fas fa-chart-line" style="margin-right: 6px; font-size: 0.85em;"></i>Analytics
+              <i class="fas fa-chevron-down dropdown-arrow" style="margin-left: 6px; font-size: 0.7em;"></i>
+            </a>
+            <ul class="dropdown-menu">
+              <li>
+                <a href="{{ url_for('shopping.budget') }}" class="dropdown-link">
+                  <i class="fas fa-wallet"></i>Budget
+                </a>
+              </li>
+              <li>
+                <a href="{{ url_for('shopping.nutrition') }}" class="dropdown-link">
+                  <i class="fas fa-chart-pie"></i>Nutrition
+                </a>
+              </li>
+            </ul>
+          </li>
           <li><a href="{{ url_for('shopping.pantry') }}" class="nav-link">
             <i class="fas fa-warehouse" style="margin-right: 6px; font-size: 0.85em;"></i>Pantry
           </a></li>
@@ -1699,6 +1893,34 @@
           </div>
         </div>
       </section>
+
+      {% if nutrition_tracking_enabled %}
+      <!-- Daily Nutrition Summary -->
+      <section class="nutrition-summary" id="nutritionSummary">
+        <div class="nutrition-summary-header">
+          <div class="nutrition-summary-title">
+            <i class="fas fa-chart-pie"></i>
+            Daily Nutrition
+          </div>
+          <div class="nutrition-date-selector">
+            <button class="date-nav-btn" id="prevNutritionDate">
+              <i class="fas fa-chevron-left"></i>
+            </button>
+            <span id="currentNutritionDate"></span>
+            <button class="date-nav-btn" id="nextNutritionDate">
+              <i class="fas fa-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+        
+        <div id="nutritionContent">
+          <div class="nutrition-loading">
+            <i class="fas fa-spinner fa-spin"></i>
+            Loading nutrition data...
+          </div>
+        </div>
+      </section>
+      {% endif %}
 
       <!-- Monthly Meals Progress Section -->
       <section class="monthly-progress-section">

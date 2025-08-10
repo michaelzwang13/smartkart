@@ -299,13 +299,23 @@ function initializeCalendar() {
     const twelveMonthsAgo = new Date(today);
     twelveMonthsAgo.setMonth(today.getMonth() - 12);
 
-    // Check if we can go back one more month
-    const potentialDate = new Date(currentDate);
-    potentialDate.setMonth(currentDate.getMonth() - 1);
+    let potentialDate = new Date(currentDate);
+    
+    if (currentView === "week") {
+      // Move back by 7 days (1 week)
+      potentialDate.setDate(currentDate.getDate() - 7);
+    } else {
+      // Move back by 1 month
+      potentialDate.setMonth(currentDate.getMonth() - 1);
+    }
 
     if (potentialDate >= twelveMonthsAgo) {
-      currentDate.setMonth(currentDate.getMonth() - 1);
-      clearMealPlanPreview(); // Clear preview when changing months
+      if (currentView === "week") {
+        currentDate.setDate(currentDate.getDate() - 7);
+      } else {
+        currentDate.setMonth(currentDate.getMonth() - 1);
+      }
+      clearMealPlanPreview();
       await loadMealsForCalendar();
       updateNavigationButtons();
     }
@@ -316,13 +326,23 @@ function initializeCalendar() {
     const twoMonthsFromNow = new Date(today);
     twoMonthsFromNow.setMonth(today.getMonth() + 2);
 
-    // Check if we can go forward one more month
-    const potentialDate = new Date(currentDate);
-    potentialDate.setMonth(currentDate.getMonth() + 1);
+    let potentialDate = new Date(currentDate);
+    
+    if (currentView === "week") {
+      // Move forward by 7 days (1 week)
+      potentialDate.setDate(currentDate.getDate() + 7);
+    } else {
+      // Move forward by 1 month
+      potentialDate.setMonth(currentDate.getMonth() + 1);
+    }
 
     if (potentialDate <= twoMonthsFromNow) {
-      currentDate.setMonth(currentDate.getMonth() + 1);
-      clearMealPlanPreview(); // Clear preview when changing months
+      if (currentView === "week") {
+        currentDate.setDate(currentDate.getDate() + 7);
+      } else {
+        currentDate.setMonth(currentDate.getMonth() + 1);
+      }
+      clearMealPlanPreview();
       await loadMealsForCalendar();
       updateNavigationButtons();
     }
@@ -357,25 +377,32 @@ function updateNavigationButtons() {
   const prevButton = document.getElementById("prevMonth");
   const nextButton = document.getElementById("nextMonth");
 
-  // Check if we can go back one more month
-  const potentialPrevDate = new Date(currentDate);
-  potentialPrevDate.setMonth(currentDate.getMonth() - 1);
+  let potentialPrevDate = new Date(currentDate);
+  let potentialNextDate = new Date(currentDate);
 
-  // Check if we can go forward one more month
-  const potentialNextDate = new Date(currentDate);
-  potentialNextDate.setMonth(currentDate.getMonth() + 1);
+  if (currentView === "week") {
+    // For week view, check one week back/forward
+    potentialPrevDate.setDate(currentDate.getDate() - 7);
+    potentialNextDate.setDate(currentDate.getDate() + 7);
+  } else {
+    // For month view, check one month back/forward
+    potentialPrevDate.setMonth(currentDate.getMonth() - 1);
+    potentialNextDate.setMonth(currentDate.getMonth() + 1);
+  }
 
   // Disable/enable previous button
   if (potentialPrevDate < twelveMonthsAgo) {
     prevButton.disabled = true;
     prevButton.style.opacity = "0.4";
     prevButton.style.cursor = "not-allowed";
-    prevButton.title = "Cannot go back more than 12 months";
+    prevButton.title = currentView === "week" ? 
+      "Cannot go back more than 12 months" : 
+      "Cannot go back more than 12 months";
   } else {
     prevButton.disabled = false;
     prevButton.style.opacity = "1";
     prevButton.style.cursor = "pointer";
-    prevButton.title = "Previous month";
+    prevButton.title = currentView === "week" ? "Previous week" : "Previous month";
   }
 
   // Disable/enable next button
@@ -383,12 +410,14 @@ function updateNavigationButtons() {
     nextButton.disabled = true;
     nextButton.style.opacity = "0.4";
     nextButton.style.cursor = "not-allowed";
-    nextButton.title = "Cannot go forward more than 2 months";
+    nextButton.title = currentView === "week" ? 
+      "Cannot go forward more than 2 months" : 
+      "Cannot go forward more than 2 months";
   } else {
     nextButton.disabled = false;
     nextButton.style.opacity = "1";
     nextButton.style.cursor = "pointer";
-    nextButton.title = "Next month";
+    nextButton.title = currentView === "week" ? "Next week" : "Next month";
   }
 }
 
@@ -466,11 +495,11 @@ function renderMonthView(container) {
 }
 
 function renderWeekView(container) {
-  const today = new Date();
-  const currentWeekStart = new Date(today);
-  currentWeekStart.setDate(today.getDate() - today.getDay());
+  // Use currentDate (which is modified by navigation) instead of hardcoded today
+  const currentWeekStart = new Date(currentDate);
+  currentWeekStart.setDate(currentDate.getDate() - currentDate.getDay());
 
-  // Generate 7 days for current week
+  // Generate 7 days for the week containing currentDate
   for (let i = 0; i < 7; i++) {
     const cellDate = new Date(currentWeekStart);
     cellDate.setDate(currentWeekStart.getDate() + i);
@@ -718,8 +747,13 @@ function createDayCell(date, currentMonth, isWeekView = false) {
         }
       });
 
-      mealElement.appendChild(checkbox);
-      mealElement.appendChild(mealNameText);
+      // Create meal header (checkbox + name)
+      const mealHeader = document.createElement("div");
+      mealHeader.className = "meal-header";
+      mealHeader.appendChild(checkbox);
+      mealHeader.appendChild(mealNameText);
+
+      mealElement.appendChild(mealHeader);
       mealsContainer.appendChild(mealElement);
     } else {
       // Create invisible empty slot for month view (maintains spacing)
@@ -1898,6 +1932,7 @@ async function showMealDetails(meal) {
 }
 
 function displayMealDetailsModal(meal) {
+  console.log("displaying meal details modal")
   const modalHTML = `
     <div id="mealDetailsModal" class="modal-overlay">
         <div class="modal-content meal-details-modal ${meal.type}">
@@ -1950,6 +1985,13 @@ function displayMealDetailsModal(meal) {
                     : ""
                 }
             </div>
+
+            ${window.NUTRITION_TRACKING_ENABLED ? `
+            <div class="meal-nutrition-section" id="mealNutritionSection-${meal.meal_id}">
+                <h4><i class="fas fa-chart-bar"></i> Nutrition Information</h4>
+                <div class="nutrition-loading" style="color: var(--text-muted); font-style: italic;">Loading nutrition data...</div>
+            </div>
+            ` : ''}
 
             ${
               meal.ingredients && meal.ingredients.length > 0
@@ -2033,6 +2075,10 @@ function displayMealDetailsModal(meal) {
   // Show modal with animation
   setTimeout(() => {
     document.getElementById("mealDetailsModal").classList.add("show");
+    // Load nutrition data for the meal if nutrition tracking is enabled
+    if (window.NUTRITION_TRACKING_ENABLED) {
+      loadMealNutritionForDetails(meal.meal_id);
+    }
   }, 10);
 }
 
@@ -2401,3 +2447,150 @@ function setupInfoPopup() {
     isPopupVisible = false;
   }
 }
+
+// Function to load and display nutrition data for a meal
+async function loadMealNutrition(mealId) {
+  try {
+    const response = await fetch(`/api/nutrition/${mealId}`);
+    const data = await response.json();
+    
+    const nutritionElement = document.getElementById(`nutrition-${mealId}`);
+    if (!nutritionElement) return;
+    
+    if (data.success && data.nutrition) {
+      const nutrition = data.nutrition;
+      let nutritionHTML = '';
+      
+      // Add calories if available
+      if (nutrition.calories) {
+        nutritionHTML += `<span class="nutrition-item nutrition-calories">${Math.round(nutrition.calories)} cal</span>`;
+      }
+      
+      // Add macros if available
+      const macros = [];
+      if (nutrition.macros.protein) {
+        macros.push(`${Math.round(nutrition.macros.protein)}p`);
+      }
+      if (nutrition.macros.carbs) {
+        macros.push(`${Math.round(nutrition.macros.carbs)}c`);
+      }
+      if (nutrition.macros.fat) {
+        macros.push(`${Math.round(nutrition.macros.fat)}f`);
+      }
+      
+      if (macros.length > 0) {
+        nutritionHTML += `<span class="nutrition-item nutrition-macros">${macros.join('/')}</span>`;
+      }
+      
+      if (nutritionHTML) {
+        nutritionElement.innerHTML = nutritionHTML;
+      } else {
+        nutritionElement.innerHTML = '<span style="opacity: 0.5; font-size: 0.5rem; font-style: italic;">No nutrition</span>';
+      }
+    } else {
+      nutritionElement.innerHTML = '<span style="opacity: 0.5; font-size: 0.5rem; font-style: italic;">No nutrition</span>';
+    }
+  } catch (error) {
+    console.error('Failed to load nutrition:', error);
+    const nutritionElement = document.getElementById(`nutrition-${mealId}`);
+    if (nutritionElement) {
+      nutritionElement.innerHTML = '<span style="opacity: 0.5; font-size: 0.5rem;">-</span>';
+    }
+  }
+}
+
+// Function to load and display detailed nutrition data for meal details modal
+async function loadMealNutritionForDetails(mealId) {
+  try {
+    const response = await fetch(`/api/nutrition/${mealId}`);
+    const data = await response.json();
+    
+    const nutritionSection = document.getElementById(`mealNutritionSection-${mealId}`);
+    if (!nutritionSection) return;
+    
+    if (data.success && data.nutrition) {
+      const nutrition = data.nutrition;
+      
+      let nutritionHTML = '<h4><i class="fas fa-chart-bar"></i> Nutrition Information</h4>';
+      nutritionHTML += '<div class="nutrition-details-grid">';
+      
+      // Main macros
+      if (nutrition.calories) {
+        nutritionHTML += `<div class="nutrition-detail-item">
+          <span class="nutrition-label">Calories</span>
+          <span class="nutrition-value">${Math.round(nutrition.calories)}</span>
+        </div>`;
+      }
+      
+      if (nutrition.macros.protein) {
+        nutritionHTML += `<div class="nutrition-detail-item">
+          <span class="nutrition-label">Protein</span>
+          <span class="nutrition-value">${Math.round(nutrition.macros.protein)}g</span>
+        </div>`;
+      }
+      
+      if (nutrition.macros.carbs) {
+        nutritionHTML += `<div class="nutrition-detail-item">
+          <span class="nutrition-label">Carbohydrates</span>
+          <span class="nutrition-value">${Math.round(nutrition.macros.carbs)}g</span>
+        </div>`;
+      }
+      
+      if (nutrition.macros.fat) {
+        nutritionHTML += `<div class="nutrition-detail-item">
+          <span class="nutrition-label">Fat</span>
+          <span class="nutrition-value">${Math.round(nutrition.macros.fat)}g</span>
+        </div>`;
+      }
+      
+      if (nutrition.macros.fiber) {
+        nutritionHTML += `<div class="nutrition-detail-item">
+          <span class="nutrition-label">Fiber</span>
+          <span class="nutrition-value">${Math.round(nutrition.macros.fiber)}g</span>
+        </div>`;
+      }
+      
+      if (nutrition.macros.sodium) {
+        nutritionHTML += `<div class="nutrition-detail-item">
+          <span class="nutrition-label">Sodium</span>
+          <span class="nutrition-value">${Math.round(nutrition.macros.sodium)}mg</span>
+        </div>`;
+      }
+      
+      nutritionHTML += '</div>';
+      
+      // Add serving info if available
+      if (nutrition.servings || nutrition.serving_size) {
+        nutritionHTML += '<div class="nutrition-serving-info">';
+        if (nutrition.servings) {
+          nutritionHTML += `<span class="serving-info">Servings: ${nutrition.servings}</span>`;
+        }
+        if (nutrition.serving_size) {
+          nutritionHTML += `<span class="serving-info">Serving Size: ${nutrition.serving_size}</span>`;
+        }
+        nutritionHTML += '</div>';
+      }
+      
+      nutritionSection.innerHTML = nutritionHTML;
+    } else {
+      nutritionSection.innerHTML = `
+        <h4><i class="fas fa-chart-bar"></i> Nutrition Information</h4>
+        <div style="color: var(--text-muted); font-style: italic; padding: 1rem 0;">
+          No nutrition data available for this meal.
+        </div>
+      `;
+    }
+  } catch (error) {
+    console.error('Failed to load nutrition for details:', error);
+    const nutritionSection = document.getElementById(`mealNutritionSection-${mealId}`);
+    if (nutritionSection) {
+      nutritionSection.innerHTML = `
+        <h4><i class="fas fa-chart-bar"></i> Nutrition Information</h4>
+        <div style="color: var(--error-color); font-style: italic; padding: 1rem 0;">
+          Failed to load nutrition data.
+        </div>
+      `;
+    }
+  }
+}
+

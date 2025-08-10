@@ -511,3 +511,117 @@ CREATE TABLE generation_ingredient_matches (
 CREATE INDEX idx_pantry_item_name ON pantry_items(item_name);
 CREATE INDEX idx_template_ingredient_name ON template_ingredients(ingredient_name);
 CREATE INDEX idx_session_shopping_ingredient ON session_shopping_lists(ingredient_name);
+
+
+-- Add nutrition tracking tables to existing database
+
+-- Create meal_nutrition table to store macro information for each meal
+CREATE TABLE meal_nutrition (
+    nutrition_id INT AUTO_INCREMENT,
+    meal_id INT NOT NULL,
+    user_id VARCHAR(50) NOT NULL,
+    
+    -- Macro nutrients (per serving)
+    calories DECIMAL(8,2) NULL,
+    protein_g DECIMAL(8,2) NULL,
+    carbohydrates_g DECIMAL(8,2) NULL,
+    fat_g DECIMAL(8,2) NULL,
+    fiber_g DECIMAL(8,2) NULL,
+    sugar_g DECIMAL(8,2) NULL,
+    sodium_mg DECIMAL(10,2) NULL,
+    
+    -- Serving information
+    servings INT DEFAULT 1,
+    serving_size VARCHAR(50) NULL, -- e.g., "1 cup", "1 plate"
+    
+    -- Data source and confidence
+    source_type ENUM('ai_generated', 'user_entered', 'api_lookup') DEFAULT 'ai_generated',
+    confidence_score DECIMAL(5,2) NULL, -- 0-100 confidence in accuracy
+    ai_model_used VARCHAR(50) NULL, -- track which AI model generated the data
+    
+    -- Metadata
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    notes TEXT NULL,
+    
+    PRIMARY KEY (nutrition_id),
+    FOREIGN KEY (meal_id) REFERENCES meals(meal_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES user_account(user_ID),
+    
+    -- Ensure one nutrition record per meal
+    UNIQUE KEY unique_meal_nutrition (meal_id),
+    
+    INDEX idx_user_nutrition (user_id),
+    INDEX idx_meal_nutrition (meal_id),
+    INDEX idx_nutrition_date (created_at)
+);
+
+-- Create daily_nutrition_summary table for tracking daily totals
+CREATE TABLE daily_nutrition_summary (
+    summary_id INT AUTO_INCREMENT,
+    user_id VARCHAR(50) NOT NULL,
+    date DATE NOT NULL,
+    
+    -- Daily totals
+    total_calories DECIMAL(10,2) DEFAULT 0.00,
+    total_protein_g DECIMAL(10,2) DEFAULT 0.00,
+    total_carbohydrates_g DECIMAL(10,2) DEFAULT 0.00,
+    total_fat_g DECIMAL(10,2) DEFAULT 0.00,
+    total_fiber_g DECIMAL(10,2) DEFAULT 0.00,
+    total_sugar_g DECIMAL(10,2) DEFAULT 0.00,
+    total_sodium_mg DECIMAL(12,2) DEFAULT 0.00,
+    
+    -- Meal breakdown
+    breakfast_calories DECIMAL(8,2) DEFAULT 0.00,
+    lunch_calories DECIMAL(8,2) DEFAULT 0.00,
+    dinner_calories DECIMAL(8,2) DEFAULT 0.00,
+    snack_calories DECIMAL(8,2) DEFAULT 0.00,
+    
+    -- Tracking
+    meals_logged INT DEFAULT 0,
+    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    PRIMARY KEY (summary_id),
+    FOREIGN KEY (user_id) REFERENCES user_account(user_ID),
+    
+    -- Ensure one summary per user per day
+    UNIQUE KEY unique_daily_summary (user_id, date),
+    
+    INDEX idx_user_daily_nutrition (user_id),
+    INDEX idx_nutrition_summary_date (date)
+);
+
+-- Create user_nutrition_goals table for tracking user targets
+CREATE TABLE user_nutrition_goals (
+    goal_id INT AUTO_INCREMENT,
+    user_id VARCHAR(50) NOT NULL,
+    
+    -- Daily targets
+    daily_calories_goal DECIMAL(8,2) NULL,
+    daily_protein_goal_g DECIMAL(8,2) NULL,
+    daily_carbs_goal_g DECIMAL(8,2) NULL,
+    daily_fat_goal_g DECIMAL(8,2) NULL,
+    daily_fiber_goal_g DECIMAL(8,2) NULL,
+    daily_sodium_limit_mg DECIMAL(10,2) NULL,
+    
+    -- Goal settings
+    goal_type ENUM('weight_loss', 'weight_gain', 'maintenance', 'muscle_gain', 'custom') DEFAULT 'maintenance',
+    activity_level ENUM('sedentary', 'lightly_active', 'moderately_active', 'very_active', 'extremely_active') DEFAULT 'moderately_active',
+    
+    -- User info for calculations
+    age INT NULL,
+    gender ENUM('male', 'female', 'other') NULL,
+    weight_lbs DECIMAL(5,1) NULL,
+    height_inches DECIMAL(4,1) NULL,
+    
+    -- Metadata
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    is_active BOOLEAN DEFAULT TRUE,
+    
+    PRIMARY KEY (goal_id),
+    FOREIGN KEY (user_id) REFERENCES user_account(user_ID),
+    
+    INDEX idx_user_goals (user_id),
+    INDEX idx_active_goals (is_active)
+);

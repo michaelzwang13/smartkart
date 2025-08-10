@@ -1,6 +1,43 @@
 from flask import Blueprint, render_template, request, session, url_for, redirect, flash, jsonify
 from src.database import get_db
 
+
+def get_user_preference(user_id, preference_key, default_value=None):
+    """Get a user preference value"""
+    db = get_db()
+    cursor = db.cursor()
+    
+    try:
+        query = """
+            SELECT preference_value, data_type 
+            FROM user_preferences 
+            WHERE user_id = %s AND preference_key = %s
+        """
+        cursor.execute(query, (user_id, preference_key))
+        result = cursor.fetchone()
+        
+        if result:
+            value = result["preference_value"]
+            data_type = result["data_type"]
+            
+            # Convert value based on data type
+            if data_type == "boolean":
+                return value.lower() == "true"
+            elif data_type == "number":
+                return float(value) if '.' in value else int(value)
+            elif data_type == "json":
+                import json
+                return json.loads(value)
+            else:
+                return value
+        else:
+            return default_value
+    except Exception as e:
+        print(f"Error getting user preference {preference_key}: {e}")
+        return default_value
+    finally:
+        cursor.close()
+
 shopping_bp = Blueprint("shopping", __name__)
 
 
@@ -94,8 +131,18 @@ def home():
 
     cursor.close()
 
+    # Get user preferences
+    nutrition_tracking_enabled = get_user_preference(user_ID, "nutrition_tracking_enabled", True)
+    
     return render_template(
-        "home.html", user_ID=user_ID, user_first_name=user_first_name, cart_history=cart_history, active_trip=active_trip, total_trips=total_trips, meals_prepped=meals_prepped
+        "home.html", 
+        user_ID=user_ID, 
+        user_first_name=user_first_name, 
+        cart_history=cart_history, 
+        active_trip=active_trip, 
+        total_trips=total_trips, 
+        meals_prepped=meals_prepped,
+        nutrition_tracking_enabled=nutrition_tracking_enabled
     )
 
 
@@ -284,7 +331,26 @@ def shopping_lists():
 
 @shopping_bp.route("/budget")
 def budget():
-    return render_template("budget.html")
+    if "user_ID" not in session:
+        return redirect(url_for("auth.login"))
+    
+    # Get user preferences
+    nutrition_tracking_enabled = get_user_preference(session["user_ID"], "nutrition_tracking_enabled", True)
+    
+    return render_template("budget.html", nutrition_tracking_enabled=nutrition_tracking_enabled)
+
+
+@shopping_bp.route("/nutrition")
+def nutrition():
+    """Show nutrition analytics and goals page"""
+    if "user_ID" not in session:
+        return redirect(url_for("auth.login"))
+      
+    # Check if nutrition tracking is enabled
+    nutrition_tracking_enabled = get_user_preference(session["user_ID"], "nutrition_tracking_enabled", True)
+        
+    # Always show the nutrition page, but with different states
+    return render_template("nutrition.html", nutrition_tracking_enabled=nutrition_tracking_enabled)
 
 
 @shopping_bp.route("/pantry-transfer")
@@ -334,7 +400,10 @@ def meal_plans():
     if "user_ID" not in session:
         return redirect(url_for("auth.login"))
     
-    return render_template("meal_plans.html")
+    # Get user preferences
+    nutrition_tracking_enabled = get_user_preference(session["user_ID"], "nutrition_tracking_enabled", True)
+    
+    return render_template("meal_plans.html", nutrition_tracking_enabled=nutrition_tracking_enabled)
 
 
 @shopping_bp.route("/meal-plans/<int:plan_id>")
@@ -357,8 +426,11 @@ def meal_plan_details(plan_id):
             flash("Meal plan not found.", "error")
             return redirect(url_for("shopping.meal_plans"))
 
+        # Get user preferences
+        nutrition_tracking_enabled = get_user_preference(user_id, "nutrition_tracking_enabled", True)
+        
         cursor.close()
-        return render_template("meal_plan_details.html", plan_id=plan_id, plan=plan)
+        return render_template("meal_plan_details.html", plan_id=plan_id, plan=plan, nutrition_tracking_enabled=nutrition_tracking_enabled)
 
     except Exception as e:
         cursor.close()
