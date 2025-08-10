@@ -1933,6 +1933,7 @@ async function showMealDetails(meal) {
 }
 
 function displayMealDetailsModal(meal) {
+  console.log("displaying meal details modal")
   const modalHTML = `
     <div id="mealDetailsModal" class="modal-overlay">
         <div class="modal-content meal-details-modal ${meal.type}">

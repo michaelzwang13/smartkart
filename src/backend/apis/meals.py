@@ -17,10 +17,12 @@ def get_meal_nutrition(meal_id):
     db = get_db()
     cursor = db.cursor()
     
+    print("SEIFOGJHOSEHGOSHGOSHGHEGOHSEOGHOSEGHOGHEIGOSJEFIOESFJSOFJ")
+    
     try:
         # Get meal nutrition data
         nutrition_query = """
-            SELECT mn.*, m.meal_type, m.meal_date, rt.name as recipe_name
+            SELECT mn.*, m.meal_type, m.meal_date, rt.recipe_name as recipe_name
             FROM meal_nutrition mn
             JOIN meals m ON mn.meal_id = m.meal_id
             LEFT JOIN recipe_templates rt ON m.recipe_template_id = rt.template_id
