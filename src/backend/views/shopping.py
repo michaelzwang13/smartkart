@@ -287,6 +287,14 @@ def budget():
     return render_template("budget.html")
 
 
+@shopping_bp.route("/nutrition")
+def nutrition():
+    """Show nutrition analytics and goals page"""
+    if "user_ID" not in session:
+        return redirect(url_for("auth.login"))
+    return render_template("nutrition.html")
+
+
 @shopping_bp.route("/pantry-transfer")
 def pantry_transfer():
     """Show pantry transfer page after completing shopping trip"""

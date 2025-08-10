@@ -3060,14 +3060,23 @@
                 </li>
               </ul>
             </li>
-            <li>
-              <a href="{{ url_for('shopping.budget') }}" class="nav-link">
-                <i
-                  class="fas fa-chart-line"
-                  style="margin-right: 6px; font-size: 0.85em"
-                ></i
-                >Analytics
+            <li class="nav-dropdown">
+              <a href="#" class="nav-link dropdown-toggle">
+                <i class="fas fa-chart-line" style="margin-right: 6px; font-size: 0.85em"></i>Analytics
+                <i class="fas fa-chevron-down dropdown-arrow" style="margin-left: 6px; font-size: 0.7em"></i>
               </a>
+              <ul class="dropdown-menu">
+                <li>
+                  <a href="{{ url_for('shopping.budget') }}" class="dropdown-link">
+                    <i class="fas fa-wallet"></i>Budget
+                  </a>
+                </li>
+                <li>
+                  <a href="{{ url_for('shopping.nutrition') }}" class="dropdown-link">
+                    <i class="fas fa-chart-pie"></i>Nutrition
+                  </a>
+                </li>
+              </ul>
             </li>
             <li>
               <a href="{{ url_for('shopping.pantry') }}" class="nav-link">
