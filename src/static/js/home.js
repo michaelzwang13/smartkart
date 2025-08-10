@@ -1051,7 +1051,169 @@ document.addEventListener("DOMContentLoaded", function () {
   initializeShoppingHistory();
   loadTodaysMeals();
   loadMonthlyProgress();
+  initializeDailyNutrition();
 
   // Update time-based greeting every minute
   setInterval(updateWelcomeMessage, 60000);
 });
+
+// Daily nutrition summary variables
+let currentNutritionDate = new Date();
+let userNutritionGoals = null;
+
+// Initialize daily nutrition summary
+function initializeDailyNutrition() {
+  const prevBtn = document.getElementById('prevNutritionDate');
+  const nextBtn = document.getElementById('nextNutritionDate');
+  
+  if (prevBtn && nextBtn) {
+    prevBtn.addEventListener('click', () => {
+      currentNutritionDate.setDate(currentNutritionDate.getDate() - 1);
+      loadDailyNutritionSummary();
+    });
+    
+    nextBtn.addEventListener('click', () => {
+      currentNutritionDate.setDate(currentNutritionDate.getDate() + 1);
+      loadDailyNutritionSummary();
+    });
+  }
+  
+  // Load nutrition goals and current date nutrition
+  loadNutritionGoals().then(() => {
+    loadDailyNutritionSummary();
+  });
+}
+
+// Load daily nutrition summary
+async function loadDailyNutritionSummary() {
+  try {
+    const dateString = currentNutritionDate.toISOString().split('T')[0];
+    const dateDisplay = currentNutritionDate.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric'
+    });
+    
+    const currentDateElement = document.getElementById('currentNutritionDate');
+    if (currentDateElement) {
+      currentDateElement.textContent = dateDisplay;
+    }
+    
+    const response = await fetch(`/api/nutrition/daily/${dateString}`);
+    const data = await response.json();
+    
+    const contentElement = document.getElementById('nutritionContent');
+    if (!contentElement) return;
+    
+    if (data.success) {
+      const totals = data.daily_totals;
+      const meals = data.meals;
+      
+      let contentHTML = `
+        <div class="nutrition-overview">
+          <div class="nutrition-stat">
+            <span class="nutrition-stat-value">${Math.round(totals.calories)}</span>
+            <span class="nutrition-stat-label">Calories</span>
+          </div>
+          <div class="nutrition-stat">
+            <span class="nutrition-stat-value">${Math.round(totals.protein)}<span class="nutrition-stat-unit">g</span></span>
+            <span class="nutrition-stat-label">Protein</span>
+          </div>
+          <div class="nutrition-stat">
+            <span class="nutrition-stat-value">${Math.round(totals.carbs)}<span class="nutrition-stat-unit">g</span></span>
+            <span class="nutrition-stat-label">Carbs</span>
+          </div>
+          <div class="nutrition-stat">
+            <span class="nutrition-stat-value">${Math.round(totals.fat)}<span class="nutrition-stat-unit">g</span></span>
+            <span class="nutrition-stat-label">Fat</span>
+          </div>
+        </div>
+        
+        <div class="nutrition-breakdown">
+          <div class="nutrition-category">
+            <div class="nutrition-category-title">
+              <i class="fas fa-dumbbell"></i>
+              Macronutrients
+            </div>
+            <div class="nutrition-category-meals">
+              <div class="nutrition-meal-item">
+                <span class="nutrition-meal-name">Daily Target</span>
+                <div class="nutrition-meal-macros">
+                  <div style="font-weight: 600; color: var(--success-color);">Goal: ${userNutritionGoals?.daily_calories || 2000} cal</div>
+                  <div style="font-size: 0.7rem; color: var(--text-muted);">${userNutritionGoals?.daily_protein || 150}p/${userNutritionGoals?.daily_carbs || 250}c/${userNutritionGoals?.daily_fat || 70}f</div>
+                </div>
+              </div>
+              <div class="nutrition-meal-item">
+                <span class="nutrition-meal-name">Progress</span>
+                <div class="nutrition-meal-macros">
+                  <div style="font-weight: 600; color: var(--primary-color);">${Math.round((totals.calories / (userNutritionGoals?.daily_calories || 2000)) * 100)}% complete</div>
+                  <div style="font-size: 0.7rem; color: var(--text-muted);">Calories consumed</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="nutrition-category">
+            <div class="nutrition-category-title">
+              <i class="fas fa-utensils"></i>
+              Meal Breakdown
+            </div>
+            <div class="nutrition-category-meals">
+              ${meals.map(meal => `
+                <div class="nutrition-meal-item">
+                  <div>
+                    <div class="nutrition-meal-name">${meal.meal_name}</div>
+                    <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: capitalize;">${meal.meal_type}</div>
+                  </div>
+                  <div class="nutrition-meal-macros">
+                    <div style="font-weight: 600; color: var(--primary-color);">${Math.round(meal.nutrition.calories)} cal</div>
+                    <div style="font-size: 0.7rem; color: var(--text-muted);">${Math.round(meal.nutrition.protein)}p/${Math.round(meal.nutrition.carbs)}c/${Math.round(meal.nutrition.fat)}f</div>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+      
+      contentElement.innerHTML = contentHTML;
+    } else {
+      contentElement.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 2rem;">No nutrition data available</div>';
+    }
+  } catch (error) {
+    console.error('Failed to load daily nutrition:', error);
+    const contentElement = document.getElementById('nutritionContent');
+    if (contentElement) {
+      contentElement.innerHTML = '<div style="text-align: center; color: var(--error-color); padding: 2rem;">Failed to load nutrition data</div>';
+    }
+  }
+}
+
+// Load user nutrition goals
+async function loadNutritionGoals() {
+  try {
+    const response = await fetch('/api/nutrition/goals');
+    const data = await response.json();
+    
+    if (data.success) {
+      userNutritionGoals = data.goals;
+      console.log('Loaded nutrition goals:', userNutritionGoals);
+    } else {
+      console.warn('Failed to load nutrition goals, using defaults');
+      userNutritionGoals = {
+        daily_calories: 2000,
+        daily_protein: 150,
+        daily_carbs: 250,
+        daily_fat: 70,
+      };
+    }
+  } catch (error) {
+    console.error('Error loading nutrition goals:', error);
+    userNutritionGoals = {
+      daily_calories: 2000,
+      daily_protein: 150,
+      daily_carbs: 250,
+      daily_fat: 70,
+    };
+  }
+}
