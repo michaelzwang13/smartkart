@@ -345,15 +345,11 @@ def nutrition():
     """Show nutrition analytics and goals page"""
     if "user_ID" not in session:
         return redirect(url_for("auth.login"))
-    
+      
     # Check if nutrition tracking is enabled
     nutrition_tracking_enabled = get_user_preference(session["user_ID"], "nutrition_tracking_enabled", True)
-    
-    # If nutrition tracking is disabled, redirect to budget page or show a message
-    if not nutrition_tracking_enabled:
-        flash("Nutrition tracking is disabled. Enable it in your settings to access nutrition features.", "info")
-        return redirect(url_for("shopping.budget"))
-    
+        
+    # Always show the nutrition page, but with different states
     return render_template("nutrition.html", nutrition_tracking_enabled=nutrition_tracking_enabled)
 
 
