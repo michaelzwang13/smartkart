@@ -814,6 +814,104 @@
             </form>
           </div>
         </div>
+        
+        <!-- Nutrition Goals Section -->
+        <div class="settings-panel">
+          <h3 class="settings-title">
+            <i class="fas fa-chart-pie" aria-hidden="true"></i>
+            Nutrition Goals
+          </h3>
+          <form class="settings-form" id="nutritionGoalsForm">
+            <div class="form-group">
+              <label for="dailyCaloriesInput" class="form-label">Daily Calories</label>
+              <input
+                type="number"
+                id="dailyCaloriesInput"
+                class="form-input"
+                value="2000"
+                min="1200"
+                max="5000"
+                step="50"
+                placeholder="Enter calories"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="dailyProteinInput" class="form-label">Protein (g)</label>
+              <input
+                type="number"
+                id="dailyProteinInput"
+                class="form-input"
+                value="150"
+                min="50"
+                max="300"
+                step="5"
+                placeholder="Enter protein"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="dailyCarbsInput" class="form-label">Carbs (g)</label>
+              <input
+                type="number"
+                id="dailyCarbsInput"
+                class="form-input"
+                value="250"
+                min="50"
+                max="500"
+                step="10"
+                placeholder="Enter carbs"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="dailyFatInput" class="form-label">Fat (g)</label>
+              <input
+                type="number"
+                id="dailyFatInput"
+                class="form-input"
+                value="70"
+                min="20"
+                max="150"
+                step="5"
+                placeholder="Enter fat"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="dailyFiberInput" class="form-label">Fiber (g)</label>
+              <input
+                type="number"
+                id="dailyFiberInput"
+                class="form-input"
+                value="25"
+                min="15"
+                max="50"
+                step="1"
+                placeholder="Enter fiber"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="dailySodiumLimitInput" class="form-label">Sodium Limit (mg)</label>
+              <input
+                type="number"
+                id="dailySodiumLimitInput"
+                class="form-input"
+                value="2300"
+                min="1500"
+                max="4000"
+                step="100"
+                placeholder="Enter sodium limit"
+              />
+            </div>
+
+            <button type="submit" class="btn-primary">
+              <i class="fas fa-save" aria-hidden="true"></i>
+              Save Nutrition Goals
+            </button>
+          </form>
+        </div>
       </div>
 
       <!-- Shopping Details Popup Modal -->
