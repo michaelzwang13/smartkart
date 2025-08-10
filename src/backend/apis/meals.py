@@ -1381,34 +1381,76 @@ def nutrition_goals():
             if not data:
                 return jsonify({"success": False, "message": "No data provided"})
             
-            # Deactivate existing goals
-            deactivate_query = "UPDATE user_nutrition_goals SET is_active = FALSE WHERE user_id = %s"
-            cursor.execute(deactivate_query, (user_id,))
-            
-            # Insert new goals
-            insert_query = """
-                INSERT INTO user_nutrition_goals (
-                    user_id, daily_calories_goal, daily_protein_goal_g, daily_carbs_goal_g,
-                    daily_fat_goal_g, daily_fiber_goal_g, daily_sodium_limit_mg,
-                    goal_type, activity_level, age, gender, weight_lbs, height_inches
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            # Check if user has existing active goals
+            check_query = """
+                SELECT goal_id FROM user_nutrition_goals 
+                WHERE user_id = %s AND is_active = TRUE
+                ORDER BY created_at DESC
+                LIMIT 1
             """
+            cursor.execute(check_query, (user_id,))
+            existing_goal = cursor.fetchone()
             
-            cursor.execute(insert_query, (
-                user_id,
-                data.get("daily_calories"),
-                data.get("daily_protein"),
-                data.get("daily_carbs"),
-                data.get("daily_fat"),
-                data.get("daily_fiber"),
-                data.get("daily_sodium_limit"),
-                data.get("goal_type", "maintenance"),
-                data.get("activity_level", "moderately_active"),
-                data.get("age"),
-                data.get("gender"),
-                data.get("weight_lbs"),
-                data.get("height_inches")
-            ))
+            if existing_goal:
+                # Update existing goals
+                update_query = """
+                    UPDATE user_nutrition_goals SET
+                        daily_calories_goal = %s,
+                        daily_protein_goal_g = %s,
+                        daily_carbs_goal_g = %s,
+                        daily_fat_goal_g = %s,
+                        daily_fiber_goal_g = %s,
+                        daily_sodium_limit_mg = %s,
+                        goal_type = %s,
+                        activity_level = %s,
+                        age = %s,
+                        gender = %s,
+                        weight_lbs = %s,
+                        height_inches = %s,
+                        updated_at = NOW()
+                    WHERE goal_id = %s
+                """
+                
+                cursor.execute(update_query, (
+                    data.get("daily_calories"),
+                    data.get("daily_protein"),
+                    data.get("daily_carbs"),
+                    data.get("daily_fat"),
+                    data.get("daily_fiber"),
+                    data.get("daily_sodium_limit"),
+                    data.get("goal_type", "maintenance"),
+                    data.get("activity_level", "moderately_active"),
+                    data.get("age"),
+                    data.get("gender"),
+                    data.get("weight_lbs"),
+                    data.get("height_inches"),
+                    existing_goal["goal_id"]
+                ))
+            else:
+                # Insert new goals if none exist
+                insert_query = """
+                    INSERT INTO user_nutrition_goals (
+                        user_id, daily_calories_goal, daily_protein_goal_g, daily_carbs_goal_g,
+                        daily_fat_goal_g, daily_fiber_goal_g, daily_sodium_limit_mg,
+                        goal_type, activity_level, age, gender, weight_lbs, height_inches
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """
+                
+                cursor.execute(insert_query, (
+                    user_id,
+                    data.get("daily_calories"),
+                    data.get("daily_protein"),
+                    data.get("daily_carbs"),
+                    data.get("daily_fat"),
+                    data.get("daily_fiber"),
+                    data.get("daily_sodium_limit"),
+                    data.get("goal_type", "maintenance"),
+                    data.get("activity_level", "moderately_active"),
+                    data.get("age"),
+                    data.get("gender"),
+                    data.get("weight_lbs"),
+                    data.get("height_inches")
+                ))
             
             db.commit()
             
