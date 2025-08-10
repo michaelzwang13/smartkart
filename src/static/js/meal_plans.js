@@ -579,9 +579,6 @@ function createWeekDayCell(date) {
       mealSlot.innerHTML = `
         <div class="calendar-meal-type">${type}</div>
         <div class="calendar-meal-name">${dishName}</div>
-        <div class="meal-nutrition" id="nutrition-${meals[0].meal_id}">
-          <span class="nutrition-loading" style="opacity: 0.6; font-size: 0.55rem;">Loading nutrition...</span>
-        </div>
         <div class="meal-completion">
             <input type="checkbox" class="meal-checkbox" ${
               meals[0].is_completed ? "checked" : ""
@@ -595,9 +592,6 @@ function createWeekDayCell(date) {
             }</span>
         </div>
         `;
-      
-      // Load nutrition data for this meal
-      loadMealNutrition(meals[0].meal_id);
 
       if (meals[0].is_completed) {
         mealSlot.classList.add("completed");
@@ -760,18 +754,8 @@ function createDayCell(date, currentMonth, isWeekView = false) {
       mealHeader.appendChild(checkbox);
       mealHeader.appendChild(mealNameText);
 
-      // Create nutrition display for month view
-      const nutritionElement = document.createElement("div");
-      nutritionElement.className = "meal-nutrition";
-      nutritionElement.id = `nutrition-${meal.meal_id}`;
-      nutritionElement.innerHTML = '<span class="nutrition-loading" style="opacity: 0.6; font-size: 0.5rem;">Loading...</span>';
-
       mealElement.appendChild(mealHeader);
-      mealElement.appendChild(nutritionElement);
       mealsContainer.appendChild(mealElement);
-      
-      // Load nutrition data for this meal
-      loadMealNutrition(meal.meal_id);
     } else {
       // Create invisible empty slot for month view (maintains spacing)
       const mealElement = document.createElement("div");
@@ -2002,6 +1986,11 @@ function displayMealDetailsModal(meal) {
                 }
             </div>
 
+            <div class="meal-nutrition-section" id="mealNutritionSection-${meal.meal_id}">
+                <h4><i class="fas fa-chart-bar"></i> Nutrition Information</h4>
+                <div class="nutrition-loading" style="color: var(--text-muted); font-style: italic;">Loading nutrition data...</div>
+            </div>
+
             ${
               meal.ingredients && meal.ingredients.length > 0
                 ? `
@@ -2084,6 +2073,8 @@ function displayMealDetailsModal(meal) {
   // Show modal with animation
   setTimeout(() => {
     document.getElementById("mealDetailsModal").classList.add("show");
+    // Load nutrition data for the meal
+    loadMealNutritionForDetails(meal.meal_id);
   }, 10);
 }
 
@@ -2500,6 +2491,101 @@ async function loadMealNutrition(mealId) {
     const nutritionElement = document.getElementById(`nutrition-${mealId}`);
     if (nutritionElement) {
       nutritionElement.innerHTML = '<span style="opacity: 0.5; font-size: 0.5rem;">-</span>';
+    }
+  }
+}
+
+// Function to load and display detailed nutrition data for meal details modal
+async function loadMealNutritionForDetails(mealId) {
+  try {
+    const response = await fetch(`/api/nutrition/${mealId}`);
+    const data = await response.json();
+    
+    const nutritionSection = document.getElementById(`mealNutritionSection-${mealId}`);
+    if (!nutritionSection) return;
+    
+    if (data.success && data.nutrition) {
+      const nutrition = data.nutrition;
+      
+      let nutritionHTML = '<h4><i class="fas fa-chart-bar"></i> Nutrition Information</h4>';
+      nutritionHTML += '<div class="nutrition-details-grid">';
+      
+      // Main macros
+      if (nutrition.calories) {
+        nutritionHTML += `<div class="nutrition-detail-item">
+          <span class="nutrition-label">Calories</span>
+          <span class="nutrition-value">${Math.round(nutrition.calories)}</span>
+        </div>`;
+      }
+      
+      if (nutrition.macros.protein) {
+        nutritionHTML += `<div class="nutrition-detail-item">
+          <span class="nutrition-label">Protein</span>
+          <span class="nutrition-value">${Math.round(nutrition.macros.protein)}g</span>
+        </div>`;
+      }
+      
+      if (nutrition.macros.carbs) {
+        nutritionHTML += `<div class="nutrition-detail-item">
+          <span class="nutrition-label">Carbohydrates</span>
+          <span class="nutrition-value">${Math.round(nutrition.macros.carbs)}g</span>
+        </div>`;
+      }
+      
+      if (nutrition.macros.fat) {
+        nutritionHTML += `<div class="nutrition-detail-item">
+          <span class="nutrition-label">Fat</span>
+          <span class="nutrition-value">${Math.round(nutrition.macros.fat)}g</span>
+        </div>`;
+      }
+      
+      if (nutrition.macros.fiber) {
+        nutritionHTML += `<div class="nutrition-detail-item">
+          <span class="nutrition-label">Fiber</span>
+          <span class="nutrition-value">${Math.round(nutrition.macros.fiber)}g</span>
+        </div>`;
+      }
+      
+      if (nutrition.macros.sodium) {
+        nutritionHTML += `<div class="nutrition-detail-item">
+          <span class="nutrition-label">Sodium</span>
+          <span class="nutrition-value">${Math.round(nutrition.macros.sodium)}mg</span>
+        </div>`;
+      }
+      
+      nutritionHTML += '</div>';
+      
+      // Add serving info if available
+      if (nutrition.servings || nutrition.serving_size) {
+        nutritionHTML += '<div class="nutrition-serving-info">';
+        if (nutrition.servings) {
+          nutritionHTML += `<span class="serving-info">Servings: ${nutrition.servings}</span>`;
+        }
+        if (nutrition.serving_size) {
+          nutritionHTML += `<span class="serving-info">Serving Size: ${nutrition.serving_size}</span>`;
+        }
+        nutritionHTML += '</div>';
+      }
+      
+      nutritionSection.innerHTML = nutritionHTML;
+    } else {
+      nutritionSection.innerHTML = `
+        <h4><i class="fas fa-chart-bar"></i> Nutrition Information</h4>
+        <div style="color: var(--text-muted); font-style: italic; padding: 1rem 0;">
+          No nutrition data available for this meal.
+        </div>
+      `;
+    }
+  } catch (error) {
+    console.error('Failed to load nutrition for details:', error);
+    const nutritionSection = document.getElementById(`mealNutritionSection-${mealId}`);
+    if (nutritionSection) {
+      nutritionSection.innerHTML = `
+        <h4><i class="fas fa-chart-bar"></i> Nutrition Information</h4>
+        <div style="color: var(--error-color); font-style: italic; padding: 1rem 0;">
+          Failed to load nutrition data.
+        </div>
+      `;
     }
   }
 }

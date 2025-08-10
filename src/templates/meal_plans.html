@@ -998,6 +998,61 @@
         opacity: 0.8;
       }
       
+      /* Meal Details Nutrition Section */
+      .meal-nutrition-section {
+        margin: var(--spacing-lg) 0;
+        padding: var(--spacing-md);
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-md);
+      }
+      
+      .meal-nutrition-section h4 {
+        margin: 0 0 var(--spacing-md) 0;
+        color: var(--text-primary);
+        font-size: 1rem;
+      }
+      
+      .nutrition-details-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: var(--spacing-sm);
+        margin-bottom: var(--spacing-md);
+      }
+      
+      .nutrition-detail-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--spacing-sm);
+        background: var(--bg-primary);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-sm);
+      }
+      
+      .nutrition-label {
+        font-weight: 500;
+        color: var(--text-secondary);
+      }
+      
+      .nutrition-value {
+        font-weight: 600;
+        color: var(--primary-color);
+      }
+      
+      .nutrition-serving-info {
+        display: flex;
+        gap: var(--spacing-md);
+        padding-top: var(--spacing-sm);
+        border-top: 1px solid var(--border-light);
+        font-size: 0.9rem;
+      }
+      
+      .serving-info {
+        color: var(--text-muted);
+        font-style: italic;
+      }
+      
       /* Daily Nutrition Summary */
       .nutrition-summary {
         background: var(--bg-secondary);
