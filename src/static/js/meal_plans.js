@@ -577,7 +577,6 @@ function createWeekDayCell(date) {
 
       mealSlot.innerHTML = `
         <div class="calendar-meal-type">${type}</div>
-        <div class="calendar-meal-name">${dishName}</div>
         <div class="meal-completion">
             <input type="checkbox" class="meal-checkbox" ${
               meals[0].is_completed ? "checked" : ""
@@ -586,9 +585,7 @@ function createWeekDayCell(date) {
       } onclick="event.stopPropagation(); toggleMealCompletion(${
         meals[0].meal_id
       }, this.checked, '${date.toISOString().split("T")[0]}')">
-            <span style="font-size: 0.6rem; opacity: 0.8;">${
-              isFuture ? "Future" : "Complete"
-            }</span>
+            <div class="calendar-meal-name">${dishName}</div>
         </div>
         `;
 
