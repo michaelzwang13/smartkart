@@ -495,14 +495,22 @@ function renderMonthView(container) {
 }
 
 function renderWeekView(container) {
-  // Use currentDate (which is modified by navigation) instead of hardcoded today
-  const currentWeekStart = new Date(currentDate);
-  currentWeekStart.setDate(currentDate.getDate() - currentDate.getDay());
+  // Use same date calculation logic as month view for consistency
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+  const day = currentDate.getDate();
+  
+  // Create a date object for the current date being viewed
+  const viewingDate = new Date(year, month, day);
+  
+  // Calculate start of week (Sunday = 0) - same logic as month view
+  const startDate = new Date(viewingDate);
+  startDate.setDate(viewingDate.getDate() - viewingDate.getDay());
 
   // Generate 7 days for the week containing currentDate
   for (let i = 0; i < 7; i++) {
-    const cellDate = new Date(currentWeekStart);
-    cellDate.setDate(currentWeekStart.getDate() + i);
+    const cellDate = new Date(startDate);
+    cellDate.setDate(startDate.getDate() + i);
 
     const dayCell = createWeekDayCell(cellDate);
     container.appendChild(dayCell);
