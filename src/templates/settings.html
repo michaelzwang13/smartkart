@@ -337,7 +337,7 @@
       }
     </style>
   </head>
-  <body class="font-sans text-slate-800 leading-relaxed bg-slate-50">
+  <body class="font-sans leading-relaxed" style="color: var(--text-primary); background: var(--bg-secondary);">
     <div
       class="page-wrapper"
       style="min-height: 100vh; display: flex; flex-direction: column"
@@ -742,5 +742,6 @@
     </div>
   </body>
 
+  <script src="{{ url_for('static', filename='js/theme-toggle.js') }}"></script>
   <script src="{{ url_for('static', filename='js/settings.js') }}"></script>
 </html>
