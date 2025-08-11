@@ -443,6 +443,12 @@ function createMealCard(mealType, recipe) {
                </div>`
             : ""
         }
+        
+        <div class="meal-actions">
+            <button class="btn btn-secondary save-recipe-btn" onclick="saveRecipeFromMealPlan(event, ${recipe.recipe_id || 'null'}, '${recipe.name.replace(/'/g, "\\'")}')">
+                <i class="fas fa-bookmark"></i> Save Recipe
+            </button>
+        </div>
     </div>
     `;
 
@@ -1455,4 +1461,129 @@ async function loadMealNutritionForPlanDetails(mealId) {
       `;
     }
   }
+}
+
+// Save recipe from meal plan details functionality
+async function saveRecipeFromMealPlan(event, mealId, mealName) {
+  if (!mealId || mealId === 'null') {
+    showMessage('Cannot save recipe: Meal ID not found', 'error');
+    return;
+  }
+
+  try {
+    // Find the save recipe button to show loading state
+    const saveBtn = event.target.closest('.save-recipe-btn');
+    if (saveBtn) {
+      const originalContent = saveBtn.innerHTML;
+      saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+      saveBtn.disabled = true;
+      
+      // Restore button after operation
+      setTimeout(() => {
+        saveBtn.innerHTML = originalContent;
+        saveBtn.disabled = false;
+      }, 3000);
+    }
+
+    const response = await fetch(`/api/saved-recipes/save-from-meal/${mealId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        recipe_name: mealName,
+        notes: `Saved from meal plan details on ${new Date().toLocaleDateString()}`
+      })
+    });
+
+    const data = await response.json();
+    
+    if (data.success) {
+      showMessage(`Recipe "${data.recipe_name}" saved successfully!`, 'success');
+      
+      // Update button to show success state briefly
+      if (saveBtn) {
+        const originalContent = saveBtn.innerHTML;
+        saveBtn.innerHTML = '<i class="fas fa-check"></i> Saved!';
+        saveBtn.style.background = 'var(--success-color)';
+        saveBtn.style.color = 'white';
+        
+        setTimeout(() => {
+          saveBtn.innerHTML = originalContent;
+          saveBtn.style.background = '';
+          saveBtn.style.color = '';
+          saveBtn.disabled = false;
+        }, 2000);
+      }
+    } else {
+      if (data.existing_recipe_id) {
+        const userConfirm = confirm(`${data.message} Would you like to view your saved recipes instead?`);
+        if (userConfirm) {
+          window.location.href = '/recipes';
+        }
+      } else {
+        showMessage(data.message, 'error');
+      }
+    }
+  } catch (error) {
+    console.error('Error saving recipe:', error);
+    showMessage('Failed to save recipe. Please try again.', 'error');
+  }
+}
+
+// Utility function for showing messages
+function showMessage(message, type) {
+  // Remove existing messages
+  const existingMessages = document.querySelectorAll('.temp-message');
+  existingMessages.forEach(msg => msg.remove());
+
+  // Create message element
+  const messageDiv = document.createElement('div');
+  messageDiv.className = `temp-message ${type}`;
+  messageDiv.style.cssText = `
+    position: fixed;
+    top: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 15px 20px;
+    border-radius: 8px;
+    color: white;
+    font-weight: 600;
+    z-index: 10000;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  `;
+
+  // Set background color based on type
+  if (type === 'success') {
+    messageDiv.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+  } else {
+    messageDiv.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+  }
+
+  messageDiv.innerHTML = `
+    <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle'}"></i>
+    ${message}
+  `;
+
+  document.body.appendChild(messageDiv);
+
+  // Animate in
+  messageDiv.style.opacity = '0';
+  messageDiv.style.transform = 'translateX(-50%) translateY(-20px)';
+  setTimeout(() => {
+    messageDiv.style.transition = 'all 0.3s ease';
+    messageDiv.style.opacity = '1';
+    messageDiv.style.transform = 'translateX(-50%) translateY(0)';
+  }, 10);
+
+  // Remove after 4 seconds
+  setTimeout(() => {
+    messageDiv.style.opacity = '0';
+    messageDiv.style.transform = 'translateX(-50%) translateY(-20px)';
+    setTimeout(() => {
+      messageDiv.remove();
+    }, 300);
+  }, 4000);
 }

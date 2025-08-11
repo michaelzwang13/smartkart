@@ -541,6 +541,48 @@
         color: var(--text-primary);
       }
 
+      .meal-actions {
+        margin-top: var(--spacing-lg);
+        padding-top: var(--spacing-md);
+        border-top: 1px solid var(--border-light);
+        display: flex;
+        justify-content: center;
+      }
+
+      .save-recipe-btn {
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        border: 2px solid var(--border-medium);
+        padding: var(--spacing-sm) var(--spacing-md);
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        font-family: var(--font-family);
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        gap: var(--spacing-sm);
+      }
+
+      .save-recipe-btn:hover {
+        background: var(--bg-secondary);
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+        transform: translateY(-1px);
+      }
+
+      .save-recipe-btn:active {
+        transform: translateY(0);
+      }
+
+      .save-recipe-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+
       /* Batch prep section */
       .batch-prep {
         background: var(--bg-primary);
