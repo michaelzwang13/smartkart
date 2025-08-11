@@ -71,6 +71,9 @@
             <li><a href="{{ url_for('auth.settings') }}" class="dropdown-link">
               <i class="fas fa-cog"></i>Settings
             </a></li>
+            <li><a href="#" class="dropdown-link" id="theme-toggle">
+              <i class="fas fa-moon" id="theme-icon"></i><span id="theme-text">Dark Mode</span>
+            </a></li>
             <li><a href="{{ url_for('auth.logout') }}" class="dropdown-link logout">
               <i class="fas fa-sign-out-alt"></i>Logout
             </a></li>
@@ -84,3 +87,6 @@
     </nav>
   </div>
 </header>
+
+<!-- Theme toggle script -->
+<script src="{{ url_for('static', filename='js/theme-toggle.js') }}"></script>
