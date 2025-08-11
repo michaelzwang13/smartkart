@@ -105,6 +105,12 @@ async function saveUserPreferences() {
         // Show success message
         showMessage("Preferences saved successfully!", "success");
         
+        // Scroll to top to show the success message
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
+        
         // If nutrition tracking was toggled, suggest page refresh
         // This will update all UI elements that depend on this preference
         if (preferences.nutrition_tracking_enabled !== window.lastNutritionState) {
