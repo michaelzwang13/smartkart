@@ -2066,6 +2066,9 @@ function displayMealDetailsModal(meal) {
             `
                 : ""
             }
+            <button class="btn btn-secondary" onclick="saveRecipeFromMeal(${meal.meal_id}, '${meal.name}')">
+                <i class="fas fa-bookmark"></i> Save Recipe
+            </button>
             <button class="btn btn-primary" onclick="editMeal(${meal.meal_id})">
                 <i class="fas fa-edit"></i> Edit Meal
             </button>
@@ -2597,5 +2600,106 @@ async function loadMealNutritionForDetails(mealId) {
       `;
     }
   }
+}
+
+// Save recipe from meal functionality
+async function saveRecipeFromMeal(mealId, mealName) {
+  try {
+    const response = await fetch(`/api/saved-recipes/save-from-meal/${mealId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        recipe_name: mealName,
+        notes: `Saved from meal plan on ${new Date().toLocaleDateString()}`
+      })
+    });
+
+    const data = await response.json();
+    
+    if (data.success) {
+      showSuccessMessage(`Recipe "${data.recipe_name}" saved successfully!`);
+      // Close meal details modal
+      closeMealDetailsModal();
+    } else {
+      if (data.existing_recipe_id) {
+        const userConfirm = confirm(`${data.message} Would you like to view your saved recipes instead?`);
+        if (userConfirm) {
+          window.location.href = '/recipes';
+        }
+      } else {
+        showErrorMessage(data.message);
+      }
+    }
+  } catch (error) {
+    console.error('Error saving recipe:', error);
+    showErrorMessage('Failed to save recipe. Please try again.');
+  }
+}
+
+// Utility functions for showing messages
+function showSuccessMessage(message) {
+  showMessage(message, 'success');
+}
+
+function showErrorMessage(message) {
+  showMessage(message, 'error');
+}
+
+function showMessage(message, type) {
+  // Remove existing messages
+  const existingMessages = document.querySelectorAll('.temp-message');
+  existingMessages.forEach(msg => msg.remove());
+
+  // Create message element
+  const messageDiv = document.createElement('div');
+  messageDiv.className = `temp-message ${type}`;
+  messageDiv.style.cssText = `
+    position: fixed;
+    top: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 15px 20px;
+    border-radius: 8px;
+    color: white;
+    font-weight: 600;
+    z-index: 10000;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  `;
+
+  // Set background color based on type
+  if (type === 'success') {
+    messageDiv.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+  } else {
+    messageDiv.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+  }
+
+  messageDiv.innerHTML = `
+    <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle'}"></i>
+    ${message}
+  `;
+
+  document.body.appendChild(messageDiv);
+
+  // Animate in
+  messageDiv.style.opacity = '0';
+  messageDiv.style.transform = 'translateX(-50%) translateY(-20px)';
+  setTimeout(() => {
+    messageDiv.style.transition = 'all 0.3s ease';
+    messageDiv.style.opacity = '1';
+    messageDiv.style.transform = 'translateX(-50%) translateY(0)';
+  }, 10);
+
+  // Remove after 5 seconds
+  setTimeout(() => {
+    messageDiv.style.opacity = '0';
+    messageDiv.style.transform = 'translateX(-50%) translateY(-20px)';
+    setTimeout(() => {
+      messageDiv.remove();
+    }, 300);
+  }, 5000);
 }
 

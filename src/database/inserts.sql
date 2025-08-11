@@ -280,3 +280,92 @@ CREATE TABLE IF NOT EXISTS user_preferences (
     -- Index for faster lookups
     INDEX idx_user_preferences (user_id, preference_key)
 );
+
+-- Migration for saved recipes feature
+
+-- Create saved_recipes table for recipes users have saved from their meals
+CREATE TABLE saved_recipes (
+    saved_recipe_id INT AUTO_INCREMENT,
+    user_id VARCHAR(50) NOT NULL,
+    recipe_name VARCHAR(200) NOT NULL,
+    description TEXT NULL,
+    meal_type ENUM('breakfast', 'lunch', 'dinner', 'snack') NOT NULL,
+    
+    -- Recipe details
+    prep_time INT NULL, -- minutes
+    cook_time INT NULL, -- minutes
+    servings INT DEFAULT 1,
+    difficulty ENUM('easy', 'medium', 'hard') DEFAULT 'medium',
+    instructions TEXT NOT NULL,
+    
+    -- Optional details
+    cuisine_type VARCHAR(50) NULL,
+    notes TEXT NULL,
+    estimated_cost DECIMAL(8,2) NULL,
+    calories_per_serving INT NULL,
+    
+    -- Source information
+    source_meal_id INT NULL, -- original meal this was saved from (if any)
+    source_template_id INT NULL, -- original template (if saved from template)
+    
+    -- User customizations
+    is_favorite BOOLEAN DEFAULT FALSE,
+    custom_tags TEXT NULL, -- JSON array of user tags
+    times_used INT DEFAULT 0, -- how many times user has cooked this
+    last_used_date DATE NULL,
+    
+    -- Metadata
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    PRIMARY KEY (saved_recipe_id),
+    FOREIGN KEY (user_id) REFERENCES user_account(user_ID) ON DELETE CASCADE,
+    FOREIGN KEY (source_meal_id) REFERENCES meals(meal_id) ON DELETE SET NULL,
+    FOREIGN KEY (source_template_id) REFERENCES recipe_templates(template_id) ON DELETE SET NULL,
+    
+    INDEX idx_user_saved_recipes (user_id),
+    INDEX idx_recipe_name (recipe_name),
+    INDEX idx_meal_type (meal_type),
+    INDEX idx_favorite (is_favorite),
+    INDEX idx_source_meal (source_meal_id),
+    INDEX idx_source_template (source_template_id),
+    INDEX idx_times_used (times_used DESC),
+    INDEX idx_last_used (last_used_date DESC)
+);
+
+-- Create saved_recipe_ingredients table for storing ingredients per saved recipe
+CREATE TABLE saved_recipe_ingredients (
+    ingredient_id INT AUTO_INCREMENT,
+    saved_recipe_id INT NOT NULL,
+    ingredient_name VARCHAR(100) NOT NULL,
+    quantity DECIMAL(10,2) NOT NULL,
+    unit VARCHAR(20) NOT NULL,
+    notes VARCHAR(200) NULL,
+    estimated_cost DECIMAL(6,2) NULL,
+    
+    PRIMARY KEY (ingredient_id),
+    FOREIGN KEY (saved_recipe_id) REFERENCES saved_recipes(saved_recipe_id) ON DELETE CASCADE,
+    
+    INDEX idx_saved_recipe_ingredients (saved_recipe_id),
+    INDEX idx_ingredient_name (ingredient_name)
+);
+
+-- Create recipe_usage_log table to track when recipes are used
+CREATE TABLE recipe_usage_log (
+    usage_id INT AUTO_INCREMENT,
+    user_id VARCHAR(50) NOT NULL,
+    saved_recipe_id INT NOT NULL,
+    used_for_meal_id INT NULL, -- which meal this recipe was used for
+    usage_date DATE NOT NULL,
+    usage_context ENUM('meal_plan', 'direct_cook', 'replaced_meal') NOT NULL,
+    notes TEXT NULL,
+    
+    PRIMARY KEY (usage_id),
+    FOREIGN KEY (user_id) REFERENCES user_account(user_ID) ON DELETE CASCADE,
+    FOREIGN KEY (saved_recipe_id) REFERENCES saved_recipes(saved_recipe_id) ON DELETE CASCADE,
+    FOREIGN KEY (used_for_meal_id) REFERENCES meals(meal_id) ON DELETE SET NULL,
+    
+    INDEX idx_user_usage (user_id),
+    INDEX idx_recipe_usage (saved_recipe_id),
+    INDEX idx_usage_date (usage_date DESC)
+);

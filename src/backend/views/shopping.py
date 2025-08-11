@@ -436,3 +436,13 @@ def meal_plan_details(plan_id):
         cursor.close()
         flash(f"Error loading meal plan: {str(e)}", "error")
         return redirect(url_for("shopping.meal_plans"))
+
+
+@shopping_bp.route("/recipes")
+def recipes():
+    """Show saved recipes page"""
+    if "user_ID" not in session:
+        return redirect(url_for("auth.login"))
+
+    user_id = session["user_ID"]
+    return render_template("recipes.html")
