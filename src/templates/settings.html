@@ -706,6 +706,27 @@
                 </div>
               </div>
 
+              <div class="form-group">
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: var(--spacing-md) 0;">
+                  <div>
+                    <label class="form-label" style="margin-bottom: var(--spacing-xs);">
+                      <i class="fas fa-moon" style="margin-right: var(--spacing-sm); color: var(--primary-color);"></i>
+                      Dark Mode
+                    </label>
+                    <p style="color: var(--text-secondary); font-size: 0.875rem; margin: 0;">
+                      Choose your preferred display theme for the interface
+                    </p>
+                  </div>
+                  <div class="form-input-container" style="min-width: 150px; max-width: 200px;">
+                    <select id="themePreference" class="form-input" style="padding-left: var(--spacing-md);">
+                      <option value="system">System Default</option>
+                      <option value="light">Light Mode</option>
+                      <option value="dark">Dark Mode</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
               <div class="btn-actions">
                 <button type="button" class="btn btn-primary" id="savePreferencesBtn">
                   <i class="fas fa-save" aria-hidden="true"></i>

@@ -631,3 +631,114 @@ def api_logout():
             exc_info=True,
         )
         return jsonify({"error": "Logout failed"}), 500
+
+
+@auth_bp.route("/api/user/preferences", methods=["GET"])
+def get_user_preferences():
+    """Get user preferences"""
+    if "user_ID" not in session:
+        return jsonify({"success": False, "message": "Not authenticated"}), 401
+    
+    user_id = session["user_ID"]
+    db = get_db()
+    cursor = db.cursor()
+    
+    try:
+        # Get all preferences for the user
+        query = """
+            SELECT preference_key, preference_value, data_type 
+            FROM user_preferences 
+            WHERE user_id = %s
+        """
+        cursor.execute(query, (user_id,))
+        preferences_raw = cursor.fetchall()
+        
+        # Convert to a dictionary
+        preferences = {}
+        for pref in preferences_raw:
+            key = pref["preference_key"]
+            value = pref["preference_value"]
+            data_type = pref["data_type"]
+            
+            # Convert value based on data type
+            if data_type == "boolean":
+                preferences[key] = value.lower() == "true"
+            elif data_type == "number":
+                preferences[key] = float(value) if '.' in value else int(value)
+            elif data_type == "json":
+                import json
+                preferences[key] = json.loads(value)
+            else:
+                preferences[key] = value
+        
+        cursor.close()
+        return jsonify({
+            "success": True,
+            "preferences": preferences
+        })
+        
+    except Exception as e:
+        cursor.close()
+        logger.error(f"Error getting user preferences: {e}")
+        return jsonify({"success": False, "message": "Failed to get preferences"}), 500
+
+
+@auth_bp.route("/api/user/preferences", methods=["POST"])
+def save_user_preferences():
+    """Save user preferences"""
+    if "user_ID" not in session:
+        return jsonify({"success": False, "message": "Not authenticated"}), 401
+    
+    user_id = session["user_ID"]
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({"success": False, "message": "No data provided"}), 400
+    
+    db = get_db()
+    cursor = db.cursor()
+    
+    try:
+        # Process each preference
+        for key, value in data.items():
+            # Determine data type
+            if isinstance(value, bool):
+                data_type = "boolean"
+                value_str = "true" if value else "false"
+            elif isinstance(value, (int, float)):
+                data_type = "number"
+                value_str = str(value)
+            elif isinstance(value, (list, dict)):
+                data_type = "json"
+                import json
+                value_str = json.dumps(value)
+            else:
+                data_type = "string"
+                value_str = str(value)
+            
+            # Use INSERT ... ON DUPLICATE KEY UPDATE for MySQL
+            upsert_query = """
+                INSERT INTO user_preferences (user_id, preference_key, preference_value, data_type, updated_at)
+                VALUES (%s, %s, %s, %s, NOW())
+                ON DUPLICATE KEY UPDATE
+                preference_value = VALUES(preference_value),
+                data_type = VALUES(data_type),
+                updated_at = NOW()
+            """
+            cursor.execute(upsert_query, (user_id, key, value_str, data_type))
+        
+        db.commit()
+        cursor.close()
+        
+        logger.info(f"User preferences saved for user {user_id}")
+        
+        return jsonify({
+            "success": True,
+            "message": "Preferences saved successfully"
+        })
+        
+    except Exception as e:
+        db.rollback()
+        cursor.close()
+        logger.error(f"Error saving user preferences: {e}")
+        return jsonify({"success": False, "message": "Failed to save preferences"}), 500

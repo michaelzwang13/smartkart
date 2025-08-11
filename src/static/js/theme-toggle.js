@@ -2,85 +2,63 @@
 (function() {
     'use strict';
     
-    // Get stored theme or default to system preference
-    function getStoredTheme() {
-        const stored = localStorage.getItem('theme');
-        if (stored) {
-            return stored;
+    let userThemePreference = 'system'; // system, light, dark
+    
+    // Get effective theme based on user preference
+    function getEffectiveTheme(preference = userThemePreference) {
+        if (preference === 'system') {
+            // Check system preference
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                return 'dark';
+            }
+            return 'light';
         }
-        
-        // Check system preference
-        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            return 'dark';
-        }
-        
-        return 'light';
+        return preference; // 'light' or 'dark'
     }
     
-    // Store theme preference
-    function setStoredTheme(theme) {
-        localStorage.setItem('theme', theme);
+    // Load theme preference from backend
+    async function loadThemePreference() {
+        try {
+            const response = await fetch('/api/user/preferences');
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.preferences.theme_preference) {
+                    userThemePreference = data.preferences.theme_preference;
+                }
+            }
+        } catch (error) {
+            console.log('Could not load theme preference, using system default');
+        }
+        
+        return getEffectiveTheme();
     }
     
     // Apply theme to document
     function applyTheme(theme) {
         document.documentElement.setAttribute('data-theme', theme);
-        updateToggleUI(theme);
     }
     
-    // Update toggle button UI
-    function updateToggleUI(theme) {
-        const themeIcon = document.getElementById('theme-icon');
-        const themeText = document.getElementById('theme-text');
-        
-        if (themeIcon && themeText) {
-            if (theme === 'dark') {
-                themeIcon.className = 'fas fa-sun';
-                themeText.textContent = 'Light Mode';
-            } else {
-                themeIcon.className = 'fas fa-moon';
-                themeText.textContent = 'Dark Mode';
-            }
-        }
+    // Apply theme from preference setting
+    function applyThemeFromPreference(preference) {
+        userThemePreference = preference;
+        const effectiveTheme = getEffectiveTheme(preference);
+        applyTheme(effectiveTheme);
     }
     
-    // Toggle theme
-    function toggleTheme() {
-        const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    // Expose function globally for settings page
+    window.applyThemeFromPreference = applyThemeFromPreference;
+    
+    // Initialize theme on page load
+    async function initTheme() {
+        // Load theme preference from backend and apply
+        const effectiveTheme = await loadThemePreference();
+        applyTheme(effectiveTheme);
         
-        setStoredTheme(newTheme);
-        applyTheme(newTheme);
-        
-        // Add smooth transition for theme switch
+        // Add smooth transition for theme switches
         document.body.style.transition = 'background-color 0.3s ease, color 0.3s ease';
         setTimeout(() => {
             document.body.style.transition = '';
         }, 300);
-        
-        // Add visual feedback to toggle button
-        const themeToggle = document.getElementById('theme-toggle');
-        if (themeToggle) {
-            themeToggle.style.transform = 'scale(0.95)';
-            setTimeout(() => {
-                themeToggle.style.transform = '';
-            }, 150);
-        }
-    }
-    
-    // Initialize theme on page load
-    function initTheme() {
-        const storedTheme = getStoredTheme();
-        applyTheme(storedTheme);
-        
-        // Set up toggle button event listener
-        const themeToggle = document.getElementById('theme-toggle');
-        if (themeToggle) {
-            themeToggle.addEventListener('click', function(e) {
-                e.preventDefault();
-                toggleTheme();
-            });
-        }
     }
     
     // Initialize when DOM is loaded
@@ -90,8 +68,8 @@
         initTheme();
     }
     
-    // Also initialize immediately to prevent flash
-    const storedTheme = getStoredTheme();
-    document.documentElement.setAttribute('data-theme', storedTheme);
+    // Also initialize immediately to prevent flash (use system default)
+    const systemTheme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', systemTheme);
     
 })();

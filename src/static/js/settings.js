@@ -42,6 +42,17 @@ document.addEventListener("DOMContentLoaded", function () {
   if (savePreferencesBtn) {
     savePreferencesBtn.addEventListener("click", saveUserPreferences);
   }
+
+  // Handle theme preference change
+  const themePreference = document.getElementById("themePreference");
+  if (themePreference) {
+    themePreference.addEventListener("change", function() {
+      // Apply theme immediately when changed
+      if (typeof window.applyThemeFromPreference === 'function') {
+        window.applyThemeFromPreference(this.value);
+      }
+    });
+  }
 });
 
 // Load user preferences from API
@@ -67,6 +78,12 @@ async function loadUserPreferences() {
         if (measurementUnit && data.preferences.measurement_unit) {
           measurementUnit.value = data.preferences.measurement_unit;
         }
+
+        // Set theme preference
+        const themePreference = document.getElementById("themePreference");
+        if (themePreference && data.preferences.theme_preference) {
+          themePreference.value = data.preferences.theme_preference;
+        }
       }
     }
   } catch (error) {
@@ -88,7 +105,8 @@ async function saveUserPreferences() {
     const preferences = {
       nutrition_tracking_enabled: document.getElementById("nutritionTrackingToggle").checked,
       email_notifications: document.getElementById("emailNotificationsToggle").checked,
-      measurement_unit: document.getElementById("measurementUnit").value
+      measurement_unit: document.getElementById("measurementUnit").value,
+      theme_preference: document.getElementById("themePreference").value
     };
 
     const response = await fetch("/api/user/preferences", {
@@ -110,6 +128,11 @@ async function saveUserPreferences() {
           top: 0,
           behavior: 'smooth'
         });
+        
+        // Apply theme preference immediately after saving
+        if (typeof window.applyThemeFromPreference === 'function') {
+          window.applyThemeFromPreference(preferences.theme_preference);
+        }
         
         // If nutrition tracking was toggled, suggest page refresh
         // This will update all UI elements that depend on this preference
