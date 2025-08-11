@@ -134,15 +134,6 @@ async function saveUserPreferences() {
           window.applyThemeFromPreference(preferences.theme_preference);
         }
         
-        // If nutrition tracking was toggled, suggest page refresh
-        // This will update all UI elements that depend on this preference
-        if (preferences.nutrition_tracking_enabled !== window.lastNutritionState) {
-          setTimeout(() => {
-            if (confirm("Nutrition tracking preference changed. Would you like to refresh the page to see the changes?")) {
-              window.location.reload();
-            }
-          }, 1500);
-        }
         window.lastNutritionState = preferences.nutrition_tracking_enabled;
       } else {
         showMessage("Failed to save preferences: " + data.message, "error");
