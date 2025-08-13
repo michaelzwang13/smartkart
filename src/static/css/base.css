@@ -84,7 +84,7 @@
 
 /* Dark mode specific overrides */
 [data-theme="dark"] .header {
-    background: rgba(17, 24, 39, 0.95);
+    background: rgba(17, 24, 39, 0.95) !important;
 }
 
 [data-theme="dark"] input {
@@ -141,6 +141,20 @@
 
 [data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
     background: var(--text-muted);
+}
+
+/* Dark mode overrides for shopping list components */
+[data-theme="dark"] .list-header {
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%) !important;
+}
+
+[data-theme="dark"] .list-card {
+    background: var(--bg-primary);
+    border-color: var(--border-medium);
+}
+
+[data-theme="dark"] .list-name {
+    color: var(--text-primary);
 }
 
 /* Theme toggle styling */
