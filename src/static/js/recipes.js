@@ -381,6 +381,12 @@ async function handleUseRecipe(event) {
                     handleUseRecipe(event);
                     return;
                 }
+            } else if (data.requires_upgrade && typeof showUpgradeModal === 'function') {
+                showUpgradeModal(
+                    data.limit_type, 
+                    data.current_limit, 
+                    data.message
+                );
             } else {
                 showError(data.message);
             }

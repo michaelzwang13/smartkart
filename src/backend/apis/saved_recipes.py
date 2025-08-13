@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, session
 from src.database import get_db
 from src.timezone_utils import get_user_current_date
+from src.subscription_utils import check_subscription_limit, SubscriptionLimitExceeded, increment_usage
 import json
 from datetime import datetime, date
 
@@ -234,6 +235,19 @@ def save_recipe_from_meal(meal_id):
         return jsonify({"success": False, "message": "Not authenticated"})
     
     user_id = session["user_ID"]
+    
+    # Check subscription limits for saved recipes (free tier: 10 recipes)
+    try:
+        check_subscription_limit(user_id, 'saved_recipes')
+    except SubscriptionLimitExceeded as e:
+        return jsonify({
+            'success': False,
+            'message': str(e),
+            'limit_type': e.limit_type,
+            'current_limit': e.current_limit,
+            'requires_upgrade': True
+        }), 403
+    
     data = request.get_json() or {}
     
     db = get_db()
@@ -332,6 +346,9 @@ def save_recipe_from_meal(meal_id):
         
         db.commit()
         
+        # Increment saved recipes usage counter (for subscription limits)
+        increment_usage(user_id, 'saved_recipes')
+        
         return jsonify({
             "success": True,
             "message": f"Recipe '{recipe_name}' saved successfully",
@@ -353,6 +370,19 @@ def create_saved_recipe():
         return jsonify({"success": False, "message": "Not authenticated"})
     
     user_id = session["user_ID"]
+    
+    # Check subscription limits for saved recipes (free tier: 10 recipes)
+    try:
+        check_subscription_limit(user_id, 'saved_recipes')
+    except SubscriptionLimitExceeded as e:
+        return jsonify({
+            'success': False,
+            'message': str(e),
+            'limit_type': e.limit_type,
+            'current_limit': e.current_limit,
+            'requires_upgrade': True
+        }), 403
+    
     data = request.get_json()
     
     if not data or not data.get("recipe_name") or not data.get("meal_type") or not data.get("instructions"):
@@ -425,6 +455,9 @@ def create_saved_recipe():
             ))
         
         db.commit()
+        
+        # Increment saved recipes usage counter (for subscription limits)
+        increment_usage(user_id, 'saved_recipes')
         
         return jsonify({
             "success": True,

@@ -61,7 +61,7 @@ def create_app():
     app.register_blueprint(shopping.shopping_bp)
     
     # Register new refactored blueprints
-    from src.backend.apis import shopping_trip, shopping_list, shopping_list_integration, budget, pantry, meals, meal_plan_compat, meal_goals, ingredient_matching, saved_recipes
+    from src.backend.apis import shopping_trip, shopping_list, shopping_list_integration, budget, pantry, meals, meal_plan_compat, meal_goals, ingredient_matching, saved_recipes, promo_codes
     app.register_blueprint(shopping_trip.shopping_trip_bp)
     app.register_blueprint(shopping_list.shopping_list_bp)
     app.register_blueprint(shopping_list_integration.shopping_list_integration_bp)
@@ -72,9 +72,22 @@ def create_app():
     app.register_blueprint(meal_goals.meal_goals_bp)  # Monthly meal goals API
     app.register_blueprint(ingredient_matching.ingredient_matching_bp)  # Fuzzy matching API
     app.register_blueprint(saved_recipes.saved_recipes_bp)  # Saved recipes API
+    app.register_blueprint(promo_codes.promo_codes_bp)  # Promotional codes API
     
     
     logger.info("Blueprints registered successfully")
 
+    # Add template global functions
+    @app.template_global()
+    def get_user_limits_status(user_id):
+        """Make subscription status available in templates"""
+        try:
+            from .subscription_utils import get_user_limits_status as _get_status
+            return _get_status(user_id)
+        except Exception:
+            # Return free tier status as fallback
+            return {'tier': 'free', 'limits': {}, 'unlimited': False}
+
+    logger.info("Template globals registered")
     logger.info("Flask application created successfully")
     return app

@@ -16,18 +16,29 @@
         return preference; // 'light' or 'dark'
     }
     
-    // Load theme preference from backend
+    // Load theme preference from localStorage first, then backend
     async function loadThemePreference() {
+        // First check localStorage for immediate access
+        const savedTheme = localStorage.getItem('theme-preference');
+        if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'system')) {
+            userThemePreference = savedTheme;
+        }
+        
+        // Then sync with backend preferences
         try {
             const response = await fetch('/api/user/preferences');
             if (response.ok) {
                 const data = await response.json();
                 if (data.success && data.preferences.theme_preference) {
-                    userThemePreference = data.preferences.theme_preference;
+                    const serverTheme = data.preferences.theme_preference;
+                    if (serverTheme !== userThemePreference) {
+                        userThemePreference = serverTheme;
+                        localStorage.setItem('theme-preference', serverTheme);
+                    }
                 }
             }
         } catch (error) {
-            console.log('Could not load theme preference, using system default');
+            console.log('Could not load theme preference from server, using local storage');
         }
         
         return getEffectiveTheme();
@@ -41,6 +52,8 @@
     // Apply theme from preference setting
     function applyThemeFromPreference(preference) {
         userThemePreference = preference;
+        // Save to localStorage for immediate access on next page load
+        localStorage.setItem('theme-preference', preference);
         const effectiveTheme = getEffectiveTheme(preference);
         applyTheme(effectiveTheme);
     }
@@ -67,9 +80,5 @@
     } else {
         initTheme();
     }
-    
-    // Also initialize immediately to prevent flash (use system default)
-    const systemTheme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    document.documentElement.setAttribute('data-theme', systemTheme);
     
 })();

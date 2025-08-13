@@ -1,10 +1,45 @@
 from flask import Blueprint, request, jsonify, session
 from src.database import get_db
 from src.timezone_utils import get_user_current_date
+from src.subscription_utils import subscription_required, check_subscription_limit, SubscriptionLimitExceeded, increment_usage, get_user_subscription_info
 import json
 from datetime import datetime, timedelta
 
 meals_bp = Blueprint("meals", __name__, url_prefix="/api")
+
+
+def filter_nutrition_data_by_subscription(user_id, nutrition_data):
+    """
+    Filter nutrition data based on user's subscription tier.
+    Free tier: calories + protein only
+    Premium tier: all macro data
+    """
+    subscription_info = get_user_subscription_info(user_id)
+    
+    if subscription_info['tier'] == 'premium':
+        # Premium users get full nutrition data
+        return nutrition_data
+    
+    # Free tier users only get calories and protein
+    filtered_data = {}
+    
+    # Always include these for free tier
+    if 'calories' in nutrition_data:
+        filtered_data['calories'] = nutrition_data['calories']
+    if 'protein' in nutrition_data:
+        filtered_data['protein'] = nutrition_data['protein']
+    
+    # Hide other macros for free tier
+    filtered_data['carbs'] = None
+    filtered_data['fat'] = None
+    filtered_data['fiber'] = None
+    filtered_data['sodium'] = None
+    
+    # Add upgrade prompts
+    filtered_data['_upgrade_message'] = "Track your full macros & nutrients — Upgrade to Preppr+."
+    filtered_data['_limited_tier'] = True
+    
+    return filtered_data
 
 
 @meals_bp.route("/nutrition/<int:meal_id>", methods=["GET"])
@@ -32,6 +67,19 @@ def get_meal_nutrition(meal_id):
         if not nutrition_data:
             return jsonify({"success": False, "message": "Nutrition data not found"})
         
+        # Prepare nutrition data
+        raw_nutrition_data = {
+            "calories": float(nutrition_data["calories"]) if nutrition_data["calories"] else None,
+            "protein": float(nutrition_data["protein_g"]) if nutrition_data["protein_g"] else None,
+            "carbs": float(nutrition_data["carbohydrates_g"]) if nutrition_data["carbohydrates_g"] else None,
+            "fat": float(nutrition_data["fat_g"]) if nutrition_data["fat_g"] else None,
+            "fiber": float(nutrition_data["fiber_g"]) if nutrition_data["fiber_g"] else None,
+            "sodium": float(nutrition_data["sodium_mg"]) if nutrition_data["sodium_mg"] else None
+        }
+        
+        # Filter based on subscription tier
+        filtered_nutrition = filter_nutrition_data_by_subscription(user_id, raw_nutrition_data)
+        
         # Format the response
         response_data = {
             "success": True,
@@ -40,20 +88,25 @@ def get_meal_nutrition(meal_id):
                 "recipe_name": nutrition_data["recipe_name"],
                 "meal_type": nutrition_data["meal_type"],
                 "meal_date": nutrition_data["meal_date"].strftime("%Y-%m-%d"),
-                "calories": float(nutrition_data["calories"]) if nutrition_data["calories"] else None,
+                "calories": filtered_nutrition["calories"],
                 "macros": {
-                    "protein": float(nutrition_data["protein_g"]) if nutrition_data["protein_g"] else None,
-                    "carbs": float(nutrition_data["carbohydrates_g"]) if nutrition_data["carbohydrates_g"] else None,
-                    "fat": float(nutrition_data["fat_g"]) if nutrition_data["fat_g"] else None
+                    "protein": filtered_nutrition["protein"],
+                    "carbs": filtered_nutrition["carbs"],
+                    "fat": filtered_nutrition["fat"]
                 },
-                "fiber": float(nutrition_data["fiber_g"]) if nutrition_data["fiber_g"] else None,
-                "sodium": float(nutrition_data["sodium_mg"]) if nutrition_data["sodium_mg"] else None,
+                "fiber": filtered_nutrition["fiber"],
+                "sodium": filtered_nutrition["sodium"],
                 "servings": nutrition_data["servings"],
                 "serving_size": nutrition_data["serving_size"],
                 "source_type": nutrition_data["source_type"],
                 "created_at": nutrition_data["created_at"].strftime("%Y-%m-%d %H:%M:%S")
             }
         }
+        
+        # Add subscription-related metadata
+        if '_upgrade_message' in filtered_nutrition:
+            response_data['_upgrade_message'] = filtered_nutrition['_upgrade_message']
+            response_data['_limited_tier'] = filtered_nutrition['_limited_tier']
         
         return jsonify(response_data)
         
@@ -115,18 +168,31 @@ def get_daily_nutrition_summary(date):
         meals_with_nutrition = []
         
         for meal in meals_data:
+            # Prepare raw nutrition data
+            raw_meal_nutrition = {
+                "calories": float(meal["calories"]) if meal["calories"] else 0,
+                "protein": float(meal["protein_g"]) if meal["protein_g"] else 0,
+                "carbs": float(meal["carbohydrates_g"]) if meal["carbohydrates_g"] else 0,
+                "fat": float(meal["fat_g"]) if meal["fat_g"] else 0,
+                "fiber": float(meal["fiber_g"]) if meal["fiber_g"] else 0,
+                "sodium": float(meal["sodium_mg"]) if meal["sodium_mg"] else 0
+            }
+            
+            # Filter based on subscription tier
+            filtered_meal_nutrition = filter_nutrition_data_by_subscription(user_id, raw_meal_nutrition)
+            
             meal_nutrition = {
                 "meal_id": meal["meal_id"],
                 "meal_type": meal["meal_type"],
                 "recipe_name": meal["recipe_name"],
                 "is_completed": meal["is_completed"],
                 "nutrition": {
-                    "calories": float(meal["calories"]) if meal["calories"] else 0,
-                    "protein": float(meal["protein_g"]) if meal["protein_g"] else 0,
-                    "carbs": float(meal["carbohydrates_g"]) if meal["carbohydrates_g"] else 0,
-                    "fat": float(meal["fat_g"]) if meal["fat_g"] else 0,
-                    "fiber": float(meal["fiber_g"]) if meal["fiber_g"] else 0,
-                    "sodium": float(meal["sodium_mg"]) if meal["sodium_mg"] else 0
+                    "calories": filtered_meal_nutrition["calories"],
+                    "protein": filtered_meal_nutrition["protein"],
+                    "carbs": filtered_meal_nutrition["carbs"],
+                    "fat": filtered_meal_nutrition["fat"],
+                    "fiber": filtered_meal_nutrition["fiber"],
+                    "sodium": filtered_meal_nutrition["sodium"]
                 },
                 "servings": meal["servings"],
                 "serving_size": meal["serving_size"]
@@ -134,23 +200,31 @@ def get_daily_nutrition_summary(date):
             
             # Add to daily totals if meal is completed (or if we want to show planned vs actual)
             if meal["is_completed"]:
-                daily_totals["calories"] += meal_nutrition["nutrition"]["calories"]
-                daily_totals["protein"] += meal_nutrition["nutrition"]["protein"]
-                daily_totals["carbs"] += meal_nutrition["nutrition"]["carbs"]
-                daily_totals["fat"] += meal_nutrition["nutrition"]["fat"]
-                daily_totals["fiber"] += meal_nutrition["nutrition"]["fiber"]
-                daily_totals["sodium"] += meal_nutrition["nutrition"]["sodium"]
+                daily_totals["calories"] += meal_nutrition["nutrition"]["calories"] or 0
+                daily_totals["protein"] += meal_nutrition["nutrition"]["protein"] or 0
+                daily_totals["carbs"] += meal_nutrition["nutrition"]["carbs"] or 0
+                daily_totals["fat"] += meal_nutrition["nutrition"]["fat"] or 0
+                daily_totals["fiber"] += meal_nutrition["nutrition"]["fiber"] or 0
+                daily_totals["sodium"] += meal_nutrition["nutrition"]["sodium"] or 0
             
             meals_with_nutrition.append(meal_nutrition)
+        
+        # Filter daily totals based on subscription tier
+        filtered_daily_totals = filter_nutrition_data_by_subscription(user_id, daily_totals)
         
         response_data = {
             "success": True,
             "date": date,
-            "daily_totals": daily_totals,
+            "daily_totals": filtered_daily_totals,
             "meals": meals_with_nutrition,
             "total_meals": len(meals_data),
             "completed_meals": len([m for m in meals_data if m["is_completed"]])
         }
+        
+        # Add subscription-related metadata
+        if '_upgrade_message' in filtered_daily_totals:
+            response_data['_upgrade_message'] = filtered_daily_totals['_upgrade_message']
+            response_data['_limited_tier'] = filtered_daily_totals['_limited_tier']
         
         return jsonify(response_data)
         
@@ -169,9 +243,37 @@ def generate_meal_plan():
     data = request.get_json()
     user_id = session["user_ID"]
 
-    # Required fields
-    days = data.get("days", 7)
-    start_date = data.get("start_date")  # Optional - defaults to today
+    # Check subscription limits first
+    try:
+        # Check active meal plans limit (3 for free tier)
+        check_subscription_limit(user_id, 'meal_plans_active')
+        
+        # Check advance planning limit
+        days = int(data.get("days", 7))
+        start_date_str = data.get("start_date")
+        
+        if start_date_str:
+            start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+        else:
+            start_date = datetime.now().date()
+        
+        # Calculate how many days in advance this plan starts
+        days_in_advance = (start_date - datetime.now().date()).days
+        
+        # Free tier can't plan more than 7 days in advance
+        if days_in_advance > 7:
+            check_subscription_limit(user_id, 'meal_plans_advance_days')
+    
+    except SubscriptionLimitExceeded as e:
+        return jsonify({
+            'success': False,
+            'message': str(e),
+            'limit_type': e.limit_type,
+            'current_limit': e.current_limit,
+            'requires_upgrade': True
+        }), 403
+
+    # Required fields (reuse from above checks)
 
     # Optional fields with defaults
     ingredients = data.get("ingredients", [])
@@ -417,6 +519,9 @@ def generate_meal_plan():
         generate_session_batch_prep(cursor, session_id, meal_plan_data.get("batch_prep", []))
 
         db.commit()
+        
+        # Increment active meal plans usage counter (for subscription limits)
+        increment_usage(user_id, 'meal_plans_active')
 
         return jsonify({
             "success": True,
@@ -1352,34 +1457,68 @@ def nutrition_goals():
             goals_data = cursor.fetchone()
             
             if goals_data:
+                # Prepare raw goals data
+                raw_goals_data = {
+                    "calories": float(goals_data["daily_calories_goal"]) if goals_data["daily_calories_goal"] else None,
+                    "protein": float(goals_data["daily_protein_goal_g"]) if goals_data["daily_protein_goal_g"] else None,
+                    "carbs": float(goals_data["daily_carbs_goal_g"]) if goals_data["daily_carbs_goal_g"] else None,
+                    "fat": float(goals_data["daily_fat_goal_g"]) if goals_data["daily_fat_goal_g"] else None,
+                    "fiber": float(goals_data["daily_fiber_goal_g"]) if goals_data["daily_fiber_goal_g"] else None,
+                    "sodium": float(goals_data["daily_sodium_limit_mg"]) if goals_data["daily_sodium_limit_mg"] else None
+                }
+                
+                # Filter based on subscription tier
+                filtered_goals = filter_nutrition_data_by_subscription(user_id, raw_goals_data)
+                
                 response_data = {
                     "success": True,
                     "goals": {
-                        "daily_calories": float(goals_data["daily_calories_goal"]) if goals_data["daily_calories_goal"] else None,
-                        "daily_protein": float(goals_data["daily_protein_goal_g"]) if goals_data["daily_protein_goal_g"] else None,
-                        "daily_carbs": float(goals_data["daily_carbs_goal_g"]) if goals_data["daily_carbs_goal_g"] else None,
-                        "daily_fat": float(goals_data["daily_fat_goal_g"]) if goals_data["daily_fat_goal_g"] else None,
-                        "daily_fiber": float(goals_data["daily_fiber_goal_g"]) if goals_data["daily_fiber_goal_g"] else None,
-                        "daily_sodium_limit": float(goals_data["daily_sodium_limit_mg"]) if goals_data["daily_sodium_limit_mg"] else None,
+                        "daily_calories": filtered_goals["calories"],
+                        "daily_protein": filtered_goals["protein"],
+                        "daily_carbs": filtered_goals["carbs"],
+                        "daily_fat": filtered_goals["fat"],
+                        "daily_fiber": filtered_goals["fiber"],
+                        "daily_sodium_limit": filtered_goals["sodium"],
                         "goal_type": goals_data["goal_type"],
                         "activity_level": goals_data["activity_level"]
                     }
                 }
+                
+                # Add subscription-related metadata
+                if '_upgrade_message' in filtered_goals:
+                    response_data['_upgrade_message'] = filtered_goals['_upgrade_message']
+                    response_data['_limited_tier'] = filtered_goals['_limited_tier']
             else:
-                # Return default goals
+                # Return default goals filtered by subscription tier
+                default_goals = {
+                    "calories": 2000,
+                    "protein": 150,
+                    "carbs": 250,
+                    "fat": 70,
+                    "fiber": 25,
+                    "sodium": 2300
+                }
+                
+                filtered_default_goals = filter_nutrition_data_by_subscription(user_id, default_goals)
+                
                 response_data = {
                     "success": True,
                     "goals": {
-                        "daily_calories": 2000,
-                        "daily_protein": 150,
-                        "daily_carbs": 250,
-                        "daily_fat": 70,
-                        "daily_fiber": 25,
-                        "daily_sodium_limit": 2300,
+                        "daily_calories": filtered_default_goals["calories"],
+                        "daily_protein": filtered_default_goals["protein"],
+                        "daily_carbs": filtered_default_goals["carbs"],
+                        "daily_fat": filtered_default_goals["fat"],
+                        "daily_fiber": filtered_default_goals["fiber"],
+                        "daily_sodium_limit": filtered_default_goals["sodium"],
                         "goal_type": "maintenance",
                         "activity_level": "moderately_active"
                     }
                 }
+                
+                # Add subscription-related metadata
+                if '_upgrade_message' in filtered_default_goals:
+                    response_data['_upgrade_message'] = filtered_default_goals['_upgrade_message']
+                    response_data['_limited_tier'] = filtered_default_goals['_limited_tier']
             
             return jsonify(response_data)
         
