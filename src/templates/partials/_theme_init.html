@@ -3,7 +3,7 @@
 (function() {
     'use strict';
     
-    // Get theme from localStorage or system preference immediately
+    // Get theme from localStorage or default to light mode immediately
     function getInitialTheme() {
         // Check if user has a saved preference in localStorage
         const savedTheme = localStorage.getItem('theme-preference');
@@ -11,11 +11,7 @@
             return savedTheme;
         }
         
-        // Fall back to system preference
-        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            return 'dark';
-        }
-        
+        // Default to light mode for new users
         return 'light';
     }
     

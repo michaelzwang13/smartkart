@@ -2,7 +2,7 @@
 (function() {
     'use strict';
     
-    let userThemePreference = 'system'; // system, light, dark
+    let userThemePreference = 'light'; // system, light, dark
     
     // Get effective theme based on user preference
     function getEffectiveTheme(preference = userThemePreference) {

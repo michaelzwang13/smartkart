@@ -193,6 +193,14 @@ def register():
                 "INSERT INTO user_account (user_ID, email, password, first_name, last_name) VALUES(%s, %s, %s, %s, %s)"
             )
             cursor.execute(ins, (user_ID, email_address, hashed_password, first_name, last_name))
+            
+            # Set default theme preference to light mode for new users
+            theme_pref_query = """
+                INSERT INTO user_preferences (user_id, preference_key, preference_value, data_type)
+                VALUES (%s, 'theme_preference', 'light', 'string')
+            """
+            cursor.execute(theme_pref_query, (user_ID,))
+            
             db.commit()
             cursor.close()
             session["user_ID"] = user_ID
@@ -584,6 +592,14 @@ def api_register():
             "VALUES (%s, %s, %s, %s, %s)"
         )
         cursor.execute(insert_query, (user_id, email, hashed_password, first_name, last_name))
+        
+        # Set default theme preference to light mode for new users
+        theme_pref_query = """
+            INSERT INTO user_preferences (user_id, preference_key, preference_value, data_type)
+            VALUES (%s, 'theme_preference', 'light', 'string')
+        """
+        cursor.execute(theme_pref_query, (user_id,))
+        
         db.commit()
         cursor.close()
         
