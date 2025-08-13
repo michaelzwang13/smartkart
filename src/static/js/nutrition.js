@@ -123,7 +123,7 @@ async function handleSubscriptionLimitations() {
           <p style="color: var(--text-secondary); margin: 0 0 var(--spacing-md) 0;">
             Track your full macros & nutrients — Upgrade to Preppr Premium!
           </p>
-          <button type="button" class="btn-primary" onclick="showUpgradeModal('macro_tracking', 'calories + protein only', 'Track your full macros & nutrients — Upgrade to Preppr Premium!')">
+          <button type="button" class="btn-primary" onclick="redirectToUpgrade()">
             <i class="fas fa-star"></i>
             Upgrade to Premium
           </button>

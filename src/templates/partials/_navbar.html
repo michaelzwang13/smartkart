@@ -68,6 +68,14 @@
             <i class="fas fa-chevron-down dropdown-arrow" style="margin-left: 6px; font-size: 0.7em;"></i>
           </a>
           <ul class="dropdown-menu">
+            {% if session.get('user_ID') %}
+              {% set user_subscription = get_user_limits_status(session['user_ID']) %}
+              {% if user_subscription.tier == 'free' %}
+            <li><a href="{{ url_for('auth.upgrade') }}" class="dropdown-link upgrade-link">
+              <i class="fas fa-crown"></i>Upgrade to Premium
+            </a></li>
+              {% endif %}
+            {% endif %}
             <li><a href="{{ url_for('auth.settings') }}" class="dropdown-link">
               <i class="fas fa-cog"></i>Settings
             </a></li>

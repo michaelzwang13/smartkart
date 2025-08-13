@@ -3,7 +3,12 @@
  */
 
 // Show upgrade modal when user hits subscription limits
-function showUpgradeModal(limitType, currentLimit, message) {
+// Set redirectOnly to true to go directly to upgrade page instead of showing modal
+function showUpgradeModal(limitType, currentLimit, message, redirectOnly = false) {
+    if (redirectOnly) {
+        window.location.href = '/upgrade';
+        return;
+    }
     // Remove existing modal if any
     const existingModal = document.getElementById('upgrade-modal');
     if (existingModal) {
@@ -53,7 +58,7 @@ function showUpgradeModal(limitType, currentLimit, message) {
                                 <span class="period">/year</span>
                             </div>
                             <div class="savings">Save 37% • Just $5/month</div>
-                            <button class="btn btn-primary upgrade-btn" onclick="upgradeToPremium('annual')">
+                            <button class="btn btn-primary upgrade-btn" onclick="redirectToUpgrade()">
                                 Choose Annual
                             </button>
                         </div>
@@ -65,7 +70,7 @@ function showUpgradeModal(limitType, currentLimit, message) {
                                 <span class="period">/month</span>
                             </div>
                             <div class="savings">Flexible billing</div>
-                            <button class="btn btn-secondary upgrade-btn" onclick="upgradeToPremium('monthly')">
+                            <button class="btn btn-secondary upgrade-btn" onclick="redirectToUpgrade()">
                                 Choose Monthly
                             </button>
                         </div>
@@ -99,9 +104,14 @@ function closeUpgradeModal() {
 }
 
 function upgradeToPremium(plan) {
-    // Placeholder for payment integration
-    alert(`Upgrading to ${plan} plan. Payment integration would be implemented here.`);
+    // Redirect to upgrade page instead of handling payment here
+    window.location.href = '/upgrade';
     closeUpgradeModal();
+}
+
+// Direct redirect to upgrade page (for use in buttons and links)
+function redirectToUpgrade() {
+    window.location.href = '/upgrade';
 }
 
 function addUpgradeModalStyles() {
@@ -398,5 +408,6 @@ async function getUserSubscriptionStatus() {
 window.showUpgradeModal = showUpgradeModal;
 window.closeUpgradeModal = closeUpgradeModal;
 window.upgradeToPremium = upgradeToPremium;
+window.redirectToUpgrade = redirectToUpgrade;
 window.handleAPIResponse = handleAPIResponse;
 window.getUserSubscriptionStatus = getUserSubscriptionStatus;

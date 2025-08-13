@@ -76,5 +76,17 @@ def create_app():
     
     logger.info("Blueprints registered successfully")
 
+    # Add template global functions
+    @app.template_global()
+    def get_user_limits_status(user_id):
+        """Make subscription status available in templates"""
+        try:
+            from .subscription_utils import get_user_limits_status as _get_status
+            return _get_status(user_id)
+        except Exception:
+            # Return free tier status as fallback
+            return {'tier': 'free', 'limits': {}, 'unlimited': False}
+
+    logger.info("Template globals registered")
     logger.info("Flask application created successfully")
     return app

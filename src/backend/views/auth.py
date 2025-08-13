@@ -375,6 +375,99 @@ def logout():
     return redirect(url_for("auth.login"))
 
 
+@auth_bp.route("/upgrade", methods=["GET"])
+def upgrade():
+    """Show premium upgrade page with pricing and payment options"""
+    if "user_ID" not in session:
+        return redirect(url_for("auth.login"))
+    
+    user_id = session["user_ID"]
+    
+    try:
+        # Get current subscription status
+        subscription_status = get_user_limits_status(user_id)
+        
+        # If user is already premium, redirect to settings
+        if subscription_status.get('tier') == 'premium':
+            return redirect(url_for("auth.settings"))
+        
+        # Prepare pricing data
+        pricing_data = {
+            "monthly": {
+                "price": 7.99,
+                "billing": "monthly",
+                "savings": None
+            },
+            "annual": {
+                "price": 59.99,
+                "billing": "annually", 
+                "monthly_equivalent": 4.99,
+                "savings": 37
+            }
+        }
+        
+        # Premium features list
+        premium_features = [
+            {
+                "icon": "fas fa-infinity",
+                "title": "Unlimited Meal Plans",
+                "description": "Create unlimited meal plans and plan weeks in advance"
+            },
+            {
+                "icon": "fas fa-warehouse", 
+                "title": "Unlimited Pantry Storage",
+                "description": "Store unlimited ingredients and track everything you have"
+            },
+            {
+                "icon": "fas fa-chart-line",
+                "title": "Full Macro Tracking", 
+                "description": "Track all macros, micronutrients, and view detailed history"
+            },
+            {
+                "icon": "fas fa-bookmark",
+                "title": "Unlimited Recipe Saving",
+                "description": "Save and organize unlimited recipes for your family"
+            },
+            {
+                "icon": "fas fa-list-ul",
+                "title": "Unlimited Shopping Lists", 
+                "description": "Generate unlimited shopping lists whenever you need"
+            },
+            {
+                "icon": "fas fa-barcode",
+                "title": "Unlimited UPC Scanning",
+                "description": "Scan unlimited products to build your pantry quickly"
+            },
+            {
+                "icon": "fas fa-brain",
+                "title": "Advanced AI Features",
+                "description": "Priority AI processing and smart suggestions"
+            },
+            {
+                "icon": "fas fa-mobile-alt",
+                "title": "Mobile App Access",
+                "description": "Full access to our mobile apps (coming soon)"
+            }
+        ]
+        
+        return render_template("upgrade.html", 
+                             subscription_status=subscription_status,
+                             pricing=pricing_data,
+                             features=premium_features)
+        
+    except Exception as e:
+        logger.error(
+            "Failed to load upgrade page",
+            extra={
+                "user_id": user_id,
+                "error": str(e),
+                "request_id": getattr(g, "request_id", None),
+            },
+            exc_info=True,
+        )
+        return redirect(url_for("shopping.home"))
+
+
 # JWT API Endpoints
 @auth_bp.route("/api/auth/login", methods=["POST"])
 def api_login():

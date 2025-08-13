@@ -392,6 +392,44 @@ body {
     color: var(--error-color);
 }
 
+.dropdown-link.upgrade-link {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #059669 100%);
+    color: white;
+    font-weight: 600;
+    border-radius: var(--radius-md);
+    margin: var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-md);
+    position: relative;
+    overflow: hidden;
+}
+
+.dropdown-link.upgrade-link::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.dropdown-link.upgrade-link:hover::before {
+    left: 100%;
+}
+
+.dropdown-link.upgrade-link:hover {
+    background: linear-gradient(135deg, #059669 0%, var(--primary-color) 100%);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.dropdown-link.upgrade-link i {
+    color: #fbbf24;
+    font-size: 0.9rem;
+}
+
 .dropdown-link i {
     font-size: 0.85rem;
     width: 14px;
