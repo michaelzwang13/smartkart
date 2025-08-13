@@ -232,25 +232,70 @@ async function handleCodeSubmit(event) {
     redeemBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
     
     try {
-        // Simulate code validation
-        await simulateCodeValidation(code);
+        // First validate the code
+        const validationResponse = await validatePromoCode(code);
         
-        // Check if code is valid (for demo purposes)
-        const validCodes = ['PREMIUM2024', 'WELCOME', 'STUDENT', 'FAMILY50'];
-        
-        if (validCodes.includes(code.toUpperCase())) {
-            showMessage('Code redeemed successfully! You now have Premium access.', 'success', 'code-messages');
+        if (validationResponse.valid) {
+            // Show validation success message with preview
+            const previewMessage = validationResponse.preview_message || 'Code is valid!';
+            showMessage(`${previewMessage} Redeeming...`, 'success', 'code-messages');
             
-            // Redirect after a delay
-            setTimeout(() => {
-                window.location.href = '/settings?upgraded=true&method=code';
-            }, 2000);
+            // Wait a moment for user to see the preview
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Now redeem the code
+            const redemptionResponse = await redeemPromoCode(code);
+            
+            if (redemptionResponse.redeemed) {
+                showMessage(redemptionResponse.message, 'success', 'code-messages');
+                
+                // Redirect based on code type
+                const redirectUrl = redemptionResponse.redirect_to || '/settings';
+                const queryParam = redemptionResponse.code_type === 'upgrade' ? 'upgraded=true&method=code' : 'promo_redeemed=true';
+                
+                setTimeout(() => {
+                    window.location.href = `${redirectUrl}?${queryParam}`;
+                }, 2000);
+            } else {
+                throw new Error(redemptionResponse.message || 'Failed to redeem code');
+            }
         } else {
-            throw new Error('Invalid promotional code. Please check and try again.');
+            throw new Error(validationResponse.message || 'Invalid promotional code');
         }
         
     } catch (error) {
-        showMessage(error.message, 'error', 'code-messages');
+        // Handle specific error types
+        let errorMessage = 'An error occurred while processing your code';
+        
+        if (error.message) {
+            errorMessage = error.message;
+        } else if (error.error) {
+            // Handle API error response format
+            switch (error.error) {
+                case 'code_expired':
+                    errorMessage = 'This promotional code has expired';
+                    break;
+                case 'code_exhausted':
+                    errorMessage = 'This promotional code has been fully redeemed';
+                    break;
+                case 'user_limit_reached':
+                    errorMessage = 'You have already used this promotional code';
+                    break;
+                case 'rate_limited':
+                    errorMessage = 'Too many attempts. Please try again later';
+                    break;
+                case 'not_eligible':
+                    errorMessage = 'You are not eligible for this promotional code';
+                    break;
+                case 'authentication_required':
+                    errorMessage = 'Please log in to redeem promotional codes';
+                    break;
+                default:
+                    errorMessage = error.message || 'Invalid promotional code';
+            }
+        }
+        
+        showMessage(errorMessage, 'error', 'code-messages');
         
         // Re-enable button
         redeemBtn.disabled = false;
@@ -258,13 +303,52 @@ async function handleCodeSubmit(event) {
     }
 }
 
-// Simulate code validation
-function simulateCodeValidation(code) {
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            resolve();
-        }, 1500);
+// Validate promotional code via API
+async function validatePromoCode(code) {
+    const response = await fetch('/api/promo-codes/validate', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ code: code }),
+        credentials: 'same-origin' // Include session cookies
     });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+        // Throw the error data to be handled by the calling function
+        const error = new Error(data.message || 'Validation failed');
+        error.error = data.error;
+        error.status = response.status;
+        throw error;
+    }
+    
+    return data;
+}
+
+// Redeem promotional code via API  
+async function redeemPromoCode(code) {
+    const response = await fetch('/api/promo-codes/redeem', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ code: code }),
+        credentials: 'same-origin' // Include session cookies
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+        // Throw the error data to be handled by the calling function
+        const error = new Error(data.message || 'Redemption failed');
+        error.error = data.error;
+        error.status = response.status;
+        throw error;
+    }
+    
+    return data;
 }
 
 // Initialize FAQ functionality
@@ -428,5 +512,6 @@ window.upgradePageUtils = {
     showMessage,
     hideMessage,
     simulatePaymentProcessing,
-    simulateCodeValidation
+    validatePromoCode,
+    redeemPromoCode
 };

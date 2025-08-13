@@ -727,6 +727,360 @@ def api_logout():
         return jsonify({"error": "Logout failed"}), 500
 
 
+# Admin Promotional Code Management Routes
+@auth_bp.route("/admin/promo-codes", methods=["GET"])
+def admin_list_promo_codes():
+    """List all promotional codes (admin only)"""
+    if "user_ID" not in session:
+        return redirect(url_for("auth.login"))
+    
+    # Basic admin check (you might want to add proper admin role checking)
+    user_id = session["user_ID"]
+    if not user_id.startswith('admin'):  # Simple admin check - replace with proper role system
+        return jsonify({"success": False, "message": "Admin access required"}), 403
+    
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        
+        # Get query parameters
+        page = int(request.args.get('page', 1))
+        per_page = min(int(request.args.get('per_page', 20)), 100)
+        status_filter = request.args.get('status', 'all')  # all, active, expired, exhausted
+        
+        # Build query based on filters
+        where_conditions = []
+        params = []
+        
+        if status_filter == 'active':
+            where_conditions.append("is_active = TRUE AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP) AND (max_uses IS NULL OR current_uses < max_uses)")
+        elif status_filter == 'expired':
+            where_conditions.append("expires_at IS NOT NULL AND expires_at <= CURRENT_TIMESTAMP")
+        elif status_filter == 'exhausted':
+            where_conditions.append("max_uses IS NOT NULL AND current_uses >= max_uses")
+        elif status_filter == 'inactive':
+            where_conditions.append("is_active = FALSE")
+        
+        where_clause = "WHERE " + " AND ".join(where_conditions) if where_conditions else ""
+        
+        # Get total count
+        count_query = f"SELECT COUNT(*) as total FROM promotional_codes {where_clause}"
+        cursor.execute(count_query, params)
+        total_codes = cursor.fetchone()['total']
+        
+        # Get paginated results
+        offset = (page - 1) * per_page
+        list_query = f"""
+            SELECT 
+                code_id, code, code_type, discount_value, subscription_duration_months,
+                max_uses, current_uses, max_uses_per_user, expires_at, is_active,
+                created_at, created_by, description,
+                CASE 
+                    WHEN expires_at IS NULL THEN TRUE
+                    WHEN expires_at > CURRENT_TIMESTAMP THEN TRUE
+                    ELSE FALSE
+                END as not_expired,
+                CASE 
+                    WHEN max_uses IS NULL THEN TRUE
+                    WHEN current_uses < max_uses THEN TRUE
+                    ELSE FALSE
+                END as has_uses_remaining
+            FROM promotional_codes 
+            {where_clause}
+            ORDER BY created_at DESC
+            LIMIT %s OFFSET %s
+        """
+        
+        cursor.execute(list_query, params + [per_page, offset])
+        codes = cursor.fetchall()
+        
+        # Calculate pagination info
+        total_pages = (total_codes + per_page - 1) // per_page
+        
+        return jsonify({
+            "success": True,
+            "codes": codes,
+            "pagination": {
+                "page": page,
+                "per_page": per_page,
+                "total": total_codes,
+                "total_pages": total_pages,
+                "has_next": page < total_pages,
+                "has_prev": page > 1
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Error listing promo codes: {e}")
+        return jsonify({"success": False, "message": "Failed to list promotional codes"}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+
+
+@auth_bp.route("/admin/promo-codes", methods=["POST"])
+def admin_create_promo_code():
+    """Create a new promotional code (admin only)"""
+    if "user_ID" not in session:
+        return jsonify({"success": False, "message": "Authentication required"}), 401
+    
+    user_id = session["user_ID"]
+    if not user_id.startswith('admin'):  # Simple admin check
+        return jsonify({"success": False, "message": "Admin access required"}), 403
+    
+    data = request.get_json()
+    if not data:
+        return jsonify({"success": False, "message": "Request data required"}), 400
+    
+    # Validate required fields
+    required_fields = ['code', 'code_type', 'description']
+    for field in required_fields:
+        if not data.get(field):
+            return jsonify({"success": False, "message": f"{field} is required"}), 400
+    
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        
+        # Check if code already exists
+        check_query = "SELECT code_id FROM promotional_codes WHERE code = %s"
+        cursor.execute(check_query, (data['code'].upper(),))
+        if cursor.fetchone():
+            return jsonify({"success": False, "message": "Code already exists"}), 409
+        
+        # Insert new promotional code
+        insert_query = """
+            INSERT INTO promotional_codes 
+            (code, code_type, discount_value, subscription_duration_months, max_uses, 
+             max_uses_per_user, expires_at, description, created_by, minimum_account_age_days, allowed_user_tiers)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        
+        # Parse expiration date if provided
+        expires_at = None
+        if data.get('expires_at'):
+            from datetime import datetime
+            expires_at = datetime.fromisoformat(data['expires_at'].replace('Z', '+00:00'))
+        
+        cursor.execute(insert_query, (
+            data['code'].upper(),
+            data['code_type'],
+            data.get('discount_value'),
+            data.get('subscription_duration_months'),
+            data.get('max_uses'),
+            data.get('max_uses_per_user', 1),
+            expires_at,
+            data['description'],
+            user_id,
+            data.get('minimum_account_age_days', 0),
+            data.get('allowed_user_tiers', 'free')
+        ))
+        
+        code_id = cursor.lastrowid
+        db.commit()
+        
+        logger.info(f"Admin {user_id} created promo code: {data['code']}")
+        
+        return jsonify({
+            "success": True,
+            "message": f"Promotional code '{data['code']}' created successfully",
+            "code_id": code_id
+        })
+        
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error creating promo code: {e}")
+        return jsonify({"success": False, "message": "Failed to create promotional code"}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+
+
+@auth_bp.route("/admin/promo-codes/<int:code_id>", methods=["PUT"])
+def admin_update_promo_code(code_id):
+    """Update a promotional code (admin only)"""
+    if "user_ID" not in session:
+        return jsonify({"success": False, "message": "Authentication required"}), 401
+    
+    user_id = session["user_ID"]
+    if not user_id.startswith('admin'):  # Simple admin check
+        return jsonify({"success": False, "message": "Admin access required"}), 403
+    
+    data = request.get_json()
+    if not data:
+        return jsonify({"success": False, "message": "Request data required"}), 400
+    
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        
+        # Check if code exists
+        check_query = "SELECT code FROM promotional_codes WHERE code_id = %s"
+        cursor.execute(check_query, (code_id,))
+        existing_code = cursor.fetchone()
+        if not existing_code:
+            return jsonify({"success": False, "message": "Promotional code not found"}), 404
+        
+        # Build update query dynamically
+        update_fields = []
+        params = []
+        
+        updateable_fields = [
+            'description', 'discount_value', 'subscription_duration_months', 
+            'max_uses', 'max_uses_per_user', 'expires_at', 'is_active',
+            'minimum_account_age_days', 'allowed_user_tiers'
+        ]
+        
+        for field in updateable_fields:
+            if field in data:
+                if field == 'expires_at' and data[field]:
+                    from datetime import datetime
+                    expires_at = datetime.fromisoformat(data[field].replace('Z', '+00:00'))
+                    update_fields.append(f"{field} = %s")
+                    params.append(expires_at)
+                else:
+                    update_fields.append(f"{field} = %s")
+                    params.append(data[field])
+        
+        if not update_fields:
+            return jsonify({"success": False, "message": "No fields to update"}), 400
+        
+        update_query = f"""
+            UPDATE promotional_codes 
+            SET {', '.join(update_fields)}
+            WHERE code_id = %s
+        """
+        
+        params.append(code_id)
+        cursor.execute(update_query, params)
+        db.commit()
+        
+        logger.info(f"Admin {user_id} updated promo code ID {code_id}")
+        
+        return jsonify({
+            "success": True,
+            "message": "Promotional code updated successfully"
+        })
+        
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error updating promo code: {e}")
+        return jsonify({"success": False, "message": "Failed to update promotional code"}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+
+
+@auth_bp.route("/admin/promo-codes/<int:code_id>", methods=["DELETE"])
+def admin_delete_promo_code(code_id):
+    """Deactivate a promotional code (admin only)"""
+    if "user_ID" not in session:
+        return jsonify({"success": False, "message": "Authentication required"}), 401
+    
+    user_id = session["user_ID"]
+    if not user_id.startswith('admin'):  # Simple admin check
+        return jsonify({"success": False, "message": "Admin access required"}), 403
+    
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        
+        # Check if code exists
+        check_query = "SELECT code FROM promotional_codes WHERE code_id = %s"
+        cursor.execute(check_query, (code_id,))
+        existing_code = cursor.fetchone()
+        if not existing_code:
+            return jsonify({"success": False, "message": "Promotional code not found"}), 404
+        
+        # Deactivate instead of delete to preserve redemption history
+        update_query = "UPDATE promotional_codes SET is_active = FALSE WHERE code_id = %s"
+        cursor.execute(update_query, (code_id,))
+        db.commit()
+        
+        logger.info(f"Admin {user_id} deactivated promo code ID {code_id}")
+        
+        return jsonify({
+            "success": True,
+            "message": f"Promotional code '{existing_code['code']}' deactivated successfully"
+        })
+        
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error deactivating promo code: {e}")
+        return jsonify({"success": False, "message": "Failed to deactivate promotional code"}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+
+
+@auth_bp.route("/admin/promo-codes/<int:code_id>/stats", methods=["GET"])
+def admin_promo_code_stats(code_id):
+    """Get statistics for a promotional code (admin only)"""
+    if "user_ID" not in session:
+        return jsonify({"success": False, "message": "Authentication required"}), 401
+    
+    user_id = session["user_ID"]
+    if not user_id.startswith('admin'):  # Simple admin check
+        return jsonify({"success": False, "message": "Admin access required"}), 403
+    
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        
+        # Get code details
+        code_query = """
+            SELECT code, code_type, description, max_uses, current_uses, 
+                   created_at, expires_at, is_active
+            FROM promotional_codes 
+            WHERE code_id = %s
+        """
+        cursor.execute(code_query, (code_id,))
+        code_data = cursor.fetchone()
+        
+        if not code_data:
+            return jsonify({"success": False, "message": "Promotional code not found"}), 404
+        
+        # Get redemption statistics
+        stats_query = """
+            SELECT 
+                COUNT(*) as total_redemptions,
+                COUNT(DISTINCT user_id) as unique_users,
+                SUM(CASE WHEN redemption_result = 'success' THEN 1 ELSE 0 END) as successful_redemptions,
+                SUM(CASE WHEN redemption_result = 'failed' THEN 1 ELSE 0 END) as failed_redemptions,
+                MIN(redeemed_at) as first_redemption,
+                MAX(redeemed_at) as last_redemption
+            FROM code_redemptions 
+            WHERE code_id = %s
+        """
+        cursor.execute(stats_query, (code_id,))
+        stats = cursor.fetchone()
+        
+        # Get recent redemptions
+        recent_query = """
+            SELECT cr.redeemed_at, cr.user_id, cr.redemption_result, cr.ip_address
+            FROM code_redemptions cr
+            WHERE cr.code_id = %s
+            ORDER BY cr.redeemed_at DESC
+            LIMIT 10
+        """
+        cursor.execute(recent_query, (code_id,))
+        recent_redemptions = cursor.fetchall()
+        
+        return jsonify({
+            "success": True,
+            "code_details": code_data,
+            "statistics": stats,
+            "recent_redemptions": recent_redemptions
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting promo code stats: {e}")
+        return jsonify({"success": False, "message": "Failed to get promotional code statistics"}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+
+
 @auth_bp.route("/api/user/preferences", methods=["GET"])
 def get_user_preferences():
     """Get user preferences"""
