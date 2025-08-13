@@ -11,8 +11,16 @@ CREATE TABLE user_account (
     timezone VARCHAR(50) DEFAULT 'America/Los_Angeles',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    subscription_tier ENUM('free', 'premium') DEFAULT 'free' NOT NULL,
+    subscription_start_date TIMESTAMP NULL,
+    subscription_end_date TIMESTAMP NULL,
+    subscription_status ENUM('active', 'expired', 'cancelled') DEFAULT 'active' NOT NULL;
     PRIMARY KEY (user_ID)
 );
+
+CREATE INDEX idx_subscription_tier ON user_account(subscription_tier);
+CREATE INDEX idx_subscription_status ON user_account(subscription_status);
+CREATE INDEX idx_subscription_end_date ON user_account(subscription_end_date);
 
 -- Create the shopping_lists table (list metadata)
 CREATE TABLE shopping_lists (
@@ -625,3 +633,56 @@ CREATE TABLE user_nutrition_goals (
     INDEX idx_user_goals (user_id),
     INDEX idx_active_goals (is_active)
 );
+
+-- Create subscription limits table for tracking usage against limits
+CREATE TABLE subscription_limits (
+    limit_id INT AUTO_INCREMENT,
+    user_id VARCHAR(50) NOT NULL,
+    limit_type ENUM('meal_plans_active', 'meal_plans_advance_days', 'pantry_items', 'shopping_lists_per_day', 'saved_recipes', 'upc_scans_per_trip', 'upc_scans_per_week') NOT NULL,
+    current_usage INT DEFAULT 0,
+    last_reset_date DATE DEFAULT (CURRENT_DATE),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (limit_id),
+    FOREIGN KEY (user_id) REFERENCES user_account(user_ID) ON DELETE CASCADE,
+    UNIQUE KEY unique_user_limit_type (user_id, limit_type),
+    INDEX idx_user_limits (user_id),
+    INDEX idx_limit_type (limit_type)
+);
+
+-- Create subscription tier features table for configuration
+CREATE TABLE subscription_tier_features (
+    tier ENUM('free', 'premium') NOT NULL,
+    feature_name VARCHAR(100) NOT NULL,
+    limit_value INT NOT NULL, -- -1 means unlimited
+    description TEXT NULL,
+    PRIMARY KEY (tier, feature_name),
+    INDEX idx_tier (tier),
+    INDEX idx_feature (feature_name)
+);
+
+-- Insert feature limits for free tier
+INSERT INTO subscription_tier_features (tier, feature_name, limit_value, description) VALUES
+('free', 'meal_plans_active', 3, 'Maximum number of active meal plans'),
+('free', 'meal_plans_advance_days', 7, 'Cannot plan more than 7 days in advance'),
+('free', 'pantry_items', 100, 'Maximum pantry ingredients'),
+('free', 'shopping_lists_per_day', 1, 'Shopping list generations per day'),
+('free', 'saved_recipes', 10, 'Maximum saved recipes'),
+('free', 'upc_scans_per_trip', 20, 'UPC scans per shopping trip'),
+('free', 'upc_scans_per_week', 50, 'UPC scans per week'),
+('free', 'macro_tracking', 0, 'Basic macro tracking (calories + protein only)'),
+('free', 'macro_history', 0, 'No macro history view');
+
+-- Insert feature limits for premium tier (unlimited for most)
+INSERT INTO subscription_tier_features (tier, feature_name, limit_value, description) VALUES
+('premium', 'meal_plans_active', -1, 'Unlimited active meal plans'),
+('premium', 'meal_plans_advance_days', -1, 'Plan unlimited days in advance'),
+('premium', 'pantry_items', -1, 'Unlimited pantry ingredients'),
+('premium', 'shopping_lists_per_day', -1, 'Unlimited shopping list generations'),
+('premium', 'saved_recipes', -1, 'Unlimited saved recipes'),
+('premium', 'upc_scans_per_trip', -1, 'Unlimited UPC scans per trip'),
+('premium', 'upc_scans_per_week', -1, 'Unlimited UPC scans per week'),
+('premium', 'macro_tracking', 1, 'Full macro tracking with all nutrients'),
+('premium', 'macro_history', 1, 'Full macro history and trends');
+
+

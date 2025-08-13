@@ -1761,7 +1761,16 @@ async function generateMealPlanWithSelection(formData, selectedMeals) {
         viewPlanDetails(result.session_id);
       }
     } else {
-      alert("Error generating meal plan: " + result.message);
+      // Check if this is a subscription limit error
+      if (result.requires_upgrade && typeof showUpgradeModal === 'function') {
+        showUpgradeModal(
+          result.limit_type, 
+          result.current_limit, 
+          result.message
+        );
+      } else {
+        alert("Error generating meal plan: " + result.message);
+      }
     }
   } catch (error) {
     console.error("Error generating meal plan:", error);

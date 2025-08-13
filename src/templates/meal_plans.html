@@ -3409,6 +3409,7 @@
       // Pass server data to JavaScript
       window.NUTRITION_TRACKING_ENABLED = JSON.parse('{{ nutrition_tracking_enabled | tojson }}');
     </script>
+    <script src="{{ url_for('static', filename='js/subscription-utils.js') }}"></script>
     <script src="{{ url_for('static', filename='js/meal_plans.js') }}"></script>
   </body>
 </html>

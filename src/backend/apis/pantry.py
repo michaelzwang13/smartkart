@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify, session, current_app
 from src.database import get_db
+from src.subscription_utils import check_subscription_limit, SubscriptionLimitExceeded, increment_usage
 
 pantry_bp = Blueprint("pantry", __name__, url_prefix="/api")
 
@@ -131,6 +132,18 @@ def add_pantry_item():
 
     data = request.get_json()
     user_ID = session["user_ID"]
+    
+    # Check subscription limits - free tier limited to 50 pantry items
+    try:
+        check_subscription_limit(user_ID, 'pantry_items')
+    except SubscriptionLimitExceeded as e:
+        return jsonify({
+            'success': False,
+            'message': str(e),
+            'limit_type': e.limit_type,
+            'current_limit': e.current_limit,
+            'requires_upgrade': True
+        }), 403
 
     # Required fields
     item_name = data.get("item_name", "").strip()
@@ -231,6 +244,9 @@ def add_pantry_item():
                     continue  # Skip duplicates (likely due to unique constraint)
         
         db.commit()
+        
+        # Increment pantry items usage counter (for subscription limits)
+        increment_usage(user_ID, 'pantry_items')
 
         # Return the created item with tags
         cursor.execute("SELECT * FROM pantry_items WHERE pantry_item_id = %s", (item_id,))

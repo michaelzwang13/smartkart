@@ -4,6 +4,7 @@ import bcrypt
 from src.database import get_db
 from src.logging_config import get_logger
 from src.auth_utils import AuthUtils, jwt_required
+from src.subscription_utils import get_user_limits_status
 
 auth_bp = Blueprint("auth", __name__)
 logger = get_logger("preppr.auth")
@@ -742,3 +743,25 @@ def save_user_preferences():
         cursor.close()
         logger.error(f"Error saving user preferences: {e}")
         return jsonify({"success": False, "message": "Failed to save preferences"}), 500
+
+
+@auth_bp.route("/api/user/subscription-status", methods=["GET"])
+def get_subscription_status():
+    """Get user's subscription status and limits"""
+    if 'user_id' not in session:
+        return jsonify({"success": False, "message": "Not authenticated"}), 401
+    
+    try:
+        user_id = session['user_id']
+        status = get_user_limits_status(user_id)
+        
+        return jsonify({
+            "success": True,
+            "tier": status['tier'],
+            "unlimited": status['unlimited'],
+            "limits": status.get('limits', {})
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting subscription status: {e}")
+        return jsonify({"success": False, "message": "Failed to get subscription status"}), 500

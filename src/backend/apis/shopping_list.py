@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify, session, current_app
 import requests
 from src.database import get_db
 from src import helper
+from src.subscription_utils import subscription_required
 
 shopping_list_bp = Blueprint("shopping_list", __name__, url_prefix="/api")
 
@@ -82,6 +83,7 @@ def get_shopping_lists():
 
 
 @shopping_list_bp.route("/shopping-lists", methods=["POST"])
+@subscription_required('shopping_lists_per_day')
 def create_shopping_list():
     """Create a new shopping list"""
     if "user_ID" not in session:
