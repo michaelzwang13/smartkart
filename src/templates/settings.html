@@ -264,6 +264,12 @@
         .btn-actions {
           flex-direction: column;
         }
+
+        .status-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: var(--spacing-md);
+        }
       }
 
       /* Focus styles for accessibility */
@@ -337,6 +343,99 @@
         background-color: transparent;
         transition: .4s;
         border-radius: 34px;
+      }
+
+      /* Subscription Status Styles */
+      .subscription-status {
+        border-radius: var(--radius-xl);
+        overflow: hidden;
+      }
+
+      .status-header {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-lg);
+        margin-bottom: var(--spacing-xl);
+      }
+
+      .status-badge {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-sm) var(--spacing-lg);
+        border-radius: var(--radius-full);
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .status-badge.premium {
+        background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+        color: var(--text-white);
+      }
+
+      .status-badge.free {
+        background: var(--bg-tertiary);
+        color: var(--text-secondary);
+        border: 1px solid var(--border-light);
+      }
+
+      .status-info h3 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-xs);
+      }
+
+      .status-info p {
+        color: var(--text-secondary);
+        margin-bottom: var(--spacing-sm);
+      }
+
+      .renewal-date {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        font-size: 0.875rem;
+        color: var(--text-muted);
+      }
+
+      /* Upgrade CTA */
+      .upgrade-cta {
+        margin-top: var(--spacing-xl);
+        padding-top: var(--spacing-xl);
+        border-top: 1px solid var(--border-light);
+        text-align: center;
+      }
+
+      .upgrade-cta p {
+        color: var(--text-secondary);
+        margin-bottom: var(--spacing-lg);
+      }
+
+      .btn-premium {
+        background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+        color: var(--text-white);
+        border: none;
+        padding: var(--spacing-md) var(--spacing-xl);
+        border-radius: var(--radius-lg);
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+      }
+
+      .btn-premium:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(245, 158, 11, 0.4);
+      }
+
+      .btn-premium i {
+        font-size: 1.125rem;
       }
     </style>
   </head>
@@ -548,6 +647,92 @@
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+
+          <!-- Subscription Status -->
+          <div class="settings-card">
+            <div class="card-header">
+              <h2 class="card-title">
+                <i class="fas fa-crown" aria-hidden="true"></i>
+                Subscription
+              </h2>
+              <p class="card-description">
+                View your current plan and manage your subscription
+              </p>
+            </div>
+            <div class="card-body">
+              {% if subscription_status %}
+                {% if subscription_status.tier == 'premium' %}
+                  <!-- Premium User -->
+                  <div class="subscription-status premium-status">
+                    <div class="status-header">
+                      <div class="status-badge premium">
+                        <i class="fas fa-crown"></i>
+                        Premium
+                      </div>
+                      <div class="status-info">
+                        <h3>Preppr Premium</h3>
+                        <p>You have unlimited access to all Preppr features</p>
+                        {% if subscription_status.end_date %}
+                          <p class="renewal-date">
+                            <i class="fas fa-calendar"></i>
+                            {% if subscription_status.status == 'active' %}
+                              Renews on {{ subscription_status.end_date.strftime('%B %d, %Y') }}
+                            {% else %}
+                              Expires on {{ subscription_status.end_date.strftime('%B %d, %Y') }}
+                            {% endif %}
+                          </p>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+                {% else %}
+                  <!-- Free User -->
+                  <div class="subscription-status free-status">
+                    <div class="status-header">
+                      <div class="status-badge free">
+                        <i class="fas fa-user"></i>
+                        Free
+                      </div>
+                      <div class="status-info">
+                        <h3>Preppr Free</h3>
+                        <p>You're using the free version of Preppr</p>
+                      </div>
+                    </div>
+                    
+                    <div class="upgrade-cta">
+                      <p>Upgrade to Premium for unlimited access to all features</p>
+                      <a href="{{ url_for('auth.upgrade') }}" class="btn btn-premium">
+                        <i class="fas fa-crown"></i>
+                        Upgrade to Premium
+                      </a>
+                    </div>
+                  </div>
+                {% endif %}
+              {% else %}
+                <!-- Fallback if no subscription info -->
+                <div class="subscription-status free-status">
+                  <div class="status-header">
+                    <div class="status-badge free">
+                      <i class="fas fa-user"></i>
+                      Free
+                    </div>
+                    <div class="status-info">
+                      <h3>Preppr Free</h3>
+                      <p>You're using the free version of Preppr</p>
+                    </div>
+                  </div>
+                  
+                  <div class="upgrade-cta">
+                    <p>Upgrade to Premium for unlimited access to all features</p>
+                    <a href="{{ url_for('auth.upgrade') }}" class="btn btn-premium">
+                      <i class="fas fa-crown"></i>
+                      Upgrade to Premium
+                    </a>
+                  </div>
+                </div>
+              {% endif %}
             </div>
           </div>
 

@@ -226,6 +226,8 @@ def get_user_limits_status(user_id):
     if tier == 'premium':
         return {
             'tier': 'premium',
+            'status': subscription_info['status'],
+            'end_date': subscription_info['end_date'],
             'limits': {},
             'unlimited': True
         }
@@ -247,6 +249,8 @@ def get_user_limits_status(user_id):
     
     status = {
         'tier': 'free',
+        'status': subscription_info['status'],
+        'end_date': subscription_info['end_date'],
         'limits': {},
         'unlimited': False
     }

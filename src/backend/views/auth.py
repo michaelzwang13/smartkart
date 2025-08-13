@@ -364,7 +364,11 @@ def render_settings_with_user_data(user_ID, success=None, error=None):
         if not user:
             return redirect(url_for("auth.login"))
         
-        return render_template("settings.html", user=user, success=success, error=error)
+        # Get subscription status
+        from src.subscription_utils import get_user_limits_status
+        subscription_status = get_user_limits_status(user_ID)
+        
+        return render_template("settings.html", user=user, subscription_status=subscription_status, success=success, error=error)
     except Exception as e:
         logger.error(
             "Failed to load user data for settings",
