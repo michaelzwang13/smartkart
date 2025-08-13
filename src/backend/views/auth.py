@@ -149,6 +149,13 @@ def register():
             error = "Email, username, and password are required"
             return render_template("register.html", error=error)
 
+        # Email format validation
+        import re
+        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(email_pattern, email_address):
+            error = "Please enter a valid email address"
+            return render_template("register.html", error=error)
+
         if len(user_ID) < 3:
             error = "Username must be at least 3 characters long"
             return render_template("register.html", error=error)
@@ -561,6 +568,12 @@ def api_register():
         # Validation
         if not user_id or not password or not email:
             return jsonify({"error": "Email, username, and password are required"}), 400
+            
+        # Email format validation
+        import re
+        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(email_pattern, email):
+            return jsonify({"error": "Please enter a valid email address"}), 400
             
         if len(user_id) < 3:
             return jsonify({"error": "Username must be at least 3 characters long"}), 400

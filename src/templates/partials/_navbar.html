@@ -72,7 +72,7 @@
               {% set user_subscription = get_user_limits_status(session['user_ID']) %}
               {% if user_subscription.tier == 'free' %}
             <li><a href="{{ url_for('auth.upgrade') }}" class="dropdown-link upgrade-link">
-              <i class="fas fa-crown"></i>Upgrade to Premium
+              <i class="fas fa-crown"></i>Upgrade
             </a></li>
               {% endif %}
             {% endif %}

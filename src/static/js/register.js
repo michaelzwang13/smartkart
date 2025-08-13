@@ -67,6 +67,43 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
+  // Email validation function
+  function checkEmailValidity() {
+    const email = document.getElementById("email_address").value;
+    const emailInput = document.getElementById("email_address");
+    let emailFeedback = document.getElementById("emailFeedback");
+    
+    // Create feedback element if it doesn't exist
+    if (!emailFeedback) {
+      emailFeedback = document.createElement("div");
+      emailFeedback.id = "emailFeedback";
+      emailFeedback.className = "input-feedback";
+      emailInput.parentElement.parentElement.appendChild(emailFeedback);
+    }
+    
+    if (email === "") {
+      emailFeedback.textContent = "";
+      emailFeedback.className = "input-feedback";
+      emailInput.style.borderColor = "";
+      return true; // Allow empty email during typing
+    }
+    
+    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    const isValid = emailPattern.test(email);
+    
+    if (isValid) {
+      emailFeedback.textContent = "";
+      emailFeedback.className = "input-feedback";
+      emailInput.style.borderColor = "";
+    } else {
+      emailFeedback.innerHTML = '<i class="fas fa-times"></i> Please enter a valid email address';
+      emailFeedback.className = "input-feedback invalid";
+      emailInput.style.borderColor = "var(--error-color)";
+    }
+    
+    return isValid;
+  }
+
   // Form validation
   function validateForm() {
     const firstName = document.getElementById("first_name").value;
@@ -76,13 +113,14 @@ document.addEventListener("DOMContentLoaded", function () {
     const password = passwordInput.value;
     const confirmPassword = confirmPasswordInput.value;
 
-    const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    const emailValid = email === "" || /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
+    const emailRequired = email !== "";
     const usernameValid = username.length >= 3;
     const passwordValid = checkPasswordStrength(password) >= 3;
     const passwordsMatch = password === confirmPassword && password !== "";
 
     const isValid =
-      emailValid && usernameValid && passwordValid && passwordsMatch;
+      emailValid && emailRequired && usernameValid && passwordValid && passwordsMatch;
 
     submitBtn.disabled = !isValid;
     return isValid;
@@ -100,15 +138,57 @@ document.addEventListener("DOMContentLoaded", function () {
     validateForm();
   });
 
+  // Email validation listener
+  document.getElementById("email_address").addEventListener("input", function () {
+    checkEmailValidity();
+    validateForm();
+  });
+
+  // Blur event for email to ensure validation on field exit
+  document.getElementById("email_address").addEventListener("blur", function () {
+    if (this.value !== "") {
+      checkEmailValidity();
+    }
+  });
+
   inputs.forEach((input) => {
     input.addEventListener("input", validateForm);
   });
 
   // Form submission
   form.addEventListener("submit", function (e) {
+    const email = document.getElementById("email_address").value;
+    const username = document.getElementById("user_ID").value;
+    const password = passwordInput.value;
+    const confirmPassword = confirmPasswordInput.value;
+
+    // Validate email format
+    if (!checkEmailValidity() && email !== "") {
+      e.preventDefault();
+      alert("Please enter a valid email address.");
+      document.getElementById("email_address").focus();
+      return;
+    }
+
     if (!validateForm()) {
       e.preventDefault();
-      alert("Please fill in all fields correctly.");
+      
+      // Provide specific error messages
+      if (email === "") {
+        alert("Please enter your email address.");
+        document.getElementById("email_address").focus();
+      } else if (username.length < 3) {
+        alert("Username must be at least 3 characters long.");
+        document.getElementById("user_ID").focus();
+      } else if (checkPasswordStrength(password) < 3) {
+        alert("Please choose a stronger password.");
+        passwordInput.focus();
+      } else if (password !== confirmPassword) {
+        alert("Passwords do not match.");
+        confirmPasswordInput.focus();
+      } else {
+        alert("Please fill in all fields correctly.");
+      }
       return;
     }
 
