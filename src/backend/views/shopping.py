@@ -146,6 +146,51 @@ def home():
     )
 
 
+@shopping_bp.route("/shopping-history")
+def shopping_history():
+    """Shopping history page"""
+    if "user_ID" not in session:
+        return redirect(url_for("auth.login"))
+    
+    user_ID = session["user_ID"]
+    db = get_db()
+    cursor = db.cursor()
+    
+    # Get all cart history (completed carts)
+    query = """
+    SELECT c.cart_ID, c.store_name, c.created_at,
+           (SELECT COUNT(*) FROM cart_item i WHERE i.cart_ID = c.cart_ID) as total_items,
+           (SELECT SUM(i.price * i.quantity) FROM cart_item i WHERE i.cart_ID = c.cart_ID) as total_spent
+    FROM shopping_cart c
+    WHERE c.user_ID = %s 
+      AND c.status = 'purchased'
+      AND EXISTS (SELECT 1 FROM cart_item i WHERE i.cart_ID = c.cart_ID)
+    ORDER BY c.created_at DESC
+    """
+    cursor.execute(query, (user_ID,))
+    cart_history = cursor.fetchall()
+    
+    # Get total count for pagination
+    count_query = """
+    SELECT COUNT(*) as total_count
+    FROM shopping_cart c
+    WHERE c.user_ID = %s 
+      AND c.status = 'purchased'
+      AND EXISTS (SELECT 1 FROM cart_item i WHERE i.cart_ID = c.cart_ID)
+    """
+    cursor.execute(count_query, (user_ID,))
+    count_result = cursor.fetchone()
+    total_trips = count_result.get("total_count", 0) if count_result else 0
+    
+    cursor.close()
+    
+    return render_template(
+        "shopping_history.html", 
+        cart_history=cart_history,
+        total_trips=total_trips
+    )
+
+
 @shopping_bp.route("/api/shopping-history")
 def get_shopping_history():
     """API endpoint to get extended shopping history"""
