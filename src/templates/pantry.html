@@ -589,6 +589,21 @@
         background: var(--bg-primary);
       }
 
+      .char-count {
+        text-align: right;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-top: var(--spacing-xs);
+      }
+
+      .char-count.near-limit {
+        color: var(--warning-color);
+      }
+
+      .char-count.at-limit {
+        color: var(--error-color);
+      }
+
       .ai-predict {
         display: flex !important;
         align-items: center;
@@ -927,7 +942,10 @@
 
           <div class="form-group">
             <label>Notes (optional):</label>
-            <textarea name="notes" rows="3"></textarea>
+            <textarea name="notes" rows="3" maxlength="50" style="resize: none;" placeholder="Add a brief note (max 50 characters)"></textarea>
+            <div class="char-count">
+              <span id="notesCharCount">0</span>/50
+            </div>
           </div>
 
           <div class="modal-actions">
@@ -1055,7 +1073,10 @@
 
           <div class="form-group">
             <label>Notes (optional):</label>
-            <textarea id="editNotes" name="notes" rows="3"></textarea>
+            <textarea id="editNotes" name="notes" rows="3" maxlength="50" style="resize: none;" placeholder="Add a brief note (max 50 characters)"></textarea>
+            <div class="char-count">
+              <span id="editNotesCharCount">0</span>/50
+            </div>
           </div>
 
           <div class="modal-actions">
