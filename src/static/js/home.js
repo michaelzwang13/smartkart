@@ -285,6 +285,7 @@ async function showMealDetails(mealId) {
 }
 
 function displayMealDetailsModal(meal) {
+  console.log("displaying meal details modal")
   const modalHTML = `
     <div id="mealDetailsModal" class="modal-overlay">
         <div class="modal-content meal-details-modal ${meal.type}">
@@ -337,6 +338,12 @@ function displayMealDetailsModal(meal) {
                     : ""
                 }
             </div>
+            ${window.NUTRITION_TRACKING_ENABLED ? `
+            <div class="meal-nutrition-section" id="mealNutritionSection-${meal.meal_id}">
+                <h4><i class="fas fa-chart-bar"></i> Nutrition Information</h4>
+                <div class="nutrition-loading" style="color: var(--text-muted); font-style: italic;">Loading nutrition data...</div>
+            </div>
+            ` : ''}
             ${
               meal.ingredients && meal.ingredients.length > 0
                 ? `
@@ -394,20 +401,34 @@ function displayMealDetailsModal(meal) {
             </div>
             
             <div class="meal-actions">
-            <button class="btn btn-primary" onclick="window.location.href='${window.HOME_CONFIG?.urls?.mealPlans || "/meal-plans"}'">
-                <i class="fas fa-calendar-alt"></i> View Meal Plans
+            ${
+              meal.session_id
+                ? `
+                <button class="btn btn-secondary" onclick="viewPlanDetails(${meal.session_id})">
+                <i class="fas fa-calendar-alt"></i> View Full Meal Plan
+                </button>
+            `
+                : ""
+            }
+            <button class="btn btn-secondary" onclick="saveRecipeFromMeal(${meal.meal_id}, '${meal.name}')">
+                <i class="fas fa-bookmark"></i> Save Recipe
+            </button>
+            <button class="btn btn-primary" onclick="editMeal(${meal.meal_id})">
+                <i class="fas fa-edit"></i> Edit Meal
             </button>
             </div>
         </div>
         </div>
     </div>
     `;
-
   document.body.insertAdjacentHTML("beforeend", modalHTML);
-
   // Show modal with animation
   setTimeout(() => {
     document.getElementById("mealDetailsModal").classList.add("show");
+    // Load nutrition data for the meal if nutrition tracking is enabled
+    if (window.NUTRITION_TRACKING_ENABLED) {
+      loadMealNutritionForDetails(meal.meal_id);
+    }
   }, 10);
 }
 
@@ -449,23 +470,49 @@ function convertToMixedFraction(decimal) {
     fraction = '3/4';
   }
   // Check for thirds
-  else if (Math.abs(fractionalPart - 0.333) < tolerance) {
+  else if (Math.abs(fractionalPart - 0.333) < tolerance || Math.abs(fractionalPart - 0.33) < tolerance) {
     fraction = '1/3';
   }
-  else if (Math.abs(fractionalPart - 0.667) < tolerance) {
+  else if (Math.abs(fractionalPart - 0.667) < tolerance || Math.abs(fractionalPart - 0.66) < tolerance) {
     fraction = '2/3';
   }
-  // If no common fraction, use decimal
+  // If doesn't match common fractions, round to nearest quarter
   else {
-    return num.toFixed(2);
+    const rounded = Math.round(fractionalPart * 4) / 4;
+    if (rounded === 0.25) fraction = '1/4';
+    else if (rounded === 0.5) fraction = '1/2';
+    else if (rounded === 0.75) fraction = '3/4';
+    else if (rounded === 0) return wholeNumber.toString();
+    else if (rounded === 1) return (wholeNumber + 1).toString();
   }
   
-  // Combine whole number with fraction
+  // Return formatted result
   if (wholeNumber === 0) {
     return fraction;
   } else {
     return `${wholeNumber} ${fraction}`;
   }
+}
+
+// Helper functions for meal modal actions
+function viewPlanDetails(sessionId) {
+  // Navigate to meal plans page with specific session
+  window.location.href = window.HOME_CONFIG?.urls?.mealPlans || "/meal-plans";
+}
+
+function saveRecipeFromMeal(mealId, mealName) {
+  // Placeholder for save recipe functionality
+  alert(`Save recipe functionality will be implemented for: ${mealName}`);
+}
+
+function editMeal(mealId) {
+  // Placeholder for meal editing functionality
+  alert(`Meal editing functionality will be implemented for meal ID: ${mealId}`);
+}
+
+function loadMealNutritionForDetails(mealId) {
+  // Placeholder for nutrition loading functionality
+  console.log(`Loading nutrition data for meal ${mealId}`);
 }
 
 // Monthly Meals Progress Wheel Functionality
