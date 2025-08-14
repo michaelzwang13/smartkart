@@ -17,6 +17,7 @@ function setupEventListeners() {
     document.getElementById('mealTypeFilter').addEventListener('change', applyFilters);
     document.getElementById('favoritesFilter').addEventListener('change', applyFilters);
     document.getElementById('sortFilter').addEventListener('change', applyFilters);
+    document.getElementById('clearFiltersBtn').addEventListener('click', clearAllFilters);
 
     // Modal controls
     document.getElementById('closeRecipeDetailBtn').addEventListener('click', closeRecipeDetailModal);
@@ -28,6 +29,7 @@ function setupEventListeners() {
     document.getElementById('createFirstRecipeBtn').addEventListener('click', createNewRecipe);
     document.getElementById('editRecipeBtn').addEventListener('click', editCurrentRecipe);
     document.getElementById('favoriteRecipeBtn').addEventListener('click', toggleCurrentRecipeFavorite);
+    document.getElementById('deleteRecipeBtn').addEventListener('click', deleteCurrentRecipe);
     document.getElementById('useRecipeBtn').addEventListener('click', showUseRecipeModal);
 
     // Form submission
@@ -187,6 +189,9 @@ function createRecipeCard(recipe) {
                     </button>
                     <button onclick="editRecipe(${recipe.saved_recipe_id})">
                         <i class="fas fa-edit"></i> Edit
+                    </button>
+                    <button onclick="deleteRecipe(${recipe.saved_recipe_id}, '${recipe.recipe_name.replace(/'/g, "\\'")}')">
+                        <i class="fas fa-trash"></i> Delete
                     </button>
                 </div>
                 <div class="recipe-usage-info">
@@ -435,6 +440,58 @@ function editRecipe(recipeId) {
 function editCurrentRecipe() {
     if (currentRecipeId) {
         editRecipe(currentRecipeId);
+    }
+}
+
+function deleteCurrentRecipe() {
+    if (currentRecipeId) {
+        // Get the recipe name from the modal title
+        const recipeName = document.getElementById('recipeDetailTitle').textContent;
+        deleteRecipe(currentRecipeId, recipeName);
+    }
+}
+
+function clearAllFilters() {
+    // Reset all filter inputs to their default values
+    document.getElementById('searchFilter').value = '';
+    document.getElementById('mealTypeFilter').value = '';
+    document.getElementById('favoritesFilter').value = '';
+    document.getElementById('sortFilter').value = 'created_at';
+    
+    // Apply filters to refresh the display
+    applyFilters();
+    
+    showSuccess('All filters cleared');
+}
+
+async function deleteRecipe(recipeId, recipeName) {
+    // Confirm deletion
+    if (!confirm(`Are you sure you want to delete the recipe "${recipeName}"? This action cannot be undone.`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/saved-recipes/${recipeId}`, {
+            method: 'DELETE'
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+            showSuccess(data.message);
+            // Reload recipes and stats to update the display
+            loadRecipes();
+            loadStats();
+            
+            // Close modal if it's currently open for this recipe
+            if (currentRecipeId === recipeId) {
+                closeRecipeDetailModal();
+            }
+        } else {
+            showError(data.message);
+        }
+    } catch (error) {
+        showError('Error deleting recipe: ' + error.message);
     }
 }
 

@@ -569,7 +569,6 @@ function createWeekDayCell(date) {
     mealSlot.className = `calendar-meal-slot ${type}`;
 
     const meals = mealsByType[type];
-    console.log(`Processing ${type}: ${meals.length} meals`);
     
     if (meals.length > 0) {
       mealSlot.classList.add("has-meal");
@@ -623,7 +622,6 @@ function createWeekDayCell(date) {
       // No content - completely blank
     }
 
-    console.log(`Appending ${type} slot with classes:`, mealSlot.className);
     mealsContainer.appendChild(mealSlot);
   });
 
