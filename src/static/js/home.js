@@ -271,16 +271,200 @@ async function showMealDetails(mealId) {
     const response = await fetch(`/api/meals/${mealId}`);
     const data = await response.json();
 
+    console.log(data)
+
     if (data.success) {
-      // For now, just navigate to meal plans page
-      // In the future, this could open a modal with meal details
-      window.location.href = config.urls?.mealPlans || "/meal-plans";
+      displayMealDetailsModal(data.meal);
     } else {
       alert("Failed to load meal details: " + data.message);
     }
   } catch (error) {
     console.error("Error loading meal details:", error);
     alert("Failed to load meal details. Please try again.");
+  }
+}
+
+function displayMealDetailsModal(meal) {
+  const modalHTML = `
+    <div id="mealDetailsModal" class="modal-overlay">
+        <div class="modal-content meal-details-modal ${meal.type}">
+        <div class="modal-header">
+            <div>
+            <h3>${meal.name}</h3>
+            <p class="meal-meta">${
+              meal.type.charAt(0).toUpperCase() + meal.type.slice(1)
+            } • ${new Date(meal.date).toLocaleDateString()}</p>
+            </div>
+            <button class="modal-close" onclick="closeMealDetailsModal()">
+            <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="meal-details-content">
+            
+            <div class="meal-info-grid">
+                ${
+                  meal.prep_time
+                    ? `<div class="info-item"><i class="fas fa-clock"></i> Prep: ${meal.prep_time} min</div>`
+                    : ""
+                }
+                ${
+                  meal.cook_time
+                    ? `<div class="info-item"><i class="fas fa-fire"></i> Cook: ${meal.cook_time} min</div>`
+                    : ""
+                }
+                ${
+                  meal.servings
+                    ? `<div class="info-item"><i class="fas fa-users"></i> Serves: ${meal.servings}</div>`
+                    : ""
+                }
+                ${
+                  meal.difficulty
+                    ? `<div class="info-item"><i class="fas fa-chart-line"></i> ${
+                        meal.difficulty.charAt(0).toUpperCase() +
+                        meal.difficulty.slice(1)
+                      }</div>`
+                    : ""
+                }
+                ${
+                  meal.estimated_cost
+                    ? `<div class="info-item"><i class="fas fa-dollar-sign"></i> ${meal.estimated_cost}</div>`
+                    : ""
+                }
+                ${
+                  meal.calories_per_serving
+                    ? `<div class="info-item"><i class="fas fa-fire-alt"></i> ${meal.calories_per_serving} cal</div>`
+                    : ""
+                }
+            </div>
+            ${
+              meal.ingredients && meal.ingredients.length > 0
+                ? `
+                <div class="meal-section">
+                <h4><i class="fas fa-list-ul"></i> Ingredients</h4>
+                <div class="ingredients-list">
+                    ${meal.ingredients
+                      .map(
+                        (ingredient) => `
+                    <div class="ingredient-item ${
+                      ingredient.is_custom ? "custom" : ""
+                    }">
+                        <span class="ingredient-name">${
+                          ingredient.ingredient_name
+                        }${
+                          ingredient.notes
+                            ? ` (${ingredient.notes})`
+                            : ""
+                        }</span>
+                        <span class="ingredient-amount">${
+                          convertToMixedFraction(ingredient.quantity)
+                        } ${ingredient.unit === 'pcs' || ingredient.unit === 'pc' ? '' : ingredient.unit}</span>
+                    </div>
+                    `
+                      )
+                      .join("")}
+                </div>
+                </div>
+            `
+                : ""
+            }
+            ${
+              meal.instructions
+                ? `
+                <div class="meal-section">
+                <h4><i class="fas fa-clipboard-list"></i> Instructions</h4>
+                <div class="instructions-content">${meal.instructions.replace(
+                  /\\n/g,
+                  "<br>"
+                )}</div>
+                </div>
+            `
+                : ""
+            }
+            ${
+              meal.notes
+                ? `
+                <div class="meal-section">
+                <h4><i class="fas fa-sticky-note"></i> Notes</h4>
+                <div class="notes-content">${meal.notes}</div>
+                </div>
+            `
+                : ""
+            }
+            </div>
+            
+            <div class="meal-actions">
+            <button class="btn btn-primary" onclick="window.location.href='${window.HOME_CONFIG?.urls?.mealPlans || "/meal-plans"}'">
+                <i class="fas fa-calendar-alt"></i> View Meal Plans
+            </button>
+            </div>
+        </div>
+        </div>
+    </div>
+    `;
+
+  document.body.insertAdjacentHTML("beforeend", modalHTML);
+
+  // Show modal with animation
+  setTimeout(() => {
+    document.getElementById("mealDetailsModal").classList.add("show");
+  }, 10);
+}
+
+function closeMealDetailsModal() {
+  const modal = document.getElementById("mealDetailsModal");
+  if (modal) {
+    modal.classList.remove("show");
+    setTimeout(() => {
+      modal.remove();
+    }, 300);
+  }
+}
+
+function convertToMixedFraction(decimal) {
+  if (!decimal || decimal === 0) return '0';
+  
+  const num = parseFloat(decimal);
+  const wholeNumber = Math.floor(num);
+  const fractionalPart = num - wholeNumber;
+  
+  // If no fractional part, return whole number
+  if (fractionalPart === 0) {
+    return wholeNumber.toString();
+  }
+  
+  // Round to nearest common fraction
+  let fraction = '';
+  const tolerance = 0.04; // Tolerance for rounding
+  
+  // Check for halves
+  if (Math.abs(fractionalPart - 0.5) < tolerance) {
+    fraction = '1/2';
+  }
+  // Check for quarters
+  else if (Math.abs(fractionalPart - 0.25) < tolerance) {
+    fraction = '1/4';
+  }
+  else if (Math.abs(fractionalPart - 0.75) < tolerance) {
+    fraction = '3/4';
+  }
+  // Check for thirds
+  else if (Math.abs(fractionalPart - 0.333) < tolerance) {
+    fraction = '1/3';
+  }
+  else if (Math.abs(fractionalPart - 0.667) < tolerance) {
+    fraction = '2/3';
+  }
+  // If no common fraction, use decimal
+  else {
+    return num.toFixed(2);
+  }
+  
+  // Combine whole number with fraction
+  if (wholeNumber === 0) {
+    return fraction;
+  } else {
+    return `${wholeNumber} ${fraction}`;
   }
 }
 
