@@ -727,16 +727,26 @@ function displayAvailableLists(lists) {
   // Clear existing options
   select.innerHTML = '<option value="">Select a shopping list...</option>';
 
-  if (lists.length === 0) {
-    showNotification(
-      "📝 No shopping lists found. Create one first!",
-      "warning"
-    );
+  // Filter out lists with 0 items
+  const listsWithItems = lists.filter(list => list.item_count > 0);
+
+  if (listsWithItems.length === 0) {
+    if (lists.length === 0) {
+      showNotification(
+        "📝 No shopping lists found. Create one first!",
+        "warning"
+      );
+    } else {
+      showNotification(
+        "📝 No shopping lists with items found. Add items to your lists first!",
+        "warning"
+      );
+    }
     return;
   }
 
-  // Populate select with lists
-  lists.forEach((list) => {
+  // Populate select with lists that have items
+  listsWithItems.forEach((list) => {
     const option = document.createElement("option");
     option.value = list.id;
     option.textContent = `${list.name} (${list.completed_count}/${list.item_count} items)`;
