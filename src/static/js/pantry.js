@@ -306,12 +306,37 @@ document.addEventListener("DOMContentLoaded", function () {
       emptyState.style.display = "block";
 
       const searchFilter = document.getElementById("searchFilter").value.trim();
+      const storageFilter = document.getElementById("storageFilter").value;
+      const categoryFilter = document.getElementById("categoryFilter").value;
+      const tagFilter = document.getElementById("tagFilter").value;
+      const expiryFilter = document.getElementById("expiryFilter").value;
       const emptyStateElement = document.getElementById("emptyState");
 
-      if (searchFilter) {
+      // Check if any filters are active
+      const hasActiveFilters = searchFilter || storageFilter || categoryFilter || tagFilter || expiryFilter;
+
+      if (hasActiveFilters) {
+        let filterDescription = "your current filters";
+        if (searchFilter) {
+          filterDescription = `your search for "${searchFilter}"`;
+        } else if (categoryFilter) {
+          filterDescription = `the category "${categoryFilter}"`;
+        } else if (storageFilter) {
+          filterDescription = `the storage type "${storageFilter}"`;
+        } else if (tagFilter) {
+          filterDescription = `the tag "${tagFilter}"`;
+        } else if (expiryFilter) {
+          const expiryLabels = {
+            "expired": "expired items",
+            "expiring_soon": "items expiring soon",
+            "fresh": "fresh items"
+          };
+          filterDescription = expiryLabels[expiryFilter] || expiryFilter;
+        }
+
         emptyStateElement.innerHTML = `
                     <h3>No items found</h3>
-                    <p>No pantry items match your search for "${searchFilter}". Try a different search term.</p>
+                    <p>No pantry items match ${filterDescription}. Try adjusting your filters or search terms.</p>
                 `;
       } else {
         emptyStateElement.innerHTML = `
