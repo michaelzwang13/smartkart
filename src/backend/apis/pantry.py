@@ -518,17 +518,23 @@ def predict_expiration_and_category(item_name, storage_type):
 
 
 def get_gemini_prediction_with_category(item_name, storage_type):
-    """Use Gemini AI to predict expiration date and category based on item and storage type"""
+    """Use Gemini AI to predict expiration date and category based on item and storage type, with OpenAI fallback"""
     import os
     import google.generativeai as genai
+    from src.openai_utils import openai_expiry_prediction
 
     try:
         # Configure Gemini with API key from environment
         api_key = os.getenv("GEMINI_API_KEY")
         if not api_key:
             print(
-                "WARNING: GEMINI_API_KEY not found in environment, falling back to simple prediction"
+                "WARNING: GEMINI_API_KEY not found in environment, trying OpenAI fallback"
             )
+            # Try OpenAI fallback
+            openai_result = openai_expiry_prediction(item_name, storage_type)
+            if openai_result:
+                print(f"DEBUG: OpenAI fallback successful for {item_name}")
+                return openai_result
             return get_simple_prediction_with_category(item_name, storage_type)
 
         genai.configure(api_key=api_key)
@@ -599,23 +605,35 @@ Respond only with the JSON object:"""
 
     except Exception as e:
         print(
-            f"ERROR: Gemini prediction failed: {str(e)}, falling back to simple prediction"
+            f"ERROR: Gemini prediction failed: {str(e)}, trying OpenAI fallback"
         )
+        # Try OpenAI fallback
+        openai_result = openai_expiry_prediction(item_name, storage_type)
+        if openai_result:
+            print(f"DEBUG: OpenAI fallback successful for {item_name} after Gemini failure")
+            return openai_result
+        print("WARNING: OpenAI fallback also failed, using simple prediction")
         return get_simple_prediction_with_category(item_name, storage_type)
 
 
 def get_gemini_prediction(item_name, storage_type):
-    """Use Gemini AI to predict expiration date based on item and storage type"""
+    """Use Gemini AI to predict expiration date based on item and storage type, with OpenAI fallback"""
     import os
     import google.generativeai as genai
+    from src.openai_utils import openai_expiry_prediction
 
     try:
         # Configure Gemini with API key from environment
         api_key = os.getenv("GEMINI_API_KEY")
         if not api_key:
             print(
-                "WARNING: GEMINI_API_KEY not found in environment, falling back to simple prediction"
+                "WARNING: GEMINI_API_KEY not found in environment, trying OpenAI fallback"
             )
+            # Try OpenAI fallback
+            openai_result = openai_expiry_prediction(item_name, storage_type)
+            if openai_result:
+                print(f"DEBUG: OpenAI fallback successful for {item_name}")
+                return openai_result.get('days')
             return get_simple_prediction(item_name, storage_type)
 
         genai.configure(api_key=api_key)
@@ -678,8 +696,14 @@ Just respond with the number of days:"""
 
     except Exception as e:
         print(
-            f"ERROR: Gemini prediction failed: {str(e)}, falling back to simple prediction"
+            f"ERROR: Gemini prediction failed: {str(e)}, trying OpenAI fallback"
         )
+        # Try OpenAI fallback
+        openai_result = openai_expiry_prediction(item_name, storage_type)
+        if openai_result:
+            print(f"DEBUG: OpenAI fallback successful for {item_name} after Gemini failure")
+            return openai_result.get('days')
+        print("WARNING: OpenAI fallback also failed, using simple prediction")
         return get_simple_prediction(item_name, storage_type)
 
 

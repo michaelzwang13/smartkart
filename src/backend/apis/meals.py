@@ -282,6 +282,7 @@ def generate_meal_plan():
     cooking_time = data.get("cooking_time", 60)
     minimal_cooking_sessions = data.get("minimal_cooking_sessions", False)
     selected_meals = data.get("selected_meals", None)  # New parameter for meal selection
+    nutrition_tracking_enabled = True
 
     try:
         days = int(days)
@@ -291,13 +292,13 @@ def generate_meal_plan():
         return jsonify({"success": False, "message": "Invalid number of days"})
 
     # Parse start date or use today
-    if start_date:
+    if not start_date:  
+        start_date = datetime.now().date()
+    elif type(start_date) == str:
         try:
             start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
         except ValueError:
             return jsonify({"success": False, "message": "Invalid start date format. Use YYYY-MM-DD"})
-    else:
-        start_date = datetime.now().date()
 
     end_date = start_date + timedelta(days=days - 1)
 
@@ -966,47 +967,96 @@ def delete_meal(meal_id):
 
 # Import AI generation function from the old file
 def generate_meal_plan_with_ai(days, start_date, ingredients, dietary_preference, budget, cooking_time, blocked_slots=None, minimal_cooking_sessions=False, selected_meals=None, nutrition_tracking_enabled=True):
-    """Use Gemini AI to generate a structured meal plan"""
+    """Use Gemini AI to generate a structured meal plan, with OpenAI fallback"""
     import os
     import google.generativeai as genai
+    from src.openai_utils import openai_meal_plan_generation
 
     try:
         # Configure Gemini
         api_key = os.getenv("GEMINI_API_KEY")
         if not api_key:
-            print("WARNING: GEMINI_API_KEY not found")
+            print("WARNING: GEMINI_API_KEY not found, trying OpenAI fallback")
+            # Build the prompt first for OpenAI fallback
+            prompt = _build_meal_plan_prompt(days, start_date, ingredients, dietary_preference, budget, cooking_time, blocked_slots, minimal_cooking_sessions, selected_meals, nutrition_tracking_enabled)
+            openai_result = openai_meal_plan_generation(prompt)
+            if openai_result:
+                print("DEBUG: OpenAI fallback successful for meal plan generation")
+                return openai_result
             return None
 
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel("gemini-1.5-flash-latest")
 
-        # Format ingredients list
-        ingredients_text = ", ".join(ingredients) if ingredients else "No specific ingredients provided"
-        
-        # Format blocked slots
-        blocked_info = ""
-        if blocked_slots:
-            blocked_list = [f"{date.strftime('%Y-%m-%d')} {meal_type}" for date, meal_type in blocked_slots]
-            blocked_info = f"\nSKIP these locked meal slots: {', '.join(blocked_list)}"
+        # Build the prompt
+        prompt = _build_meal_plan_prompt(days, start_date, ingredients, dietary_preference, budget, cooking_time, blocked_slots, minimal_cooking_sessions, selected_meals, nutrition_tracking_enabled)
 
-        # Format the minimal cooking sessions mode setting
-        minimal_sessions_text = "true" if minimal_cooking_sessions else "false"
-        budget_text = f"${budget}" if budget else "No limit"
-        start_date_text = start_date.strftime('%B %d, %Y')
-        
-        # Format selected meals information
-        selected_meals_info = ""
-        if selected_meals:
-            selected_meals_info = "\n\nSELECTED MEALS ONLY:\n"
-            for meal_selection in selected_meals:
-                day = meal_selection["day"]
-                meals = meal_selection["meals"]
-                selected_meals_info += f"- Day {day}: Generate only {', '.join(meals)}\n"
-            selected_meals_info += "IMPORTANT: Only generate recipes for the specified meals above. Omit any meals not listed."
-        
-        # Create detailed prompt for meal planning
-        nutrition_role = "nutrition planner" if nutrition_tracking_enabled else "meal planner"
-        prompt = f'''You are a professional meal prep consultant and {nutrition_role}. Create a detailed {days}-day meal plan starting from {start_date_text} with the following requirements:
+        # Generate the meal plan
+        response = model.generate_content(prompt)
+        response_text = response.text.strip()
+
+        # Clean the response to extract just the JSON
+        if "```json" in response_text:
+            json_start = response_text.find("```json") + 7
+            json_end = response_text.find("```", json_start)
+            response_text = response_text[json_start:json_end]
+        elif "```" in response_text:
+            json_start = response_text.find("```") + 3
+            json_end = response_text.find("```", json_start)
+            response_text = response_text[json_start:json_end]
+
+        # Parse JSON response
+        try:
+            meal_plan = json.loads(response_text)
+            print("FULL RAW RESPONSE:\n", response.text)
+            print(f"DEBUG: Successfully parsed meal plan with {len(meal_plan.get('days', []))} days")
+            return meal_plan
+        except json.JSONDecodeError as e:
+            print(f"DEBUG: JSON parse error: {str(e)}")
+            print("FULL RAW RESPONSE:\n", response.text)
+            return None
+
+    except Exception as e:
+        print(f"ERROR: Gemini meal plan generation failed: {str(e)}, trying OpenAI fallback")
+        # Try OpenAI fallback
+        prompt = _build_meal_plan_prompt(days, start_date, ingredients, dietary_preference, budget, cooking_time, blocked_slots, minimal_cooking_sessions, selected_meals, nutrition_tracking_enabled)
+        openai_result = openai_meal_plan_generation(prompt)
+        if openai_result:
+            print("DEBUG: OpenAI fallback successful for meal plan generation after Gemini failure")
+            return openai_result
+        print("WARNING: OpenAI fallback also failed")
+        return None
+
+
+def _build_meal_plan_prompt(days, start_date, ingredients, dietary_preference, budget, cooking_time, blocked_slots, minimal_cooking_sessions, selected_meals, nutrition_tracking_enabled):
+    """Helper function to build the meal plan prompt for both Gemini and OpenAI"""
+    # Format ingredients list
+    ingredients_text = ", ".join(ingredients) if ingredients else "No specific ingredients provided"
+    
+    # Format blocked slots
+    blocked_info = ""
+    if blocked_slots:
+        blocked_list = [f"{date.strftime('%Y-%m-%d')} {meal_type}" for date, meal_type in blocked_slots]
+        blocked_info = f"\nSKIP these locked meal slots: {', '.join(blocked_list)}"
+
+    # Format the minimal cooking sessions mode setting
+    minimal_sessions_text = "true" if minimal_cooking_sessions else "false"
+    budget_text = f"${budget}" if budget else "No limit"
+    start_date_text = start_date.strftime('%B %d, %Y')
+    
+    # Format selected meals information
+    selected_meals_info = ""
+    if selected_meals:
+        selected_meals_info = "\n\nSELECTED MEALS ONLY:\n"
+        for meal_selection in selected_meals:
+            day = meal_selection["day"]
+            meals = meal_selection["meals"]
+            selected_meals_info += f"- Day {day}: Generate only {', '.join(meals)}\n"
+        selected_meals_info += "IMPORTANT: Only generate recipes for the specified meals above. Omit any meals not listed."
+    
+    # Create detailed prompt for meal planning
+    nutrition_role = "nutrition planner" if nutrition_tracking_enabled else "meal planner"
+    prompt = f'''You are a professional meal prep consultant and {nutrition_role}. Create a detailed {days}-day meal plan starting from {start_date_text} with the following requirements:
 
 IMPORTANT: Use numeric day numbers (1, 2, 3, etc.) NOT dates in the "day" field.
 
@@ -1118,35 +1168,8 @@ Respond with a valid JSON object in exactly this format:
 }}
 
 Generate the complete meal plan now. Remember to convert fractions into decimal'''
-
-        # Generate the meal plan
-        response = model.generate_content(prompt)
-        response_text = response.text.strip()
-
-        # Clean the response to extract just the JSON
-        if "```json" in response_text:
-            json_start = response_text.find("```json") + 7
-            json_end = response_text.find("```", json_start)
-            response_text = response_text[json_start:json_end]
-        elif "```" in response_text:
-            json_start = response_text.find("```") + 3
-            json_end = response_text.find("```", json_start)
-            response_text = response_text[json_start:json_end]
-
-        # Parse JSON response
-        try:
-            meal_plan = json.loads(response_text)
-            print("FULL RAW RESPONSE:\n", response.text)
-            print(f"DEBUG: Successfully parsed meal plan with {len(meal_plan.get('days', []))} days")
-            return meal_plan
-        except json.JSONDecodeError as e:
-            print(f"DEBUG: JSON parse error: {str(e)}")
-            print("FULL RAW RESPONSE:\n", response.text)
-            return None
-
-    except Exception as e:
-        print(f"ERROR: Meal plan generation failed: {str(e)}")
-        return None
+    
+    return prompt
 
 
 def generate_session_shopping_list_with_fuzzy_matching(cursor, session_id, user_id, recipe_template_map):
