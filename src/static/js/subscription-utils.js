@@ -146,7 +146,7 @@ function addUpgradeModalStyles() {
     }
     
     .upgrade-header {
-        background: linear-gradient(135deg, var(--primary-color) 0%, #059669 100%);
+        background: var(--primary-color);
         color: white;
         padding: 24px;
         border-radius: 16px 16px 0 0;

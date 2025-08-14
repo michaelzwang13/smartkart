@@ -477,14 +477,14 @@ function showMessage(message, type) {
     // Set background color based on type
     switch (type) {
         case 'success':
-            messageDiv.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+            messageDiv.style.background = '#10b981';
             break;
         case 'error':
-            messageDiv.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+            messageDiv.style.background = '#ef4444';
             break;
         case 'info':
         default:
-            messageDiv.style.background = 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)';
+            messageDiv.style.background = '#3b82f6';
             break;
     }
 

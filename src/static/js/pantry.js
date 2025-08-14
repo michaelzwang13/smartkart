@@ -398,27 +398,27 @@ document.addEventListener("DOMContentLoaded", function () {
       },
       "Frozen Foods": {
         icon: "fas fa-snowflake",
-        color: "linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)",
+        color: "#06b6d4",
       },
       Beverages: {
         icon: "fas fa-glass-water",
-        color: "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)",
+        color: "#3b82f6",
       },
       Snacks: {
         icon: "fas fa-cookie-bite",
-        color: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
+        color: "#f97316",
       },
       Condiments: {
         icon: "fas fa-pepper-hot",
-        color: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)",
+        color: "#dc2626",
       },
       Spices: {
         icon: "fas fa-mortar-pestle",
-        color: "linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)",
+        color: "#7c3aed",
       },
       Bread: {
         icon: "fas fa-bread-slice",
-        color: "linear-gradient(135deg, #92400e 0%, #78350f 100%)",
+        color: "#92400e",
       },
       Other: { icon: "fas fa-box", color: "var(--text-secondary)" },
     };

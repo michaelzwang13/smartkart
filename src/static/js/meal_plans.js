@@ -2681,9 +2681,9 @@ function showMessage(message, type) {
 
   // Set background color based on type
   if (type === 'success') {
-    messageDiv.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+    messageDiv.style.background = '#10b981';
   } else {
-    messageDiv.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+    messageDiv.style.background = '#ef4444';
   }
 
   messageDiv.innerHTML = `
