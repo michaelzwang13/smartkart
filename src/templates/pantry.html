@@ -395,6 +395,35 @@
         border-left: 4px solid var(--warning-color);
       }
 
+      /* Highlighting animation for newly added items */
+      .pantry-item.newly-added-item {
+        animation: highlightItem 3s ease-out;
+        border: 2px solid var(--primary-color) !important;
+      }
+
+      @keyframes highlightItem {
+        0% {
+          border-color: var(--primary-color);
+          box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+        }
+        25% {
+          border-color: var(--primary-color);
+          box-shadow: 0 0 0 10px rgba(16, 185, 129, 0.3);
+        }
+        50% {
+          border-color: var(--primary-color);
+          box-shadow: 0 0 0 15px rgba(16, 185, 129, 0.1);
+        }
+        75% {
+          border-color: var(--primary-color);
+          box-shadow: 0 0 0 10px rgba(16, 185, 129, 0.05);
+        }
+        100% {
+          border-color: var(--primary-color);
+          box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+        }
+      }
+
       .item-header {
         display: flex;
         justify-content: space-between;

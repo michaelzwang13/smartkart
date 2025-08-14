@@ -189,7 +189,9 @@ document.addEventListener("DOMContentLoaded", function () {
         addItemForm.reset();
         resetCustomUnitInputs();
         resetTagSelection("selectedTags");
-        loadPantryItems();
+        // Pass the newly added item ID to highlight it
+        const newItemId = result.item.pantry_item_id;
+        loadPantryItems(newItemId);
       } else {
         alert("Error adding item: " + result.message);
       }
@@ -247,7 +249,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  async function loadPantryItems() {
+  async function loadPantryItems(highlightItemId = null) {
     try {
       const searchFilter = document
         .getElementById("searchFilter")
@@ -288,7 +290,7 @@ document.addEventListener("DOMContentLoaded", function () {
           });
         }
 
-        displayPantryItems(filteredItems);
+        displayPantryItems(filteredItems, highlightItemId);
         updateStats(filteredItems);
       } else {
         console.error("Error loading pantry items:", result.message);
@@ -298,7 +300,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  function displayPantryItems(items) {
+  function displayPantryItems(items, highlightItemId = null) {
     if (items.length === 0) {
       pantryItems.style.display = "none";
       emptyState.style.display = "block";
@@ -340,12 +342,22 @@ document.addEventListener("DOMContentLoaded", function () {
       pantryItems.innerHTML = `<div class="pantry-grid">${items
         .map((item) => createItemHTML(item))
         .join("")}</div>`;
+      
+      // After rendering, scroll to and highlight the newly added item if specified
+      if (highlightItemId) {
+        scrollToAndHighlightItem(highlightItemId);
+      }
       return;
     }
 
     // Group items by category for "All Locations" view
     const groupedItems = groupItemsByCategory(items);
     pantryItems.innerHTML = createCategorizedHTML(groupedItems);
+    
+    // After rendering, scroll to and highlight the newly added item if specified
+    if (highlightItemId) {
+      scrollToAndHighlightItem(highlightItemId);
+    }
   }
 
   function groupItemsByCategory(items) {
@@ -1045,4 +1057,27 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Load tags when page loads
   loadAndPopulateTagFilter();
+
+  // Function to scroll to and highlight a newly added item
+  function scrollToAndHighlightItem(itemId) {
+    // Use setTimeout to ensure DOM is fully rendered
+    setTimeout(() => {
+      const itemElement = document.querySelector(`[data-item-id="${itemId}"]`);
+      if (itemElement) {
+        // Scroll to the item with smooth scrolling
+        itemElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
+        });
+        
+        // Add highlight class for animation
+        itemElement.classList.add('newly-added-item');
+        
+        // Remove highlight class after animation completes
+        setTimeout(() => {
+          itemElement.classList.remove('newly-added-item');
+        }, 3000); // 3 seconds highlight duration
+      }
+    }, 100); // Small delay to ensure DOM rendering
+  }
 });
