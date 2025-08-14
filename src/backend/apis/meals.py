@@ -1830,3 +1830,269 @@ def single_user_preference(preference_key):
         return jsonify({"success": False, "message": f"Failed to manage preference: {str(e)}"})
     finally:
         cursor.close()
+
+
+@meals_bp.route("/advanced-meal-planning/chat", methods=["POST"])
+def advanced_meal_planning_chat():
+    """Handle natural language requests for advanced meal planning"""
+    if "user_ID" not in session:
+        return jsonify({"success": False, "message": "Not authenticated"})
+    
+    data = request.get_json()
+    user_id = session["user_ID"]
+    message = data.get("message", "").strip()
+    
+    if not message:
+        return jsonify({"success": False, "message": "Message is required"})
+    
+    # Get context from sidebar inputs
+    context = {
+        "pantry_items": data.get("pantry_items", []),
+        "food_restrictions": data.get("food_restrictions", []),
+        "dietary_preference": data.get("dietary_preference", "none"),
+        "conversation_history": data.get("conversation_history", [])
+    }
+    
+    try:
+        # Check subscription limits for advanced features
+        check_subscription_limit(user_id, 'ai_chat_requests')
+        
+        # Generate response using AI
+        response = generate_chat_response(message, context, user_id)
+        
+        if response:
+            # Increment usage counter
+            increment_usage(user_id, 'ai_chat_requests')
+            
+            return jsonify({
+                "success": True,
+                "response": response["message"],
+                "suggestions": response.get("suggestions", []),
+                "action_required": response.get("action_required", False),
+                "meal_plan_data": response.get("meal_plan_data")
+            })
+        else:
+            return jsonify({
+                "success": False, 
+                "message": "Sorry, I'm having trouble processing your request right now. Please try again."
+            })
+    
+    except SubscriptionLimitExceeded as e:
+        return jsonify({
+            'success': False,
+            'message': str(e),
+            'limit_type': e.limit_type,
+            'current_limit': e.current_limit,
+            'requires_upgrade': True
+        }), 403
+    except Exception as e:
+        print(f"ERROR: Advanced meal planning chat failed: {str(e)}")
+        return jsonify({
+            "success": False, 
+            "message": "An error occurred while processing your request."
+        })
+
+
+def generate_chat_response(message, context, user_id):
+    """Generate AI response for meal planning chat"""
+    try:
+        # Build conversation prompt
+        prompt = build_chat_prompt(message, context, user_id)
+        
+        # Try Gemini first, then OpenAI fallback
+        response = gemini_chat_response(prompt)
+        if not response:
+            response = openai_chat_response(prompt)
+        
+        return response
+        
+    except Exception as e:
+        print(f"ERROR: Chat response generation failed: {str(e)}")
+        return None
+
+
+def build_chat_prompt(message, context, user_id):
+    """Build the prompt for AI chat response"""
+    # Get user's current pantry items
+    pantry_items = get_user_pantry_items(user_id)
+    pantry_text = ", ".join([f"{item['item_name']} ({item['quantity']} {item['unit'] or ''})" for item in pantry_items[:10]]) if pantry_items else "No pantry items available"
+    
+    # Build restrictions text
+    restrictions_text = ", ".join(context["food_restrictions"]) if context["food_restrictions"] else "None specified"
+    
+    # Build conversation history
+    history_text = ""
+    if context["conversation_history"]:
+        for i, msg in enumerate(context["conversation_history"][-6:]):  # Last 6 messages for context
+            sender = "User" if msg.get("sender") == "user" else "Assistant"
+            history_text += f"{sender}: {msg.get('message', '')}\n"
+    
+    prompt = f"""You are an expert meal planning assistant. Help the user create personalized meal plans based on their needs, pantry items, and preferences.
+
+CONTEXT:
+- Available pantry items: {pantry_text}
+- Food restrictions: {restrictions_text}
+- Dietary preference: {context['dietary_preference']}
+
+CONVERSATION HISTORY:
+{history_text}
+
+USER MESSAGE: {message}
+
+INSTRUCTIONS:
+1. Respond in a conversational, helpful tone
+2. Ask clarifying questions when needed
+3. Suggest meal plans based on available ingredients
+4. Consider dietary preferences and restrictions
+5. Keep responses concise but informative
+6. If the user wants to generate a meal plan, gather: days, start date, special requests
+
+RESPONSE FORMAT (JSON):
+{{
+    "message": "Your conversational response",
+    "suggestions": ["Quick suggestion 1", "Quick suggestion 2"],
+    "action_required": false,
+    "meal_plan_data": null
+}}
+
+If ready to generate a meal plan, set action_required to true and include meal_plan_data with:
+{{
+    "days": number,
+    "start_date": "YYYY-MM-DD",
+    "dietary_preference": "preference",
+    "ingredients": ["ingredient1", "ingredient2"],
+    "food_restrictions": ["restriction1"],
+    "budget": number or null,
+    "cooking_time": number
+}}
+
+Respond with valid JSON only:"""
+    
+    return prompt
+
+
+def get_user_pantry_items(user_id):
+    """Get user's current pantry items"""
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        
+        query = """
+            SELECT item_name, quantity, unit, storage_type, expiration_date
+            FROM pantry_items 
+            WHERE user_id = %s AND is_consumed = FALSE
+            ORDER BY expiration_date ASC, item_name
+            LIMIT 20
+        """
+        cursor.execute(query, (user_id,))
+        items = cursor.fetchall()
+        cursor.close()
+        return items
+        
+    except Exception as e:
+        print(f"ERROR: Failed to get pantry items: {str(e)}")
+        return []
+
+
+def gemini_chat_response(prompt):
+    """Generate response using Gemini AI"""
+    try:
+        import requests
+        import os
+        
+        api_key = os.getenv('GEMINI_API_KEY')
+        if not api_key:
+            return None
+            
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={api_key}"
+        
+        payload = {
+            "contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {
+                "temperature": 0.7,
+                "topK": 40,
+                "topP": 0.95,
+                "maxOutputTokens": 1024,
+            }
+        }
+        
+        response = requests.post(url, json=payload, timeout=30)
+        
+        if response.status_code == 200:
+            result = response.json()
+            if 'candidates' in result and result['candidates']:
+                response_text = result['candidates'][0]['content']['parts'][0]['text'].strip()
+                
+                # Extract JSON from response
+                if "```json" in response_text:
+                    json_start = response_text.find("```json") + 7
+                    json_end = response_text.find("```", json_start)
+                    response_text = response_text[json_start:json_end]
+                elif "```" in response_text:
+                    json_start = response_text.find("```") + 3
+                    json_end = response_text.find("```", json_start)
+                    response_text = response_text[json_start:json_end]
+                
+                try:
+                    return json.loads(response_text)
+                except json.JSONDecodeError:
+                    print(f"DEBUG: Gemini response not valid JSON: {response_text}")
+                    return None
+                    
+    except Exception as e:
+        print(f"ERROR: Gemini chat failed: {str(e)}")
+        return None
+
+
+def openai_chat_response(prompt):
+    """Generate response using OpenAI as fallback"""
+    try:
+        import requests
+        import os
+        
+        api_key = os.getenv('OPENAI_API_KEY')
+        if not api_key:
+            return None
+            
+        url = "https://api.openai.com/v1/chat/completions"
+        
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json"
+        }
+        
+        payload = {
+            "model": "gpt-3.5-turbo",
+            "messages": [
+                {"role": "user", "content": prompt}
+            ],
+            "temperature": 0.7,
+            "max_tokens": 1024
+        }
+        
+        response = requests.post(url, json=payload, headers=headers, timeout=30)
+        
+        if response.status_code == 200:
+            result = response.json()
+            if 'choices' in result and result['choices']:
+                response_text = result['choices'][0]['message']['content'].strip()
+                
+                # Extract JSON from response
+                if "```json" in response_text:
+                    json_start = response_text.find("```json") + 7
+                    json_end = response_text.find("```", json_start)
+                    response_text = response_text[json_start:json_end]
+                elif "```" in response_text:
+                    json_start = response_text.find("```") + 3
+                    json_end = response_text.find("```", json_start)
+                    response_text = response_text[json_start:json_end]
+                
+                try:
+                    return json.loads(response_text)
+                except json.JSONDecodeError:
+                    print(f"DEBUG: OpenAI response not valid JSON: {response_text}")
+                    return None
+                    
+    except Exception as e:
+        print(f"ERROR: OpenAI chat failed: {str(e)}")
+        return None
