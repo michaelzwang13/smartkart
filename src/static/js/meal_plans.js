@@ -48,7 +48,7 @@ function handleDropdownResize() {
 
 // Calendar functionality
 let currentDate = new Date();
-let currentView = "month";
+let currentView = "week";
 let mealPlanData = [];
 let mealsData = [];
 
