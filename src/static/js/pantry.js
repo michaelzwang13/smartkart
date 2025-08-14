@@ -731,12 +731,6 @@ document.addEventListener("DOMContentLoaded", function () {
           item.expiration_date || "";
         document.getElementById("editAiPredict").checked = false; // Reset AI prediction
         document.getElementById("editNotes").value = item.notes || "";
-        
-        // Update character counter for notes
-        const editNotesCharCount = document.getElementById('editNotesCharCount');
-        if (editNotesCharCount) {
-          updateCharacterCount(document.getElementById("editNotes"), editNotesCharCount);
-        }
 
         // Show the edit modal
         editItemModal.style.display = "flex";
@@ -1089,48 +1083,6 @@ document.addEventListener("DOMContentLoaded", function () {
   // Load tags when page loads
   loadAndPopulateTagFilter();
 
-  // Character counter for notes textareas
-  function initializeCharacterCounters() {
-    // Add item modal notes
-    const notesTextarea = document.querySelector('textarea[name="notes"]');
-    const notesCharCount = document.getElementById('notesCharCount');
-    
-    if (notesTextarea && notesCharCount) {
-      notesTextarea.addEventListener('input', function() {
-        updateCharacterCount(this, notesCharCount);
-      });
-    }
-
-    // Edit item modal notes
-    const editNotesTextarea = document.getElementById('editNotes');
-    const editNotesCharCount = document.getElementById('editNotesCharCount');
-    
-    if (editNotesTextarea && editNotesCharCount) {
-      editNotesTextarea.addEventListener('input', function() {
-        updateCharacterCount(this, editNotesCharCount);
-      });
-    }
-  }
-
-  function updateCharacterCount(textarea, countElement) {
-    const currentLength = textarea.value.length;
-    const maxLength = parseInt(textarea.getAttribute('maxlength'));
-    
-    countElement.textContent = currentLength;
-    
-    // Update styling based on character count
-    const countContainer = countElement.parentElement;
-    countContainer.classList.remove('near-limit', 'at-limit');
-    
-    if (currentLength >= maxLength) {
-      countContainer.classList.add('at-limit');
-    } else if (currentLength >= maxLength * 0.8) {
-      countContainer.classList.add('near-limit');
-    }
-  }
-
-  // Initialize character counters
-  initializeCharacterCounters();
 
   // Function to scroll to and highlight a newly added item
   function scrollToAndHighlightItem(itemId) {
