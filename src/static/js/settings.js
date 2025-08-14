@@ -151,6 +151,20 @@ async function saveUserPreferences() {
   }
 }
 
+// Toggle feature comparison dropdown
+function toggleFeatureComparison() {
+  const content = document.getElementById('featureComparisonContent');
+  const icon = document.getElementById('featureToggleIcon');
+  
+  if (content.style.display === 'none' || content.style.display === '') {
+    content.style.display = 'block';
+    icon.style.transform = 'rotate(180deg)';
+  } else {
+    content.style.display = 'none';
+    icon.style.transform = 'rotate(0deg)';
+  }
+}
+
 // Show message to user
 function showMessage(message, type) {
   // Remove existing messages

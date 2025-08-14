@@ -733,6 +733,116 @@
                   </div>
                 </div>
               {% endif %}
+              
+              <!-- Feature Comparison Dropdown -->
+              <div class="subscription-comparison" style="margin-top: var(--spacing-xl); padding-top: var(--spacing-xl); border-top: 1px solid var(--border-light);">
+                <div class="comparison-header" style="display: flex; align-items: center; justify-content: space-between; padding: var(--spacing-md); background: var(--bg-secondary); border-radius: var(--radius-lg); cursor: pointer;" onclick="toggleFeatureComparison()">
+                  <div style="display: flex; align-items: center; gap: var(--spacing-sm);">
+                    <i class="fas fa-list" style="color: var(--primary-color);"></i>
+                    <span style="font-weight: 600; color: var(--text-primary);">Compare Plans & Features</span>
+                  </div>
+                  <i id="featureToggleIcon" class="fas fa-chevron-down" style="color: var(--text-secondary); transition: transform 0.3s ease;"></i>
+                </div>
+                
+                <div id="featureComparisonContent" class="comparison-content" style="display: none; margin-top: var(--spacing-md); border: 1px solid var(--border-light); border-radius: var(--radius-lg); overflow: hidden;">
+                  <div class="comparison-table" style="display: grid; grid-template-columns: 2fr 1fr 1fr; background: var(--bg-primary);">
+                    <!-- Header -->
+                    <div class="comparison-header-cell" style="padding: var(--spacing-lg); background: var(--bg-tertiary); font-weight: 600; color: var(--text-primary); border-right: 1px solid var(--border-light);">Feature</div>
+                    <div class="comparison-header-cell" style="padding: var(--spacing-lg); background: var(--bg-tertiary); font-weight: 600; color: var(--text-primary); text-align: center; border-right: 1px solid var(--border-light);">
+                      <i class="fas fa-user" style="margin-right: var(--spacing-xs);"></i>Free
+                    </div>
+                    <div class="comparison-header-cell" style="padding: var(--spacing-lg); background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); font-weight: 600; color: white; text-align: center;">
+                      <i class="fas fa-crown" style="margin-right: var(--spacing-xs);"></i>Premium
+                    </div>
+                    
+                    <!-- Meal Plans -->
+                    <div class="comparison-cell" style="padding: var(--spacing-md) var(--spacing-lg); border-right: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light);">
+                      <div style="font-weight: 500; color: var(--text-primary);">Active Meal Plans</div>
+                      <div style="font-size: 0.875rem; color: var(--text-secondary); margin-top: var(--spacing-xs);">Number of meal plans you can have running at once</div>
+                    </div>
+                    <div class="comparison-cell" style="padding: var(--spacing-md); border-right: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light); text-align: center;">
+                      <span style="font-weight: 600; color: var(--text-primary);">3 plans</span>
+                    </div>
+                    <div class="comparison-cell" style="padding: var(--spacing-md); border-bottom: 1px solid var(--border-light); text-align: center;">
+                      <span style="font-weight: 600; color: var(--success-color);">Unlimited</span>
+                    </div>
+                    
+                    <!-- Advance Planning -->
+                    <div class="comparison-cell" style="padding: var(--spacing-md) var(--spacing-lg); border-right: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light);">
+                      <div style="font-weight: 500; color: var(--text-primary);">Advance Planning</div>
+                      <div style="font-size: 0.875rem; color: var(--text-secondary); margin-top: var(--spacing-xs);">How far ahead you can plan meals</div>
+                    </div>
+                    <div class="comparison-cell" style="padding: var(--spacing-md); border-right: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light); text-align: center;">
+                      <span style="font-weight: 600; color: var(--text-primary);">7 days</span>
+                    </div>
+                    <div class="comparison-cell" style="padding: var(--spacing-md); border-bottom: 1px solid var(--border-light); text-align: center;">
+                      <span style="font-weight: 600; color: var(--success-color);">Unlimited</span>
+                    </div>
+                    
+                    <!-- Pantry Items -->
+                    <div class="comparison-cell" style="padding: var(--spacing-md) var(--spacing-lg); border-right: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light);">
+                      <div style="font-weight: 500; color: var(--text-primary);">Pantry Items</div>
+                      <div style="font-size: 0.875rem; color: var(--text-secondary); margin-top: var(--spacing-xs);">Maximum ingredients you can store in pantry</div>
+                    </div>
+                    <div class="comparison-cell" style="padding: var(--spacing-md); border-right: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light); text-align: center;">
+                      <span style="font-weight: 600; color: var(--text-primary);">100 items</span>
+                    </div>
+                    <div class="comparison-cell" style="padding: var(--spacing-md); border-bottom: 1px solid var(--border-light); text-align: center;">
+                      <span style="font-weight: 600; color: var(--success-color);">Unlimited</span>
+                    </div>
+                    
+                    <!-- Saved Recipes -->
+                    <div class="comparison-cell" style="padding: var(--spacing-md) var(--spacing-lg); border-right: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light);">
+                      <div style="font-weight: 500; color: var(--text-primary);">Saved Recipes</div>
+                      <div style="font-size: 0.875rem; color: var(--text-secondary); margin-top: var(--spacing-xs);">Personal recipe collection storage</div>
+                    </div>
+                    <div class="comparison-cell" style="padding: var(--spacing-md); border-right: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light); text-align: center;">
+                      <span style="font-weight: 600; color: var(--text-primary);">10 recipes</span>
+                    </div>
+                    <div class="comparison-cell" style="padding: var(--spacing-md); border-bottom: 1px solid var(--border-light); text-align: center;">
+                      <span style="font-weight: 600; color: var(--success-color);">Unlimited</span>
+                    </div>
+                    
+                    <!-- Shopping Lists -->
+                    <div class="comparison-cell" style="padding: var(--spacing-md) var(--spacing-lg); border-right: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light);">
+                      <div style="font-weight: 500; color: var(--text-primary);">Shopping List Generation</div>
+                      <div style="font-size: 0.875rem; color: var(--text-secondary); margin-top: var(--spacing-xs);">AI-generated shopping lists per day</div>
+                    </div>
+                    <div class="comparison-cell" style="padding: var(--spacing-md); border-right: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light); text-align: center;">
+                      <span style="font-weight: 600; color: var(--text-primary);">1 per day</span>
+                    </div>
+                    <div class="comparison-cell" style="padding: var(--spacing-md); border-bottom: 1px solid var(--border-light); text-align: center;">
+                      <span style="font-weight: 600; color: var(--success-color);">Unlimited</span>
+                    </div>
+                    
+                    <!-- UPC Scanning -->
+                    <div class="comparison-cell" style="padding: var(--spacing-md) var(--spacing-lg); border-right: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light);">
+                      <div style="font-weight: 500; color: var(--text-primary);">UPC Scanning</div>
+                      <div style="font-size: 0.875rem; color: var(--text-secondary); margin-top: var(--spacing-xs);">Product barcode scans per shopping trip</div>
+                    </div>
+                    <div class="comparison-cell" style="padding: var(--spacing-md); border-right: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light); text-align: center;">
+                      <span style="font-weight: 600; color: var(--text-primary);">20 per trip</span>
+                    </div>
+                    <div class="comparison-cell" style="padding: var(--spacing-md); border-bottom: 1px solid var(--border-light); text-align: center;">
+                      <span style="font-weight: 600; color: var(--success-color);">Unlimited</span>
+                    </div>
+                    
+                    <!-- Nutrition Tracking -->
+                    <div class="comparison-cell" style="padding: var(--spacing-md) var(--spacing-lg); border-right: 1px solid var(--border-light);">
+                      <div style="font-weight: 500; color: var(--text-primary);">Nutrition Tracking</div>
+                      <div style="font-size: 0.875rem; color: var(--text-secondary); margin-top: var(--spacing-xs);">Detailed macro and nutrient analysis</div>
+                    </div>
+                    <div class="comparison-cell" style="padding: var(--spacing-md); border-right: 1px solid var(--border-light); text-align: center;">
+                      <span style="font-weight: 600; color: var(--warning-color);">Basic</span>
+                      <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: var(--spacing-xs);">Calories + Protein only</div>
+                    </div>
+                    <div class="comparison-cell" style="padding: var(--spacing-md); text-align: center;">
+                      <span style="font-weight: 600; color: var(--success-color);">Advanced</span>
+                      <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: var(--spacing-xs);">All macros + history</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
