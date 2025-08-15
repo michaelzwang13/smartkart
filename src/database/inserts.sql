@@ -386,3 +386,28 @@ CREATE TABLE weekly_meal_goals (
     INDEX idx_user_week (user_id, week_start_date),
     INDEX idx_week_date (week_start_date)
 );
+
+-- Table to store all available tips
+CREATE TABLE IF NOT EXISTS tips (
+    tip_id INT AUTO_INCREMENT PRIMARY KEY,
+    tip_text TEXT NOT NULL,
+    tip_category VARCHAR(50) DEFAULT 'general',
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_active (is_active),
+    INDEX idx_category (tip_category)
+);
+
+-- Table to track which tips each user has seen and when
+CREATE TABLE IF NOT EXISTS user_tip_history (
+    history_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    tip_id INT NOT NULL,
+    shown_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES user_account(user_ID) ON DELETE CASCADE,
+    FOREIGN KEY (tip_id) REFERENCES tips(tip_id) ON DELETE CASCADE,
+    UNIQUE KEY unique_user_tip (user_id, tip_id),
+    INDEX idx_user_shown (user_id, shown_at),
+    INDEX idx_shown_date (shown_at)
+);

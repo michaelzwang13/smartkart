@@ -21,6 +21,50 @@ function updateWelcomeMessage() {
   welcomeTimeEl.textContent = `${greeting}! ${message}`;
 }
 
+// Load daily tip
+async function loadDailyTip() {
+  const tipLoading = document.getElementById("tipLoading");
+  const tipContent = document.getElementById("tipContent");
+  const tipText = document.getElementById("tipText");
+  const tipCategory = document.getElementById("tipCategory");
+
+  try {
+    const response = await fetch("/api/tips/daily");
+    const data = await response.json();
+
+    console.log(data)
+
+    if (data.success && data.tip) {
+      // Format category name for display
+      const categoryDisplay = data.tip.category
+        .split('_')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+
+      // Update tip content
+      tipText.textContent = data.tip.text;
+      tipCategory.textContent = categoryDisplay;
+
+      // Show tip content and hide loading
+      tipLoading.style.display = "none";
+      tipContent.style.display = "block";
+    } else {
+      // Hide tip section entirely if no tip available
+      const tipSection = document.querySelector(".daily-tip-section");
+      if (tipSection) {
+        tipSection.style.display = "none";
+      }
+    }
+  } catch (error) {
+    console.error("Error loading daily tip:", error);
+    // Hide tip section on error
+    const tipSection = document.querySelector(".daily-tip-section");
+    if (tipSection) {
+      tipSection.style.display = "none";
+    }
+  }
+}
+
 // Animate stats on page load
 function animateStats() {
   const statValues = document.querySelectorAll(".stat-value");
@@ -614,6 +658,7 @@ function updateProgressWheel(completed, goal) {
 // Initialize all functionality
 document.addEventListener("DOMContentLoaded", function () {
   updateWelcomeMessage();
+  loadDailyTip();
   animateStats();
   initializeScrollEffects();
   initializeMobileMenu();
