@@ -647,6 +647,119 @@
         margin: 0 auto;
       }
 
+      /* Plan Categories Styles */
+      .plan-categories {
+        margin-bottom: var(--spacing-xl);
+      }
+
+      .plan-category {
+        margin-bottom: var(--spacing-2xl);
+      }
+
+      .category-header {
+        margin-bottom: var(--spacing-lg);
+      }
+
+      .category-title {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0;
+      }
+
+      .category-title i {
+        color: var(--primary-color);
+      }
+
+      .plan-count {
+        font-size: 1rem;
+        font-weight: 400;
+        color: var(--text-secondary);
+      }
+
+      .show-more-btn {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-light);
+        color: var(--text-secondary);
+        padding: var(--spacing-sm) var(--spacing-lg);
+        border-radius: var(--radius-lg);
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        margin: var(--spacing-lg) auto 0;
+        width: fit-content;
+      }
+
+      .show-more-btn:hover {
+        background: var(--primary-color);
+        color: var(--text-white);
+        border-color: var(--primary-color);
+      }
+
+      .show-more-btn.expanded i {
+        transform: rotate(180deg);
+      }
+
+      .category-toggles {
+        display: flex;
+        gap: var(--spacing-md);
+        justify-content: center;
+        margin-bottom: var(--spacing-xl);
+        flex-wrap: wrap;
+      }
+
+      .category-toggle-btn {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-light);
+        color: var(--text-secondary);
+        padding: var(--spacing-sm) var(--spacing-lg);
+        border-radius: var(--radius-lg);
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+      }
+
+      .category-toggle-btn:hover {
+        background: var(--primary-color);
+        color: var(--text-white);
+        border-color: var(--primary-color);
+      }
+
+      .category-toggle-btn.active {
+        background: var(--primary-color);
+        color: var(--text-white);
+        border-color: var(--primary-color);
+      }
+
+      .category-toggle-btn i {
+        font-size: 0.875rem;
+      }
+
+      /* Active plans get priority styling */
+      .active-plans .plans-grid {
+        margin-bottom: var(--spacing-md);
+      }
+
+      /* Completed and expired plans have muted styling */
+      .completed-plans .plan-card,
+      .expired-plans .plan-card {
+        opacity: 0.8;
+      }
+
+      .completed-plans .plan-card:hover,
+      .expired-plans .plan-card:hover {
+        opacity: 1;
+      }
+
       /* Calendar Styles */
       .calendar-section {
         background: var(--bg-primary);
@@ -3235,8 +3348,66 @@
       <!-- Existing Plans Section -->
       <section class="plans-section">
         <h2 class="section-title">Your Meal Plans</h2>
-        <div class="plans-grid" id="plansGrid">
-          <!-- Plans will be loaded here -->
+        
+        <!-- Plan Categories -->
+        <div class="plan-categories">
+          <!-- Active Plans -->
+          <div class="plan-category active-plans">
+            <div class="category-header">
+              <h3 class="category-title">
+                <i class="fas fa-play-circle"></i>
+                Active Plans
+                <span class="plan-count" id="activePlansCount">(0)</span>
+              </h3>
+            </div>
+            <div class="plans-grid" id="activePlansGrid">
+              <!-- Active plans will be loaded here -->
+            </div>
+            <button class="show-more-btn" id="showMoreActiveBtn" style="display: none;">
+              <i class="fas fa-chevron-down"></i>
+              <span>Show All Active Plans</span>
+            </button>
+          </div>
+
+          <!-- Completed Plans -->
+          <div class="plan-category completed-plans" style="display: none;">
+            <div class="category-header">
+              <h3 class="category-title">
+                <i class="fas fa-check-circle"></i>
+                Completed Plans
+                <span class="plan-count" id="completedPlansCount">(0)</span>
+              </h3>
+            </div>
+            <div class="plans-grid" id="completedPlansGrid">
+              <!-- Completed plans will be loaded here -->
+            </div>
+          </div>
+
+          <!-- Expired Plans -->
+          <div class="plan-category expired-plans" style="display: none;">
+            <div class="category-header">
+              <h3 class="category-title">
+                <i class="fas fa-times-circle"></i>
+                Expired Plans
+                <span class="plan-count" id="expiredPlansCount">(0)</span>
+              </h3>
+            </div>
+            <div class="plans-grid" id="expiredPlansGrid">
+              <!-- Expired plans will be loaded here -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Category Toggle Buttons -->
+        <div class="category-toggles">
+          <button class="category-toggle-btn" id="toggleCompletedBtn" onclick="togglePlanCategory('completed')">
+            <i class="fas fa-check-circle"></i>
+            <span>Show Completed Plans</span>
+          </button>
+          <button class="category-toggle-btn" id="toggleExpiredBtn" onclick="togglePlanCategory('expired')">
+            <i class="fas fa-times-circle"></i>
+            <span>Show Expired Plans</span>
+          </button>
         </div>
 
         <!-- Empty state -->

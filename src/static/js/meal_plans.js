@@ -301,6 +301,12 @@ document.addEventListener("DOMContentLoaded", function () {
     .getElementById("generateBtn")
     .addEventListener("click", generateMealPlan);
 
+  // Setup show more button for active plans
+  const showMoreActiveBtn = document.getElementById("showMoreActiveBtn");
+  if (showMoreActiveBtn) {
+    showMoreActiveBtn.addEventListener("click", toggleShowAllActive);
+  }
+
   // Setup info popup functionality
   setupInfoPopup();
   
@@ -920,14 +926,111 @@ async function loadMealsForCalendar() {
   }
 }
 
-function displayMealPlans(plans) {
-  const grid = document.getElementById("plansGrid");
-  grid.innerHTML = "";
+// Global state for plan categorization
+let allPlans = [];
+let showingAllActive = false;
 
-  plans.forEach((plan) => {
+function displayMealPlans(plans) {
+  console.log("Displaying meal plans:", plans);
+  allPlans = plans;
+  
+  // Categorize plans by status
+  const activePlans = plans.filter(plan => plan.status === 'active');
+  const completedPlans = plans.filter(plan => plan.status === 'completed');
+  const expiredPlans = plans.filter(plan => plan.status === 'expired');
+  
+  console.log("Categorized plans:", { activePlans, completedPlans, expiredPlans });
+  
+  // Display categorized plans
+  displayCategorizedPlans('active', activePlans);
+  displayCategorizedPlans('completed', completedPlans);
+  displayCategorizedPlans('expired', expiredPlans);
+  
+  // Update plan counts
+  updatePlanCounts(activePlans.length, completedPlans.length, expiredPlans.length);
+  
+  // Show/hide empty state
+  const emptyState = document.getElementById("emptyState");
+  if (plans.length === 0) {
+    emptyState.style.display = "block";
+  } else {
+    emptyState.style.display = "none";
+  }
+}
+
+function displayCategorizedPlans(category, plans) {
+  const gridId = `${category}PlansGrid`;
+  const grid = document.getElementById(gridId);
+  
+  if (!grid) {
+    console.error(`Grid not found: ${gridId}`);
+    return;
+  }
+  
+  grid.innerHTML = "";
+  
+  // For active plans, show only first 3 initially
+  let plansToShow = plans;
+  if (category === 'active' && !showingAllActive && plans.length > 3) {
+    plansToShow = plans.slice(0, 3);
+    // Show the "show more" button
+    const showMoreBtn = document.getElementById("showMoreActiveBtn");
+    if (showMoreBtn) {
+      showMoreBtn.style.display = "block";
+    }
+  } else if (category === 'active') {
+    // Hide the "show more" button if showing all or 3 or fewer
+    const showMoreBtn = document.getElementById("showMoreActiveBtn");
+    if (showMoreBtn) {
+      showMoreBtn.style.display = plans.length > 3 && showingAllActive ? "block" : "none";
+      if (showingAllActive) {
+        showMoreBtn.classList.add("expanded");
+        showMoreBtn.querySelector("span").textContent = "Show Fewer Plans";
+      }
+    }
+  }
+  
+  plansToShow.forEach((plan) => {
     const planCard = createPlanCard(plan);
     grid.appendChild(planCard);
   });
+}
+
+function updatePlanCounts(activeCount, completedCount, expiredCount) {
+  const activeCountEl = document.getElementById("activePlansCount");
+  const completedCountEl = document.getElementById("completedPlansCount");
+  const expiredCountEl = document.getElementById("expiredPlansCount");
+  
+  if (activeCountEl) activeCountEl.textContent = `(${activeCount})`;
+  if (completedCountEl) completedCountEl.textContent = `(${completedCount})`;
+  if (expiredCountEl) expiredCountEl.textContent = `(${expiredCount})`;
+}
+
+// Show more/fewer active plans functionality
+function toggleShowAllActive() {
+  showingAllActive = !showingAllActive;
+  const activePlans = allPlans.filter(plan => plan.status === 'active');
+  displayCategorizedPlans('active', activePlans);
+}
+
+// Toggle plan category visibility
+function togglePlanCategory(category) {
+  const categorySection = document.querySelector(`.${category}-plans`);
+  const toggleBtn = document.getElementById(`toggle${category.charAt(0).toUpperCase() + category.slice(1)}Btn`);
+  
+  if (!categorySection || !toggleBtn) return;
+  
+  const isHidden = categorySection.style.display === 'none';
+  
+  if (isHidden) {
+    categorySection.style.display = 'block';
+    toggleBtn.classList.add('active');
+    toggleBtn.querySelector('span').textContent = `Hide ${category.charAt(0).toUpperCase() + category.slice(1)} Plans`;
+  } else {
+    categorySection.style.display = 'none';
+    toggleBtn.classList.remove('active');
+    toggleBtn.querySelector('span').textContent = `Show ${category.charAt(0).toUpperCase() + category.slice(1)} Plans`;
+  }
 }
 
 function formatDateString(dateString) {
