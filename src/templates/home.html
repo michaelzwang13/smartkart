@@ -83,106 +83,20 @@
       filter: drop-shadow(0 2px 4px rgba(16, 185, 129, 0.2));
     }
     
-    .welcome-time {
-      font-size: 1.125rem;
+    .daily-tip {
+      font-size: 1rem;
       color: var(--text-secondary);
       margin-bottom: var(--spacing-lg);
-    }
-    
-    /* Daily Tip Section */
-    .daily-tip-section {
-      margin-bottom: var(--spacing-2xl);
-      animation: fadeInUp 0.8s ease 0.2s both;
-    }
-
-    .tip-card {
-      background: var(--bg-primary);
-      border-radius: var(--radius-xl);
-      border: 1px solid var(--border-light);
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08), 0 3px 10px rgba(0, 0, 0, 0.04);
-      padding: var(--spacing-xl);
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-      transition: all 0.3s ease;
-    }
-
-    .tip-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.12), 0 6px 20px rgba(0, 0, 0, 0.08);
-    }
-
-    .tip-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 4px;
-      background: var(--accent-gradient);
-    }
-
-    .tip-header {
       display: flex;
       align-items: center;
       justify-content: center;
       gap: var(--spacing-sm);
-      margin-bottom: var(--spacing-md);
-    }
-
-    .tip-icon {
-      color: var(--accent-color);
-      font-size: 1.5rem;
-      animation: tipIconPulse 2s ease-in-out infinite;
-    }
-
-    @keyframes tipIconPulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-    }
-
-    .tip-title {
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin: 0;
-    }
-
-    .tip-text {
-      font-size: 1rem;
-      line-height: 1.6;
-      color: var(--text-secondary);
-      margin-bottom: var(--spacing-md);
       font-style: italic;
     }
 
-    .tip-category {
-      display: inline-block;
-      background: var(--accent-color);
-      color: var(--text-white);
-      padding: var(--spacing-xs) var(--spacing-sm);
-      border-radius: var(--radius-md);
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .tip-loading {
-      text-align: center;
-      padding: var(--spacing-lg);
-      color: var(--text-secondary);
-    }
-
-    .tip-loading i {
-      font-size: 1.5rem;
-      margin-bottom: var(--spacing-sm);
-      animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
+    .daily-tip i {
+      color: var(--accent-color);
+      font-size: 1.125rem;
     }
     
     
@@ -1779,25 +1693,10 @@
       <!-- Welcome Section -->
       <section class="welcome-section">
         <h1 class="welcome-greeting">Welcome back{% if user_first_name %}, {{ user_first_name }}{% endif %}!</h1>
-        <p class="welcome-time" id="welcomeTime">Ready to shop smart today?</p>
-      </section>
-
-      <!-- Daily Tip Section -->
-      <section class="daily-tip-section">
-        <div class="tip-card">
-          <div id="tipLoading" class="tip-loading">
-            <i class="fas fa-lightbulb fa-spin"></i>
-            <p>Loading today's tip...</p>
-          </div>
-          <div id="tipContent" style="display: none;">
-            <div class="tip-header">
-              <i class="fas fa-lightbulb tip-icon"></i>
-              <h3 class="tip-title">Tip of the Day</h3>
-            </div>
-            <p class="tip-text" id="tipText"></p>
-            <span class="tip-category" id="tipCategory"></span>
-          </div>
-        </div>
+        <p class="daily-tip" id="dailyTip">
+          <i class="fas fa-lightbulb"></i>
+          <span id="tipText">Loading tip...</span>
+        </p>
       </section>
 
       <!-- Today's Meals Section -->
