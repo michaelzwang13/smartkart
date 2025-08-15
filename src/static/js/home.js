@@ -647,7 +647,7 @@ document.addEventListener("DOMContentLoaded", function () {
   initializeDailyNutrition();
 
   // Update time-based greeting every minute
-  setInterval(updateWelcomeMessage, 60000);
+  // setInterval(updateWelcomeMessage, 60000);
 });
 
 // Daily nutrition summary variables

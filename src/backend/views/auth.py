@@ -1228,11 +1228,11 @@ def save_user_preferences():
 @auth_bp.route("/api/user/subscription-status", methods=["GET"])
 def get_subscription_status():
     """Get user's subscription status and limits"""
-    if 'user_id' not in session:
+    if 'user_ID' not in session:
         return jsonify({"success": False, "message": "Not authenticated"}), 401
     
     try:
-        user_id = session['user_id']
+        user_id = session['user_ID']
         status = get_user_limits_status(user_id)
         
         return jsonify({

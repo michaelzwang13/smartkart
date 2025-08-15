@@ -606,11 +606,22 @@ CREATE TABLE user_nutrition_goals (
     
     -- Daily targets
     daily_calories_goal DECIMAL(8,2) NULL,
+    calories_type ENUM('goal', 'limit') DEFAULT 'goal',
+    
     daily_protein_goal_g DECIMAL(8,2) NULL,
+    protein_type ENUM('goal', 'limit') DEFAULT 'goal',
+    
     daily_carbs_goal_g DECIMAL(8,2) NULL,
+    carbs_type ENUM('goal', 'limit') DEFAULT 'goal',
+
     daily_fat_goal_g DECIMAL(8,2) NULL,
+    fat_type ENUM('goal', 'limit') DEFAULT 'limit',
+    
     daily_fiber_goal_g DECIMAL(8,2) NULL,
+    fiber_type ENUM('goal', 'limit') DEFAULT 'goal',
+  
     daily_sodium_limit_mg DECIMAL(10,2) NULL,
+    sodium_type ENUM('goal', 'limit') DEFAULT 'limit';
     
     -- Goal settings
     goal_type ENUM('weight_loss', 'weight_gain', 'maintenance', 'muscle_gain', 'custom') DEFAULT 'maintenance',
@@ -633,6 +644,8 @@ CREATE TABLE user_nutrition_goals (
     INDEX idx_user_goals (user_id),
     INDEX idx_active_goals (is_active)
 );
+
+CREATE INDEX idx_goal_types ON user_nutrition_goals(calories_type, protein_type, carbs_type, fat_type, fiber_type, sodium_type);
 
 -- Create subscription limits table for tracking usage against limits
 CREATE TABLE subscription_limits (
@@ -685,4 +698,155 @@ INSERT INTO subscription_tier_features (tier, feature_name, limit_value, descrip
 ('premium', 'macro_tracking', 1, 'Full macro tracking with all nutrients'),
 ('premium', 'macro_history', 1, 'Full macro history and trends');
 
+-- User Preferences Table
+-- Stores various user preferences and settings
 
+CREATE TABLE IF NOT EXISTS user_preferences (
+    preference_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id VARCHAR(50) NOT NULL,
+    preference_key VARCHAR(100) NOT NULL,
+    preference_value TEXT,
+    data_type ENUM('boolean', 'string', 'number', 'json') DEFAULT 'string',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    -- Foreign key constraint
+    FOREIGN KEY (user_id) REFERENCES user_account(user_ID) ON DELETE CASCADE,
+    
+    -- Ensure unique preference per user
+    UNIQUE KEY unique_user_preference (user_id, preference_key),
+    
+    -- Index for faster lookups
+    INDEX idx_user_preferences (user_id, preference_key)
+);
+
+-- Migration for saved recipes feature
+
+-- Create saved_recipes table for recipes users have saved from their meals
+CREATE TABLE saved_recipes (
+    saved_recipe_id INT AUTO_INCREMENT,
+    user_id VARCHAR(50) NOT NULL,
+    recipe_name VARCHAR(200) NOT NULL,
+    description TEXT NULL,
+    meal_type ENUM('breakfast', 'lunch', 'dinner', 'snack') NOT NULL,
+    
+    -- Recipe details
+    prep_time INT NULL, -- minutes
+    cook_time INT NULL, -- minutes
+    servings INT DEFAULT 1,
+    difficulty ENUM('easy', 'medium', 'hard') DEFAULT 'medium',
+    instructions TEXT NOT NULL,
+    
+    -- Optional details
+    cuisine_type VARCHAR(50) NULL,
+    notes TEXT NULL,
+    estimated_cost DECIMAL(8,2) NULL,
+    calories_per_serving INT NULL,
+    
+    -- Source information
+    source_meal_id INT NULL, -- original meal this was saved from (if any)
+    source_template_id INT NULL, -- original template (if saved from template)
+    
+    -- User customizations
+    is_favorite BOOLEAN DEFAULT FALSE,
+    custom_tags TEXT NULL, -- JSON array of user tags
+    times_used INT DEFAULT 0, -- how many times user has cooked this
+    last_used_date DATE NULL,
+    
+    -- Metadata
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    PRIMARY KEY (saved_recipe_id),
+    FOREIGN KEY (user_id) REFERENCES user_account(user_ID) ON DELETE CASCADE,
+    FOREIGN KEY (source_meal_id) REFERENCES meals(meal_id) ON DELETE SET NULL,
+    FOREIGN KEY (source_template_id) REFERENCES recipe_templates(template_id) ON DELETE SET NULL,
+    
+    INDEX idx_user_saved_recipes (user_id),
+    INDEX idx_recipe_name (recipe_name),
+    INDEX idx_meal_type (meal_type),
+    INDEX idx_favorite (is_favorite),
+    INDEX idx_source_meal (source_meal_id),
+    INDEX idx_source_template (source_template_id),
+    INDEX idx_times_used (times_used DESC),
+    INDEX idx_last_used (last_used_date DESC)
+);
+
+-- Create saved_recipe_ingredients table for storing ingredients per saved recipe
+CREATE TABLE saved_recipe_ingredients (
+    ingredient_id INT AUTO_INCREMENT,
+    saved_recipe_id INT NOT NULL,
+    ingredient_name VARCHAR(100) NOT NULL,
+    quantity DECIMAL(10,2) NOT NULL,
+    unit VARCHAR(20) NOT NULL,
+    notes VARCHAR(200) NULL,
+    estimated_cost DECIMAL(6,2) NULL,
+    
+    PRIMARY KEY (ingredient_id),
+    FOREIGN KEY (saved_recipe_id) REFERENCES saved_recipes(saved_recipe_id) ON DELETE CASCADE,
+    
+    INDEX idx_saved_recipe_ingredients (saved_recipe_id),
+    INDEX idx_ingredient_name (ingredient_name)
+);
+
+-- Create recipe_usage_log table to track when recipes are used
+CREATE TABLE recipe_usage_log (
+    usage_id INT AUTO_INCREMENT,
+    user_id VARCHAR(50) NOT NULL,
+    saved_recipe_id INT NOT NULL,
+    used_for_meal_id INT NULL, -- which meal this recipe was used for
+    usage_date DATE NOT NULL,
+    usage_context ENUM('meal_plan', 'direct_cook', 'replaced_meal') NOT NULL,
+    notes TEXT NULL,
+    
+    PRIMARY KEY (usage_id),
+    FOREIGN KEY (user_id) REFERENCES user_account(user_ID) ON DELETE CASCADE,
+    FOREIGN KEY (saved_recipe_id) REFERENCES saved_recipes(saved_recipe_id) ON DELETE CASCADE,
+    FOREIGN KEY (used_for_meal_id) REFERENCES meals(meal_id) ON DELETE SET NULL,
+    
+    INDEX idx_user_usage (user_id),
+    INDEX idx_recipe_usage (saved_recipe_id),
+    INDEX idx_usage_date (usage_date DESC)
+);
+
+-- Create weekly meal goals table
+CREATE TABLE weekly_meal_goals (
+    goal_id INT AUTO_INCREMENT,
+    user_id VARCHAR(50) NOT NULL,
+    week_start_date DATE NOT NULL, -- Monday of the week
+    meal_plans_goal INT DEFAULT 2 CHECK (meal_plans_goal >= 1 AND meal_plans_goal <= 10),
+    meals_completed_goal INT DEFAULT 15 CHECK (meals_completed_goal >= 5 AND meals_completed_goal <= 50),
+    new_recipes_goal INT DEFAULT 3 CHECK (new_recipes_goal >= 1 AND new_recipes_goal <= 15),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (goal_id),
+    FOREIGN KEY (user_id) REFERENCES user_account(user_ID) ON DELETE CASCADE,
+    UNIQUE KEY unique_user_week (user_id, week_start_date),
+    INDEX idx_user_week (user_id, week_start_date),
+    INDEX idx_week_date (week_start_date)
+);
+
+-- Table to store all available tips
+CREATE TABLE IF NOT EXISTS tips (
+    tip_id INT AUTO_INCREMENT PRIMARY KEY,
+    tip_text TEXT NOT NULL,
+    tip_category VARCHAR(50) DEFAULT 'general',
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_active (is_active),
+    INDEX idx_category (tip_category)
+);
+
+-- Table to track which tips each user has seen and when
+CREATE TABLE IF NOT EXISTS user_tip_history (
+    history_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    tip_id INT NOT NULL,
+    shown_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES user_account(user_ID) ON DELETE CASCADE,
+    FOREIGN KEY (tip_id) REFERENCES tips(tip_id) ON DELETE CASCADE,
+    UNIQUE KEY unique_user_tip (user_id, tip_id),
+    INDEX idx_user_shown (user_id, shown_at),
+    INDEX idx_shown_date (shown_at)
+);

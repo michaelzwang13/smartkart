@@ -61,7 +61,7 @@ def create_app():
     app.register_blueprint(shopping.shopping_bp)
     
     # Register new refactored blueprints
-    from src.backend.apis import shopping_trip, shopping_list, shopping_list_integration, budget, pantry, meals, meal_plan_compat, meal_goals, ingredient_matching, saved_recipes, promo_codes, tips
+    from src.backend.apis import shopping_trip, shopping_list, shopping_list_integration, budget, pantry, meals, meal_plan_compat, meal_goals, ingredient_matching, saved_recipes, promo_codes, tips, nutrition
     app.register_blueprint(shopping_trip.shopping_trip_bp)
     app.register_blueprint(shopping_list.shopping_list_bp)
     app.register_blueprint(shopping_list_integration.shopping_list_integration_bp)
@@ -74,6 +74,7 @@ def create_app():
     app.register_blueprint(saved_recipes.saved_recipes_bp)  # Saved recipes API
     app.register_blueprint(promo_codes.promo_codes_bp)  # Promotional codes API
     app.register_blueprint(tips.tips_bp)  # Daily tips API
+    app.register_blueprint(nutrition.nutrition_bp)  # Nutrition goals and analytics API
     
     
     logger.info("Blueprints registered successfully")

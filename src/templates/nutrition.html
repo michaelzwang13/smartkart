@@ -30,8 +30,6 @@
 
     <!-- Chart.js for data visualization -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@2.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 
     <style>
       .nutrition-container {
@@ -245,6 +243,76 @@
         outline: none;
         border-color: var(--primary-color);
         background: var(--bg-primary);
+      }
+
+      /* Goal/Limit Toggle Styles */
+      .form-group-with-toggle {
+        display: flex;
+        align-items: flex-end;
+        gap: var(--spacing-md);
+      }
+
+      .form-input-wrapper {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xs);
+      }
+
+      .goal-limit-toggle {
+        display: flex;
+        background: var(--bg-secondary);
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border-light);
+        overflow: hidden;
+        height: 42px;
+        align-items: center;
+      }
+
+      .toggle-option {
+        flex: 1;
+        padding: var(--spacing-sm) var(--spacing-md);
+        background: transparent;
+        border: none;
+        font-family: var(--font-family);
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: center;
+        min-width: 60px;
+      }
+
+      .toggle-option.active {
+        background: var(--primary-color);
+        color: var(--text-white);
+      }
+
+      .toggle-option:hover:not(.active) {
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+      }
+
+      .toggle-option.goal.active {
+        background: var(--success-color);
+      }
+
+      .toggle-option.limit.active {
+        background: var(--warning-color);
+      }
+
+      @media (max-width: 768px) {
+        .form-group-with-toggle {
+          flex-direction: column;
+          align-items: stretch;
+          gap: var(--spacing-sm);
+        }
+
+        .goal-limit-toggle {
+          align-self: center;
+          width: 140px;
+        }
       }
 
       .btn-primary {
@@ -538,88 +606,124 @@
               Nutrition Goals
             </h3>
             <form class="settings-form" id="nutritionGoalsForm">
-              <div class="form-group">
-                <label for="dailyCaloriesInput" class="form-label">Daily Calories</label>
-                <input
-                  type="number"
-                  id="dailyCaloriesInput"
-                  class="form-input"
-                  value="2000"
-                  min="1200"
-                  max="5000"
-                  step="50"
-                  placeholder="Enter calories"
-                />
+              <div class="form-group-with-toggle">
+                <div class="form-input-wrapper">
+                  <label for="dailyCaloriesInput" class="form-label">Daily Calories</label>
+                  <input
+                    type="number"
+                    id="dailyCaloriesInput"
+                    class="form-input"
+                    value="2000"
+                    min="1200"
+                    max="5000"
+                    step="50"
+                    placeholder="Enter calories"
+                  />
+                </div>
+                <div class="goal-limit-toggle" data-metric="calories">
+                  <button type="button" class="toggle-option goal active" data-type="goal">Goal</button>
+                  <button type="button" class="toggle-option limit" data-type="limit">Limit</button>
+                </div>
               </div>
 
-              <div class="form-group">
-                <label for="dailyProteinInput" class="form-label">Protein (g)</label>
-                <input
-                  type="number"
-                  id="dailyProteinInput"
-                  class="form-input"
-                  value="150"
-                  min="50"
-                  max="300"
-                  step="5"
-                  placeholder="Enter protein"
-                />
+              <div class="form-group-with-toggle">
+                <div class="form-input-wrapper">
+                  <label for="dailyProteinInput" class="form-label">Protein (g)</label>
+                  <input
+                    type="number"
+                    id="dailyProteinInput"
+                    class="form-input"
+                    value="150"
+                    min="50"
+                    max="300"
+                    step="5"
+                    placeholder="Enter protein"
+                  />
+                </div>
+                <div class="goal-limit-toggle" data-metric="protein">
+                  <button type="button" class="toggle-option goal active" data-type="goal">Goal</button>
+                  <button type="button" class="toggle-option limit" data-type="limit">Limit</button>
+                </div>
               </div>
 
-              <div class="form-group">
-                <label for="dailyCarbsInput" class="form-label">Carbs (g)</label>
-                <input
-                  type="number"
-                  id="dailyCarbsInput"
-                  class="form-input"
-                  value="250"
-                  min="50"
-                  max="500"
-                  step="10"
-                  placeholder="Enter carbs"
-                />
+              <div class="form-group-with-toggle">
+                <div class="form-input-wrapper">
+                  <label for="dailyCarbsInput" class="form-label">Carbs (g)</label>
+                  <input
+                    type="number"
+                    id="dailyCarbsInput"
+                    class="form-input"
+                    value="250"
+                    min="50"
+                    max="500"
+                    step="10"
+                    placeholder="Enter carbs"
+                  />
+                </div>
+                <div class="goal-limit-toggle" data-metric="carbs">
+                  <button type="button" class="toggle-option goal active" data-type="goal">Goal</button>
+                  <button type="button" class="toggle-option limit" data-type="limit">Limit</button>
+                </div>
               </div>
 
-              <div class="form-group">
-                <label for="dailyFatInput" class="form-label">Fat (g)</label>
-                <input
-                  type="number"
-                  id="dailyFatInput"
-                  class="form-input"
-                  value="70"
-                  min="20"
-                  max="150"
-                  step="5"
-                  placeholder="Enter fat"
-                />
+              <div class="form-group-with-toggle">
+                <div class="form-input-wrapper">
+                  <label for="dailyFatInput" class="form-label">Fat (g)</label>
+                  <input
+                    type="number"
+                    id="dailyFatInput"
+                    class="form-input"
+                    value="70"
+                    min="20"
+                    max="150"
+                    step="5"
+                    placeholder="Enter fat"
+                  />
+                </div>
+                <div class="goal-limit-toggle" data-metric="fat">
+                  <button type="button" class="toggle-option goal active" data-type="goal">Goal</button>
+                  <button type="button" class="toggle-option limit" data-type="limit">Limit</button>
+                </div>
               </div>
 
-              <div class="form-group">
-                <label for="dailyFiberInput" class="form-label">Fiber (g)</label>
-                <input
-                  type="number"
-                  id="dailyFiberInput"
-                  class="form-input"
-                  value="25"
-                  min="15"
-                  max="50"
-                  step="1"
-                  placeholder="Enter fiber"
-                />
+              <div class="form-group-with-toggle">
+                <div class="form-input-wrapper">
+                  <label for="dailyFiberInput" class="form-label">Fiber (g)</label>
+                  <input
+                    type="number"
+                    id="dailyFiberInput"
+                    class="form-input"
+                    value="25"
+                    min="15"
+                    max="50"
+                    step="1"
+                    placeholder="Enter fiber"
+                  />
+                </div>
+                <div class="goal-limit-toggle" data-metric="fiber">
+                  <button type="button" class="toggle-option goal active" data-type="goal">Goal</button>
+                  <button type="button" class="toggle-option limit" data-type="limit">Limit</button>
+                </div>
               </div>
 
-              <div class="form-group">
-                <label for="dailySodiumLimitInput" class="form-label">Sodium Limit (mg)</label>
-                <input
-                  type="number"
-                  id="dailySodiumLimitInput"
-                  class="form-input"
-                  value="2300"
-                  min="1500"
-                  max="4000"
-                  step="100"
-                  placeholder="Enter sodium limit"
-                />
+              <div class="form-group-with-toggle">
+                <div class="form-input-wrapper">
+                  <label for="dailySodiumLimitInput" class="form-label">Sodium (mg)</label>
+                  <input
+                    type="number"
+                    id="dailySodiumLimitInput"
+                    class="form-input"
+                    value="2300"
+                    min="1500"
+                    max="4000"
+                    step="100"
+                    placeholder="Enter sodium amount"
+                  />
+                </div>
+                <div class="goal-limit-toggle" data-metric="sodium">
+                  <button type="button" class="toggle-option goal" data-type="goal">Goal</button>
+                  <button type="button" class="toggle-option limit active" data-type="limit">Limit</button>
+                </div>
               </div>
 
               <button type="submit" class="btn-primary">

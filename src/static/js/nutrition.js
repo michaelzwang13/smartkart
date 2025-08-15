@@ -1,5 +1,128 @@
 // Initialize nutrition page functionality
 
+// Initialize goal/limit toggles
+function initializeGoalLimitToggles() {
+  const toggleGroups = document.querySelectorAll('.goal-limit-toggle');
+  
+  toggleGroups.forEach(toggleGroup => {
+    const buttons = toggleGroup.querySelectorAll('.toggle-option');
+    
+    buttons.forEach(button => {
+      button.addEventListener('click', function() {
+        // Remove active class from all buttons in this group
+        buttons.forEach(btn => btn.classList.remove('active'));
+        
+        // Add active class to clicked button
+        this.classList.add('active');
+        
+        // Get the metric and type
+        const metric = toggleGroup.dataset.metric;
+        const type = this.dataset.type;
+        
+        // Update label text to reflect goal vs limit
+        const label = toggleGroup.parentElement.querySelector('.form-label');
+        const originalText = label.textContent.replace(' Goal', '').replace(' Limit', '');
+        
+        if (type === 'goal') {
+          label.textContent = originalText + ' Goal';
+        } else {
+          label.textContent = originalText + ' Limit';
+        }
+        
+        // Store the selection for form submission
+        toggleGroup.setAttribute('data-selected-type', type);
+        
+        console.log(`${metric} set to ${type}`);
+      });
+    });
+  });
+}
+
+// Get nutrition goals data including goal/limit types
+function getNutritionGoalsData() {
+  const formData = {};
+  
+  // Get all toggle groups
+  const toggleGroups = document.querySelectorAll('.goal-limit-toggle');
+  
+  toggleGroups.forEach(toggleGroup => {
+    const metric = toggleGroup.dataset.metric;
+    const selectedType = toggleGroup.getAttribute('data-selected-type') || 'goal';
+    const input = toggleGroup.parentElement.querySelector('.form-input');
+    
+    formData[metric] = {
+      value: parseFloat(input.value),
+      type: selectedType
+    };
+  });
+  
+  return formData;
+}
+
+// Load saved nutrition goals and preferences
+async function loadNutritionGoals() {
+  try {
+    const response = await fetch("/api/nutrition/goals");
+    const data = await response.json();
+
+    if (data.success && data.goals) {
+      const goals = data.goals;
+      
+      // Update form inputs with saved values
+      document.getElementById("dailyCaloriesInput").value = goals.daily_calories || 2000;
+      document.getElementById("dailyProteinInput").value = goals.daily_protein || 150;
+      document.getElementById("dailyCarbsInput").value = goals.daily_carbs || 250;
+      document.getElementById("dailyFatInput").value = goals.daily_fat || 70;
+      document.getElementById("dailyFiberInput").value = goals.daily_fiber || 25;
+      document.getElementById("dailySodiumLimitInput").value = goals.daily_sodium || 2300;
+      
+      // Update toggles with saved preferences
+      updateToggleState('calories', goals.calories_type || 'goal');
+      updateToggleState('protein', goals.protein_type || 'goal');
+      updateToggleState('carbs', goals.carbs_type || 'goal');
+      updateToggleState('fat', goals.fat_type || 'goal');
+      updateToggleState('fiber', goals.fiber_type || 'goal');
+      updateToggleState('sodium', goals.sodium_type || 'limit');
+      
+      console.log("Nutrition goals loaded successfully");
+    } else {
+      console.log("No saved nutrition goals found, using defaults");
+    }
+  } catch (error) {
+    console.error("Error loading nutrition goals:", error);
+  }
+}
+
+// Update toggle state and label for a specific metric
+function updateToggleState(metric, type) {
+  const toggleGroup = document.querySelector(`[data-metric="${metric}"]`);
+  if (!toggleGroup) return;
+  
+  const buttons = toggleGroup.querySelectorAll('.toggle-option');
+  const label = toggleGroup.parentElement.querySelector('.form-label');
+  
+  // Remove active class from all buttons
+  buttons.forEach(btn => btn.classList.remove('active'));
+  
+  // Add active class to the correct button
+  const activeButton = toggleGroup.querySelector(`[data-type="${type}"]`);
+  if (activeButton) {
+    activeButton.classList.add('active');
+  }
+  
+  // Update label text
+  const originalText = label.textContent.replace(' Goal', '').replace(' Limit', '');
+  if (type === 'goal') {
+    label.textContent = originalText + ' Goal';
+  } else {
+    label.textContent = originalText + ' Limit';
+  }
+  
+  // Store the selection
+  toggleGroup.setAttribute('data-selected-type', type);
+}
+
+
 // Initialize dropdown functionality
 function initializeDropdowns() {
   // Get all dropdown toggles
@@ -48,57 +171,21 @@ function handleDropdownResize() {
   });
 }
 
-// Load current nutrition goals from API
-async function loadNutritionGoals() {
-  try {
-    const response = await fetch("/api/nutrition/goals");
-    if (response.ok) {
-      const data = await response.json();
-      if (data.success && data.goals) {
-        // Populate form with current goals
-        document.getElementById("dailyCaloriesInput").value = data.goals.daily_calories || 2000;
-        document.getElementById("dailyProteinInput").value = data.goals.daily_protein || 150;
-        
-        // Only show premium fields if user has access to them
-        if (data.goals.daily_carbs !== null) {
-          document.getElementById("dailyCarbsInput").value = data.goals.daily_carbs || 250;
-        }
-        if (data.goals.daily_fat !== null) {
-          document.getElementById("dailyFatInput").value = data.goals.daily_fat || 70;
-        }
-        if (data.goals.daily_fiber !== null) {
-          document.getElementById("dailyFiberInput").value = data.goals.daily_fiber || 25;
-        }
-        if (data.goals.daily_sodium_limit !== null) {
-          document.getElementById("dailySodiumLimitInput").value = data.goals.daily_sodium_limit || 2300;
-        }
-        
-        // Handle subscription limitations for free tier
-        if (data._limited_tier) {
-          await handleSubscriptionLimitations();
-        }
-      }
-    }
-  } catch (error) {
-    console.error("Error loading nutrition goals:", error);
-  }
-}
 
 // Handle subscription limitations for free tier users
 async function handleSubscriptionLimitations() {
   const subscriptionStatus = await getUserSubscriptionStatus();
   
   if (subscriptionStatus.tier === 'free') {
-    // Hide premium-only form fields
+    // Hide premium-only form fields (carbs, fiber, sodium - fat is allowed for free users)
     const premiumFields = [
       'dailyCarbsInput', 
-      'dailyFatInput', 
       'dailyFiberInput', 
       'dailySodiumLimitInput'
     ];
     
     premiumFields.forEach(fieldId => {
-      const fieldGroup = document.getElementById(fieldId)?.closest('.form-group');
+      const fieldGroup = document.getElementById(fieldId)?.closest('.form-group-with-toggle');
       if (fieldGroup) {
         fieldGroup.style.display = 'none';
       }
@@ -138,13 +225,23 @@ async function handleSubscriptionLimitations() {
 async function handleNutritionGoals(event) {
   event.preventDefault();
 
+  // Get the toggle data using our new function
+  const nutritionData = getNutritionGoalsData();
+  
+  // Format the data for the API, maintaining backwards compatibility
   const goalData = {
-    daily_calories: parseFloat(document.getElementById("dailyCaloriesInput").value),
-    daily_protein: parseFloat(document.getElementById("dailyProteinInput").value),
-    daily_carbs: parseFloat(document.getElementById("dailyCarbsInput").value),
-    daily_fat: parseFloat(document.getElementById("dailyFatInput").value),
-    daily_fiber: parseFloat(document.getElementById("dailyFiberInput").value),
-    daily_sodium_limit: parseFloat(document.getElementById("dailySodiumLimitInput").value),
+    daily_calories: nutritionData.calories.value,
+    calories_type: nutritionData.calories.type,
+    daily_protein: nutritionData.protein.value,
+    protein_type: nutritionData.protein.type,
+    daily_carbs: nutritionData.carbs.value,
+    carbs_type: nutritionData.carbs.type,
+    daily_fat: nutritionData.fat.value,
+    fat_type: nutritionData.fat.type,
+    daily_fiber: nutritionData.fiber.value,
+    fiber_type: nutritionData.fiber.type,
+    daily_sodium: nutritionData.sodium.value,
+    sodium_type: nutritionData.sodium.type,
     goal_type: "custom",
     activity_level: "moderately_active"
   };
@@ -254,6 +351,8 @@ document.addEventListener("DOMContentLoaded", function () {
   initializeDropdowns();
   handleDropdownResize();
   initializeChartControls();
+  initializeGoalLimitToggles();
+  handleSubscriptionLimitations();
 
   // Nutrition goals form
   document
