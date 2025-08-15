@@ -32,7 +32,7 @@ function initializeGoalLimitToggles() {
         // Store the selection for form submission
         toggleGroup.setAttribute('data-selected-type', type);
         
-        console.log(`${metric} set to ${type}`);
+        console.log(`${metric} set to ${type}`, 'Toggle group:', toggleGroup);
       });
     });
   });
@@ -64,6 +64,9 @@ async function loadNutritionGoals() {
   try {
     const response = await fetch("/api/nutrition/goals");
     const data = await response.json();
+
+    console.log("IDK WHATS GOING ON")
+    console.log(data)
 
     if (data.success && data.goals) {
       const goals = data.goals;
@@ -227,6 +230,7 @@ async function handleNutritionGoals(event) {
 
   // Get the toggle data using our new function
   const nutritionData = getNutritionGoalsData();
+  console.log('Collected nutrition data:', nutritionData);
   
   // Format the data for the API, maintaining backwards compatibility
   const goalData = {
@@ -245,6 +249,8 @@ async function handleNutritionGoals(event) {
     goal_type: "custom",
     activity_level: "moderately_active"
   };
+
+  console.log('Sending goal data to server:', goalData);
 
   try {
     const response = await fetch("/api/nutrition/goals", {

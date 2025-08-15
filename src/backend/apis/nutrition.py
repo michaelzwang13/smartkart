@@ -140,6 +140,7 @@ def save_nutrition_goals():
 
     user_id = session["user_ID"]
     data = request.get_json()
+    print(f"Received data from frontend: {data}")
     accessible_fields = get_accessible_nutrition_fields(user_id)
 
     # Check premium field access for free users
@@ -184,6 +185,8 @@ def save_nutrition_goals():
         fiber_type = data.get("fiber_type", "goal") if accessible_fields["fiber"] else None
         daily_sodium = float(data["daily_sodium"]) if accessible_fields["sodium"] and "daily_sodium" in data else None
         sodium_type = data.get("sodium_type", "limit") if accessible_fields["sodium"] else None
+        
+        print(f"Extracted types - calories: {calories_type}, protein: {protein_type}, carbs: {carbs_type}, fat: {fat_type}, fiber: {fiber_type}, sodium: {sodium_type}")
         
         goal_type = data.get("goal_type", "custom")
         activity_level = data.get("activity_level", "moderately_active")
@@ -231,6 +234,8 @@ def save_nutrition_goals():
     cursor = db.cursor()
 
     try:
+        print(f"Starting database operations for user {user_id}")
+        
         # First, deactivate any existing goals
         deactivate_query = """
             UPDATE user_nutrition_goals 
@@ -238,6 +243,7 @@ def save_nutrition_goals():
             WHERE user_id = %s
         """
         cursor.execute(deactivate_query, (user_id,))
+        print(f"Deactivated existing goals for user {user_id}")
         
         # Insert new goals (use default values for inaccessible fields)
         insert_query = """
@@ -261,6 +267,8 @@ def save_nutrition_goals():
         sodium_value = daily_sodium if daily_sodium is not None else 2300
         sodium_type_value = sodium_type if sodium_type is not None else "limit"
         
+        print(f"About to insert: calories={daily_calories}/{calories_type}, protein={daily_protein}/{protein_type}, carbs={carbs_value}/{carbs_type_value}, fat={daily_fat}/{fat_type}, fiber={fiber_value}/{fiber_type_value}, sodium={sodium_value}/{sodium_type_value}")
+        
         cursor.execute(insert_query, (
             user_id, daily_calories, calories_type,
             daily_protein, protein_type,
@@ -272,7 +280,9 @@ def save_nutrition_goals():
             age, gender, weight_lbs, height_inches
         ))
         
+        print("Insert query executed successfully")
         db.commit()
+        print("Database committed successfully")
         
         # Build response with only accessible fields
         response_goals = {
@@ -296,6 +306,8 @@ def save_nutrition_goals():
         if accessible_fields["sodium"] and daily_sodium is not None:
             response_goals["daily_sodium"] = daily_sodium
             response_goals["sodium_type"] = sodium_type
+            
+        print(response_goals)
         
         return jsonify({
             "success": True,
@@ -304,6 +316,10 @@ def save_nutrition_goals():
         })
 
     except Exception as e:
+        print(f"Database error occurred: {str(e)}")
+        print(f"Exception type: {type(e)}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
         db.rollback()
         return jsonify({"success": False, "message": f"Failed to save nutrition goals: {str(e)}"})
     finally:
