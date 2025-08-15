@@ -212,7 +212,7 @@ async function handleBudgetSettings(event) {
 }
 
 // Shopping Details Modal Functions
-let currentPeriod = "7d";
+let currentPeriod = "1m";
 
 function handleChartClick(event, elements) {
   if (elements.length > 0) {
@@ -425,5 +425,5 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Load real data
   loadBudgetData();
-  loadSpendingTrends("7d");
+  loadSpendingTrends("1m");
 });
