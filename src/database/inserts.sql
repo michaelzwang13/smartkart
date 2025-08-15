@@ -369,3 +369,20 @@ CREATE TABLE recipe_usage_log (
     INDEX idx_recipe_usage (saved_recipe_id),
     INDEX idx_usage_date (usage_date DESC)
 );
+
+-- Create weekly meal goals table
+CREATE TABLE weekly_meal_goals (
+    goal_id INT AUTO_INCREMENT,
+    user_id VARCHAR(50) NOT NULL,
+    week_start_date DATE NOT NULL, -- Monday of the week
+    meal_plans_goal INT DEFAULT 2 CHECK (meal_plans_goal >= 1 AND meal_plans_goal <= 10),
+    meals_completed_goal INT DEFAULT 15 CHECK (meals_completed_goal >= 5 AND meals_completed_goal <= 50),
+    new_recipes_goal INT DEFAULT 3 CHECK (new_recipes_goal >= 1 AND new_recipes_goal <= 15),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (goal_id),
+    FOREIGN KEY (user_id) REFERENCES user_account(user_ID) ON DELETE CASCADE,
+    UNIQUE KEY unique_user_week (user_id, week_start_date),
+    INDEX idx_user_week (user_id, week_start_date),
+    INDEX idx_week_date (week_start_date)
+);

@@ -71,9 +71,13 @@ function initializeGoals() {
     "November",
     "December",
   ];
-  document.getElementById("currentMonth").textContent = `${
-    monthNames[currentDate.getMonth()]
-  } ${currentDate.getFullYear()}`;
+  // Calculate and display current week
+  const weekStart = getWeekStartDate(currentDate);
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekStart.getDate() + 6);
+  const weekStartFormatted = weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const weekEndFormatted = weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  document.getElementById("currentWeek").textContent = `${weekStartFormatted} - ${weekEndFormatted}`;
 
   // Load saved goals from localStorage
   loadGoals();
@@ -85,15 +89,22 @@ function initializeGoals() {
   setupGoalsEventListeners();
 }
 
-async function loadGoals() {
-  try {
-    const currentMonth = new Date().getMonth() + 1;
-    const currentYear = new Date().getFullYear();
+// Helper function to get week start date (Monday)
+function getWeekStartDate(date) {
+  const daysFromMonday = date.getDay() === 0 ? 6 : date.getDay() - 1;
+  const weekStart = new Date(date);
+  weekStart.setDate(date.getDate() - daysFromMonday);
+  weekStart.setHours(0, 0, 0, 0);
+  return weekStart;
+}
 
-    const response = await fetch(
-      `/api/meal-goals?month=${currentMonth}&year=${currentYear}`
-    );
+async function loadGoals() {
+  console.log("Loading weekly goals...");
+  try {
+    const response = await fetch(`/api/meal-goals/weekly`);
+    console.log("Goals API response status:", response.status);
     const data = await response.json();
+    console.log("Goals API data:", data);
 
     if (data.success) {
       const goals = data.goals;
@@ -101,33 +112,26 @@ async function loadGoals() {
       document.getElementById("mealsCompletedGoal").value =
         goals.meals_completed_goal;
       document.getElementById("newRecipesGoal").value = goals.new_recipes_goal;
+      console.log("Loaded goals:", goals);
     } else {
-      console.error("Failed to load goals:", data.message);
-      // Set default values on error
-      document.getElementById("mealPlansGoal").value = 4;
-      document.getElementById("mealsCompletedGoal").value = 60;
-      document.getElementById("newRecipesGoal").value = 12;
+      console.warn("Failed to load weekly goals:", data.message);
     }
 
     updateGoalTargets();
   } catch (error) {
-    console.error("Error loading goals:", error);
-    // Set default values on error
-    document.getElementById("mealPlansGoal").value = 4;
-    document.getElementById("mealsCompletedGoal").value = 60;
-    document.getElementById("newRecipesGoal").value = 12;
+    console.error("Error loading weekly goals:", error);
+    // Set default weekly values on error
+    document.getElementById("mealPlansGoal").value = 2;
+    document.getElementById("mealsCompletedGoal").value = 15;
+    document.getElementById("newRecipesGoal").value = 3;
     updateGoalTargets();
   }
 }
 
 async function saveGoals() {
+  console.log("Saving weekly goals...");
   try {
-    const currentMonth = new Date().getMonth() + 1;
-    const currentYear = new Date().getFullYear();
-
     const goalsData = {
-      month: currentMonth,
-      year: currentYear,
       meal_plans_goal: parseInt(document.getElementById("mealPlansGoal").value),
       meals_completed_goal: parseInt(
         document.getElementById("mealsCompletedGoal").value
@@ -137,7 +141,9 @@ async function saveGoals() {
       ),
     };
 
-    const response = await fetch("/api/meal-goals", {
+    console.log("Goals data to save:", goalsData);
+
+    const response = await fetch("/api/meal-goals/weekly", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -145,7 +151,9 @@ async function saveGoals() {
       body: JSON.stringify(goalsData),
     });
 
+    console.log("Save goals API response status:", response.status);
     const data = await response.json();
+    console.log("Save goals API data:", data);
 
     if (data.success) {
       updateGoalTargets();
@@ -162,18 +170,19 @@ async function saveGoals() {
         saveBtn.style.background = "var(--primary-gradient)";
       }, 2000);
     } else {
-      alert("Failed to save goals: " + data.message);
+      console.error("Save goals failed:", data);
+      alert("Failed to save weekly goals: " + data.message);
     }
   } catch (error) {
-    console.error("Error saving goals:", error);
-    alert("Failed to save goals. Please try again.");
+    console.error("Error saving weekly goals:", error);
+    alert("Failed to save weekly goals. Please try again.");
   }
 }
 
 function resetGoals() {
-  document.getElementById("mealPlansGoal").value = 4;
-  document.getElementById("mealsCompletedGoal").value = 60;
-  document.getElementById("newRecipesGoal").value = 12;
+  document.getElementById("mealPlansGoal").value = 2;
+  document.getElementById("mealsCompletedGoal").value = 15;
+  document.getElementById("newRecipesGoal").value = 3;
 
   updateGoalTargets();
   updateGoalsProgress();
@@ -190,12 +199,18 @@ function updateGoalTargets() {
 
 async function updateGoalsProgress() {
   try {
-    const currentMonth = new Date().getMonth() + 1;
-    const currentYear = new Date().getFullYear();
+    // Calculate current week range
+    const now = new Date();
+    const weekStart = getWeekStartDate(now);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    
+    const startDateStr = weekStart.toISOString().split('T')[0];
+    const endDateStr = weekEnd.toISOString().split('T')[0];
 
-    // Get progress data from the API
+    // Get weekly progress data from the API
     const response = await fetch(
-      `/api/meal-goals/progress?month=${currentMonth}&year=${currentYear}`
+      `/api/meal-goals/progress/weekly?start_date=${startDateStr}&end_date=${endDateStr}`
     );
     const data = await response.json();
 
@@ -211,14 +226,14 @@ async function updateGoalsProgress() {
       );
       updateGoalProgress("newRecipes", progress.new_recipes_count, "recipes");
     } else {
-      console.error("Failed to load progress:", data.message);
+      console.warn("Failed to load weekly progress:", data.message);
       // Set zero values on error
       updateGoalProgress("mealPlans", 0, "plans");
       updateGoalProgress("mealsCompleted", 0, "meals");
       updateGoalProgress("newRecipes", 0, "recipes");
     }
   } catch (error) {
-    console.error("Error updating goals progress:", error);
+    console.error("Error updating weekly goals progress:", error);
     // Set zero values on error
     updateGoalProgress("mealPlans", 0, "plans");
     updateGoalProgress("mealsCompleted", 0, "meals");

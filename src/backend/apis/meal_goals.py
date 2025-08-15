@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, session
 from src.database import get_db
-from datetime import datetime
+from datetime import datetime, timedelta
 
 meal_goals_bp = Blueprint("meal_goals", __name__, url_prefix="/api")
 
@@ -271,5 +271,272 @@ def delete_meal_goals():
     except Exception as e:
         db.rollback()
         return jsonify({"success": False, "message": f"Failed to delete meal goals: {str(e)}"})
+    finally:
+        cursor.close()
+
+
+# ============================================================================
+# WEEKLY MEAL GOALS API ENDPOINTS
+# ============================================================================
+
+def get_week_start_date(date_obj):
+    """Get the Monday of the week for a given date"""
+    days_since_monday = date_obj.weekday()
+    week_start = date_obj - timedelta(days=days_since_monday)
+    return week_start
+
+
+@meal_goals_bp.route("/meal-goals/weekly", methods=["GET"])
+def get_weekly_meal_goals():
+    """Get meal goals for the current week"""
+    print("GET /api/meal-goals/weekly called")
+    
+    if "user_ID" not in session:
+        print("User not authenticated")
+        return jsonify({"success": False, "message": "Not authenticated"})
+
+    user_id = session["user_ID"]
+    print(f"User ID: {user_id}")
+    
+    # Get current week start (Monday)
+    current_date = datetime.now().date()
+    week_start = get_week_start_date(current_date)
+    print(f"Week start: {week_start}")
+
+    db = get_db()
+    cursor = db.cursor()
+
+    try:
+        query = """
+            SELECT meal_plans_goal, meals_completed_goal, new_recipes_goal, 
+                   week_start_date, created_at, updated_at
+            FROM weekly_meal_goals 
+            WHERE user_id = %s AND week_start_date = %s
+        """
+        print(f"Executing query with user_id={user_id}, week_start={week_start}")
+        cursor.execute(query, (user_id, week_start))
+        goals = cursor.fetchone()
+        print(f"Query result: {goals}")
+
+        if goals:
+            result = {
+                "success": True,
+                "goals": {
+                    "meal_plans_goal": goals["meal_plans_goal"],
+                    "meals_completed_goal": goals["meals_completed_goal"],
+                    "new_recipes_goal": goals["new_recipes_goal"],
+                    "week_start_date": goals["week_start_date"].isoformat(),
+                    "created_at": goals["created_at"].isoformat() if goals["created_at"] else None,
+                    "updated_at": goals["updated_at"].isoformat() if goals["updated_at"] else None
+                }
+            }
+            print(f"Returning existing goals: {result}")
+            return jsonify(result)
+        else:
+            # Return default weekly goals if none exist
+            result = {
+                "success": True,
+                "goals": {
+                    "meal_plans_goal": 2,
+                    "meals_completed_goal": 15,
+                    "new_recipes_goal": 3,
+                    "week_start_date": week_start.isoformat(),
+                    "created_at": None,
+                    "updated_at": None
+                }
+            }
+            print(f"Returning default goals: {result}")
+            return jsonify(result)
+
+    except Exception as e:
+        print(f"Error in get_weekly_meal_goals: {str(e)}")
+        return jsonify({"success": False, "message": f"Failed to get weekly meal goals: {str(e)}"})
+    finally:
+        cursor.close()
+
+
+@meal_goals_bp.route("/meal-goals/weekly", methods=["POST", "PUT"])
+def save_weekly_meal_goals():
+    """Save or update weekly meal goals"""
+    print("POST /api/meal-goals/weekly called")
+    
+    if "user_ID" not in session:
+        print("User not authenticated")
+        return jsonify({"success": False, "message": "Not authenticated"})
+
+    user_id = session["user_ID"]
+    print(f"User ID: {user_id}")
+    
+    data = request.get_json()
+    print(f"Request data: {data}")
+
+    # Validate required fields
+    required_fields = ["meal_plans_goal", "meals_completed_goal", "new_recipes_goal"]
+    for field in required_fields:
+        if field not in data:
+            print(f"Missing field: {field}")
+            return jsonify({"success": False, "message": f"Missing required field: {field}"})
+
+    try:
+        meal_plans_goal = int(data["meal_plans_goal"])
+        meals_completed_goal = int(data["meals_completed_goal"])
+        new_recipes_goal = int(data["new_recipes_goal"])
+        print(f"Parsed goals: plans={meal_plans_goal}, meals={meals_completed_goal}, recipes={new_recipes_goal}")
+
+        # Validate ranges for weekly goals
+        if not (1 <= meal_plans_goal <= 10):
+            return jsonify({"success": False, "message": "Meal plans goal must be between 1 and 10"})
+        if not (5 <= meals_completed_goal <= 50):
+            return jsonify({"success": False, "message": "Meals completed goal must be between 5 and 50"})
+        if not (1 <= new_recipes_goal <= 15):
+            return jsonify({"success": False, "message": "New recipes goal must be between 1 and 15"})
+
+    except (ValueError, TypeError) as e:
+        print(f"Data parsing error: {e}")
+        return jsonify({"success": False, "message": "Invalid data types for goal values"})
+
+    # Get current week start
+    current_date = datetime.now().date()
+    week_start = get_week_start_date(current_date)
+    print(f"Week start: {week_start}")
+
+    db = get_db()
+    cursor = db.cursor()
+
+    try:
+        # Use INSERT ... ON DUPLICATE KEY UPDATE for upsert functionality
+        upsert_query = """
+            INSERT INTO weekly_meal_goals 
+            (user_id, week_start_date, meal_plans_goal, meals_completed_goal, new_recipes_goal)
+            VALUES (%s, %s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE
+                meal_plans_goal = VALUES(meal_plans_goal),
+                meals_completed_goal = VALUES(meals_completed_goal),
+                new_recipes_goal = VALUES(new_recipes_goal),
+                updated_at = CURRENT_TIMESTAMP
+        """
+        
+        print(f"Executing upsert with: user_id={user_id}, week_start={week_start}")
+        cursor.execute(upsert_query, (
+            user_id, week_start, meal_plans_goal, 
+            meals_completed_goal, new_recipes_goal
+        ))
+        
+        db.commit()
+        print("Database commit successful")
+        
+        result = {
+            "success": True,
+            "message": "Weekly meal goals saved successfully",
+            "goals": {
+                "meal_plans_goal": meal_plans_goal,
+                "meals_completed_goal": meals_completed_goal,
+                "new_recipes_goal": new_recipes_goal,
+                "week_start_date": week_start.isoformat()
+            }
+        }
+        print(f"Returning result: {result}")
+        return jsonify(result)
+
+    except Exception as e:
+        print(f"Database error: {str(e)}")
+        db.rollback()
+        return jsonify({"success": False, "message": f"Failed to save weekly meal goals: {str(e)}"})
+    finally:
+        cursor.close()
+
+
+@meal_goals_bp.route("/meal-goals/progress/weekly", methods=["GET"])
+def get_weekly_goals_progress():
+    """Get current progress towards weekly meal goals"""
+    print("GET /api/meal-goals/progress/weekly called")
+    
+    if "user_ID" not in session:
+        print("User not authenticated")
+        return jsonify({"success": False, "message": "Not authenticated"})
+
+    user_id = session["user_ID"]
+    print(f"User ID: {user_id}")
+    
+    # Get date range from query params or use current week
+    start_date_str = request.args.get("start_date")
+    end_date_str = request.args.get("end_date")
+    print(f"Date params: start={start_date_str}, end={end_date_str}")
+    
+    if start_date_str and end_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+        except ValueError:
+            return jsonify({"success": False, "message": "Invalid date format. Use YYYY-MM-DD"})
+    else:
+        # Use current week
+        current_date = datetime.now().date()
+        start_date = get_week_start_date(current_date)
+        end_date = start_date + timedelta(days=6)
+    
+    print(f"Using date range: {start_date} to {end_date}")
+
+    db = get_db()
+    cursor = db.cursor()
+
+    try:
+        # Get meal plans created this week
+        meal_plans_query = """
+            SELECT COUNT(*) as plan_count
+            FROM meal_plan_sessions
+            WHERE user_id = %s 
+            AND DATE(generated_at) >= %s 
+            AND DATE(generated_at) <= %s
+        """
+        cursor.execute(meal_plans_query, (user_id, start_date, end_date))
+        meal_plans_result = cursor.fetchone()
+        meal_plans_count = meal_plans_result["plan_count"] if meal_plans_result else 0
+        print(f"Meal plans count: {meal_plans_count}")
+
+        # Get completed meals this week
+        completed_meals_query = """
+            SELECT COUNT(*) as completed_count
+            FROM meals
+            WHERE user_id = %s 
+            AND is_completed = TRUE
+            AND meal_date >= %s 
+            AND meal_date <= %s
+        """
+        cursor.execute(completed_meals_query, (user_id, start_date, end_date))
+        completed_meals_result = cursor.fetchone()
+        completed_meals_count = completed_meals_result["completed_count"] if completed_meals_result else 0
+        print(f"Completed meals count: {completed_meals_count}")
+
+        # For new recipes, count unique recipe templates used this week
+        new_recipes_query = """
+            SELECT COUNT(DISTINCT m.recipe_template_id) as unique_recipes
+            FROM meals m
+            WHERE m.user_id = %s 
+            AND m.recipe_template_id IS NOT NULL
+            AND m.meal_date >= %s 
+            AND m.meal_date <= %s
+        """
+        cursor.execute(new_recipes_query, (user_id, start_date, end_date))
+        new_recipes_result = cursor.fetchone()
+        new_recipes_count = new_recipes_result["unique_recipes"] if new_recipes_result else 0
+        print(f"New recipes count: {new_recipes_count}")
+
+        result = {
+            "success": True,
+            "progress": {
+                "meal_plans_count": meal_plans_count,
+                "completed_meals_count": completed_meals_count,
+                "new_recipes_count": new_recipes_count,
+                "week_start_date": start_date.isoformat(),
+                "week_end_date": end_date.isoformat()
+            }
+        }
+        print(f"Returning progress result: {result}")
+        return jsonify(result)
+
+    except Exception as e:
+        print(f"Error in get_weekly_goals_progress: {str(e)}")
+        return jsonify({"success": False, "message": f"Failed to get weekly goals progress: {str(e)}"})
     finally:
         cursor.close()

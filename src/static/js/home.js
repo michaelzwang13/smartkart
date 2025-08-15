@@ -246,9 +246,9 @@ async function toggleMealCompletion(
         mealItem.classList.remove("completed");
       }
 
-      // Update the monthly progress wheel
-      if (typeof loadMonthlyProgress === "function") {
-        loadMonthlyProgress();
+      // Update the weekly progress wheel
+      if (typeof loadWeeklyProgress === "function") {
+        loadWeeklyProgress();
       }
     } else {
       // Revert checkbox on error
@@ -511,55 +511,65 @@ function loadMealNutritionForDetails(mealId) {
   console.log(`Loading nutrition data for meal ${mealId}`);
 }
 
-// Monthly Meals Progress Wheel Functionality
-async function loadMonthlyProgress() {
+// Weekly Meals Progress Wheel Functionality
+async function loadWeeklyProgress() {
+  console.log("Loading weekly progress...");
   try {
-    const currentMonth = new Date().getMonth() + 1;
-    const currentYear = new Date().getFullYear();
+    const now = new Date();
+    
+    // Calculate current week start (Monday)
+    const currentDay = now.getDay();
+    const daysFromMonday = currentDay === 0 ? 6 : currentDay - 1; // Handle Sunday as 0
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - daysFromMonday);
+    weekStart.setHours(0, 0, 0, 0);
+    
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    weekEnd.setHours(23, 59, 59, 999);
 
-    // Update the month display
-    const monthNames = [
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December",
-    ];
-    document.getElementById("progressMonth").textContent = `${
-      monthNames[currentMonth - 1]
-    } ${currentYear}`;
+    // Format week display
+    const weekStartFormatted = weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const weekEndFormatted = weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    
+    document.getElementById("progressWeek").textContent = `${weekStartFormatted} - ${weekEndFormatted}`;
 
-    // Get goals and progress data
+    // Get goals and progress data for the week
+    const startDateStr = weekStart.toISOString().split('T')[0];
+    const endDateStr = weekEnd.toISOString().split('T')[0];
+    
+    console.log("Fetching weekly goals and progress:", { startDateStr, endDateStr });
+    
     const [goalsResponse, progressResponse] = await Promise.all([
-      fetch(`/api/meal-goals?month=${currentMonth}&year=${currentYear}`),
-      fetch(
-        `/api/meal-goals/progress?month=${currentMonth}&year=${currentYear}`
-      ),
+      fetch(`/api/meal-goals/weekly`),
+      fetch(`/api/meal-goals/progress/weekly?start_date=${startDateStr}&end_date=${endDateStr}`),
     ]);
+
+    console.log("API responses:", { 
+      goalsStatus: goalsResponse.status, 
+      progressStatus: progressResponse.status 
+    });
 
     const goalsData = await goalsResponse.json();
     const progressData = await progressResponse.json();
+
+    console.log("API data:", { goalsData, progressData });
 
     if (goalsData.success && progressData.success) {
       const goal = goalsData.goals.meals_completed_goal;
       const completed = progressData.progress.completed_meals_count;
 
+      console.log("Updating progress wheel:", { completed, goal });
       updateProgressWheel(completed, goal);
     } else {
-      // Use default values if API fails
-      updateProgressWheel(0, 60);
+      console.warn("API calls failed, using defaults:", { goalsData, progressData });
+      // Use default values if API fails (more reasonable for weekly)
+      updateProgressWheel(0, 15);
     }
   } catch (error) {
-    console.error("Error loading monthly progress:", error);
+    console.error("Error loading weekly progress:", error);
     // Use default values on error
-    updateProgressWheel(0, 60);
+    updateProgressWheel(0, 15);
   }
 }
 
@@ -610,7 +620,7 @@ document.addEventListener("DOMContentLoaded", function () {
   initializeDropdowns();
   handleDropdownResize();
   loadTodaysMeals();
-  loadMonthlyProgress();
+  loadWeeklyProgress();
   initializeDailyNutrition();
 
   // Update time-based greeting every minute
