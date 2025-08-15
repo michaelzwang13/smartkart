@@ -415,10 +415,14 @@
       border-left: 4px solid var(--primary-color);
       transition: all 0.3s ease;
       position: relative;
+      min-height: 80px;
+    }
+
+    .meal-single-row {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      min-height: 80px;
+      gap: var(--spacing-md);
+      width: 100%;
     }
     
     .meal-item:hover {
@@ -446,23 +450,19 @@
       text-decoration: line-through;
     }
     
-    .meal-header {
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-md);
-    }
-    
-    .meal-content {
-      display: flex;
-      flex-direction: column;
+    .meal-single-row .meal-name {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: color 0.2s ease;
+      margin: 0;
       flex: 1;
-      gap: var(--spacing-xs);
+      min-width: 0; /* Allow text truncation if needed */
     }
     
-    .meal-main-info {
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-md);
+    .meal-single-row .meal-name:hover {
+      color: var(--primary-color);
     }
     
     .meal-type-badge {
@@ -537,25 +537,16 @@
       display: none;
     }
     
-    .meal-name {
-      font-size: 1.125rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      cursor: pointer;
-      transition: color 0.2s ease;
-      margin: 0;
-    }
     
-    .meal-name:hover {
-      color: var(--primary-color);
-    }
-    
-    .meal-info {
+    .meal-single-row .meal-info {
       display: flex;
-      gap: var(--spacing-md);
+      gap: var(--spacing-sm);
       font-size: 0.875rem;
       color: var(--text-secondary);
       align-items: center;
+      flex-shrink: 0;
+      margin-left: auto;
+      margin-right: var(--spacing-md);
     }
     
     .meal-info i {
@@ -1067,6 +1058,7 @@
     .meal-details-modal.breakfast .btn-primary {
       background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
       border-color: #d97706;
+      color: white;
     }
     .meal-details-modal.breakfast .btn-primary:hover {
       background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
@@ -1098,6 +1090,7 @@
     .meal-details-modal.lunch .btn-primary {
       background: linear-gradient(135deg, #10b981 0%, #059669 100%);
       border-color: #059669;
+      color: white;
     }
     .meal-details-modal.lunch .btn-primary:hover {
       background: linear-gradient(135deg, #059669 0%, #047857 100%);
@@ -1129,6 +1122,7 @@
     .meal-details-modal.dinner .btn-primary {
       background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
       border-color: #7c3aed;
+      color: white;
     }
     .meal-details-modal.dinner .btn-primary:hover {
       background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
@@ -1160,6 +1154,7 @@
     .meal-details-modal.snack .btn-primary {
       background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
       border-color: #10b981;
+      color: white;
     }
     .meal-details-modal.snack .btn-primary:hover {
       background: linear-gradient(135deg, #10b981 0%, #059669 100%);

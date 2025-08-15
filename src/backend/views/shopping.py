@@ -451,6 +451,18 @@ def meal_plans():
     return render_template("meal_plans.html", nutrition_tracking_enabled=nutrition_tracking_enabled)
 
 
+@shopping_bp.route("/meal-plans/advanced")
+def advanced_meal_planning():
+    """Show advanced meal planning page with AI chatbot"""
+    if "user_ID" not in session:
+        return redirect(url_for("auth.login"))
+    
+    # Get user preferences
+    nutrition_tracking_enabled = get_user_preference(session["user_ID"], "nutrition_tracking_enabled", True)
+    
+    return render_template("advanced_meal_planning.html", nutrition_tracking_enabled=nutrition_tracking_enabled)
+
+
 @shopping_bp.route("/meal-plans/<int:plan_id>")
 def meal_plan_details(plan_id):
     """Show detailed view of a specific meal plan"""

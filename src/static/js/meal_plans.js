@@ -280,6 +280,7 @@ document.addEventListener("DOMContentLoaded", function () {
   // Initialize form handlers for slider and calendar preview
   initializeFormHandlers();
 
+
   // Setup generate button
   document
     .getElementById("generateBtn")
@@ -2680,12 +2681,18 @@ function showMessage(message, type) {
   // Set background color based on type
   if (type === 'success') {
     messageDiv.style.background = '#10b981';
+  } else if (type === 'info') {
+    messageDiv.style.background = '#3b82f6';
   } else {
     messageDiv.style.background = '#ef4444';
   }
 
+  let icon = 'fa-exclamation-triangle';
+  if (type === 'success') icon = 'fa-check-circle';
+  if (type === 'info') icon = 'fa-info-circle';
+
   messageDiv.innerHTML = `
-    <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle'}"></i>
+    <i class="fas ${icon}"></i>
     ${message}
   `;
 
@@ -2709,4 +2716,15 @@ function showMessage(message, type) {
     }, 300);
   }, 5000);
 }
+
+
+// Add pulse animation for typing indicator
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes pulse {
+    0%, 100% { opacity: 0.3; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1); }
+  }
+`;
+document.head.appendChild(style);
 
