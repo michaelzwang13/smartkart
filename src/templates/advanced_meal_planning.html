@@ -210,6 +210,30 @@
         color: white;
       }
 
+      /* Form select styling */
+      .form-select {
+        width: 100%;
+        padding: var(--spacing-sm);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-md);
+        font-size: 0.875rem;
+        font-family: var(--font-family);
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .form-select:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+      }
+
+      .form-select:hover {
+        border-color: var(--border-medium);
+      }
+
       /* Main chat area */
       .chatbot-main {
         flex: 1;
