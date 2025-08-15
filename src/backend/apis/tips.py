@@ -8,7 +8,7 @@ tips_bp = Blueprint("tips", __name__, url_prefix="/api")
 
 @tips_bp.route("/tips/daily", methods=["GET"])
 def get_daily_tip():
-    """Get a random tip for the user that hasn't been shown in the last 10 days"""
+    """Get a tip for the user that changes every 12 hours and hasn't been shown in the last 10 days"""
     if "user_ID" not in session:
         return jsonify({"success": False, "message": "Not authenticated"})
 
@@ -18,6 +18,41 @@ def get_daily_tip():
     cursor = db.cursor()
     
     try:
+        # Check if user has a current tip for this 12-hour period
+        now = datetime.now()
+        # Create a 12-hour period identifier (0 for 00:00-11:59, 1 for 12:00-23:59)
+        current_period = 0 if now.hour < 12 else 1
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        period_start = today_start + timedelta(hours=current_period * 12)
+        period_end = period_start + timedelta(hours=12)
+        
+        # Check if user already has a tip for this 12-hour period
+        current_tip_query = """
+            SELECT t.tip_id, t.tip_text, t.tip_category
+            FROM user_tip_history uth
+            JOIN tips t ON uth.tip_id = t.tip_id
+            WHERE uth.user_id = %s 
+            AND uth.shown_at >= %s 
+            AND uth.shown_at < %s
+            AND t.is_active = TRUE
+            ORDER BY uth.shown_at DESC
+            LIMIT 1
+        """
+        cursor.execute(current_tip_query, (user_id, period_start, period_end))
+        current_tip = cursor.fetchone()
+        
+        if current_tip:
+            # Return the existing tip for this period
+            return jsonify({
+                "success": True,
+                "tip": {
+                    "id": current_tip["tip_id"],
+                    "text": current_tip["tip_text"],
+                    "category": current_tip["tip_category"]
+                }
+            })
+        
+        # No tip for current period, get a new one
         # First check if user has any tip history at all
         history_check = """
             SELECT COUNT(*) as count
