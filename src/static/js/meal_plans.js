@@ -977,15 +977,22 @@ function displayCategorizedPlans(category, plans) {
     const showMoreBtn = document.getElementById("showMoreActiveBtn");
     if (showMoreBtn) {
       showMoreBtn.style.display = "block";
+      showMoreBtn.classList.remove("expanded");
+      showMoreBtn.querySelector("span").textContent = "Show All Active Plans";
     }
   } else if (category === 'active') {
-    // Hide the "show more" button if showing all or 3 or fewer
+    // Handle button state for showing all or 3 or fewer plans
     const showMoreBtn = document.getElementById("showMoreActiveBtn");
     if (showMoreBtn) {
-      showMoreBtn.style.display = plans.length > 3 && showingAllActive ? "block" : "none";
-      if (showingAllActive) {
+      if (plans.length > 3 && showingAllActive) {
+        // Showing all plans - display "Show Fewer" button
+        showMoreBtn.style.display = "block";
         showMoreBtn.classList.add("expanded");
         showMoreBtn.querySelector("span").textContent = "Show Fewer Plans";
+      } else {
+        // 3 or fewer plans total - hide button
+        showMoreBtn.style.display = "none";
+        showMoreBtn.classList.remove("expanded");
       }
     }
   }
