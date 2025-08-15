@@ -415,10 +415,14 @@
       border-left: 4px solid var(--primary-color);
       transition: all 0.3s ease;
       position: relative;
+      min-height: 80px;
+    }
+
+    .meal-single-row {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      min-height: 80px;
+      gap: var(--spacing-md);
+      width: 100%;
     }
     
     .meal-item:hover {
@@ -446,23 +450,19 @@
       text-decoration: line-through;
     }
     
-    .meal-header {
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-md);
-    }
-    
-    .meal-content {
-      display: flex;
-      flex-direction: column;
+    .meal-single-row .meal-name {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: color 0.2s ease;
+      margin: 0;
       flex: 1;
-      gap: var(--spacing-xs);
+      min-width: 0; /* Allow text truncation if needed */
     }
     
-    .meal-main-info {
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-md);
+    .meal-single-row .meal-name:hover {
+      color: var(--primary-color);
     }
     
     .meal-type-badge {
@@ -537,25 +537,16 @@
       display: none;
     }
     
-    .meal-name {
-      font-size: 1.125rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      cursor: pointer;
-      transition: color 0.2s ease;
-      margin: 0;
-    }
     
-    .meal-name:hover {
-      color: var(--primary-color);
-    }
-    
-    .meal-info {
+    .meal-single-row .meal-info {
       display: flex;
-      gap: var(--spacing-md);
+      gap: var(--spacing-sm);
       font-size: 0.875rem;
       color: var(--text-secondary);
       align-items: center;
+      flex-shrink: 0;
+      margin-left: auto;
+      margin-right: var(--spacing-md);
     }
     
     .meal-info i {

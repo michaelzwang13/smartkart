@@ -162,15 +162,12 @@ function displayTodaysMeals(meals) {
     const totalTime = (meal.prep_time || 0) + (meal.cook_time || 0);
 
     mealItem.innerHTML = `
-        <div class="meal-header">
-        <span class="meal-type-badge ${meal.type}">${meal.type}</span>
-        <div class="meal-content">
-            <div class="meal-main-info">
-            <div class="meal-name" onclick="showMealDetails(${
-              meal.meal_id
-            })">${dishName}</div>
-            </div>
-            <div class="meal-info">
+        <div class="meal-single-row">
+          <span class="meal-type-badge ${meal.type}">${meal.type}</span>
+          <div class="meal-name" onclick="showMealDetails(${
+            meal.meal_id
+          })">${dishName}</div>
+          <div class="meal-info">
             ${
               totalTime > 0
                 ? `<span><i class="fas fa-clock"></i> ${totalTime} min</span>`
@@ -186,15 +183,14 @@ function displayTodaysMeals(meals) {
                 ? `<span><i class="fas fa-chart-line"></i> ${meal.difficulty}</span>`
                 : ""
             }
-            </div>
+          </div>
+          <label class="meal-completion-checkbox">
+            <input type="checkbox" ${meal.is_completed ? "checked" : ""} 
+                    onchange="toggleMealCompletion(${
+                      meal.meal_id
+                    }, this.checked, this, '${meal.date}')">
+          </label>
         </div>
-        </div>
-        <label class="meal-completion-checkbox">
-        <input type="checkbox" ${meal.is_completed ? "checked" : ""} 
-                onchange="toggleMealCompletion(${
-                  meal.meal_id
-                }, this.checked, this, '${meal.date}')">
-        </label>
     `;
 
     grid.appendChild(mealItem);
